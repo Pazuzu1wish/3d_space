@@ -168,7 +168,10 @@ def main():
         for p in particles:    p.draw(screen, *draw_args)
         for l in lasers:       l.draw(screen, *draw_args)
 
-        draw_cockpit_hud(screen, W, H, throttle, weapons_cooldown <= 0)
+        draw_cockpit_hud(screen, W, H, throttle, weapons_cooldown <= 0,
+                         orientation=orientation,
+                         player_pos=player_pos,
+                         enemies=enemies)
 
         pygame.display.flip()
         handler.update()
