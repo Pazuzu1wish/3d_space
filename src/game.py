@@ -66,6 +66,8 @@ def main():
         if keys[pygame.K_s]:     ly =  1.0
         if keys[pygame.K_a]:     lx = -1.0
         if keys[pygame.K_d]:     lx =  1.0
+        if keys[pygame.K_LEFT]:     rx = -1.0
+        if keys[pygame.K_RIGHT]:     rx =  1.0
         if keys[pygame.K_UP]:    throttle = min(1.0, throttle + dt)
         if keys[pygame.K_DOWN]:  throttle = max(0.0, throttle - dt)
         if keys[pygame.K_SPACE]: fire_pressed = True
@@ -142,7 +144,7 @@ def main():
                 player_pos[0], player_pos[1], player_pos[2],
                 orientation,
             )
-            if cz < -500:
+            if cz < -5000:
                 enemies.remove(e)
 
         for p in particles[:]:

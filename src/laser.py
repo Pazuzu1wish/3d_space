@@ -12,9 +12,9 @@ class Laser:
         # Track previous position to draw as a line (blaster bolt)
         self.px, self.py, self.pz = self.x, self.y, self.z
 
-        speed = 5000
+        speed = 8000
         self.vx, self.vy, self.vz = fx * speed, fy * speed, fz * speed
-        self.life = 1.0
+        self.life = 2.0
 
     def update(self, dt):
         self.px, self.py, self.pz = self.x, self.y, self.z

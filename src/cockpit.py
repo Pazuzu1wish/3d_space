@@ -26,13 +26,13 @@ ALPHA_SURFACE = (0, 0, 0, 0)   # for per-surface alpha blits
 
 _FONT_CACHE = {}
 
-def _font(size):
-    if size not in _FONT_CACHE:
-        try:
-            _FONT_CACHE[size] = pygame.font.SysFont("Courier New", size, bold=True)
-        except Exception:
-            _FONT_CACHE[size] = pygame.font.SysFont(None, size)
-    return _FONT_CACHE[size]
+# def _font(size):
+#     if size not in _FONT_CACHE:
+#         try:
+#             _FONT_CACHE[size] = pygame.font.SysFont("Courier New", size, bold=True)
+#         except Exception:
+#             _FONT_CACHE[size] = pygame.font.SysFont(None, size)
+#     return _FONT_CACHE[size]
 
 def custom_font(size):
     if size not in _FONT_CACHE:
@@ -339,10 +339,10 @@ def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
     ai_r  = 70
     draw_attitude_indicator(surface, ai_cx, ai_cy, ai_r, orientation)
 
-    # ── Radar (bottom-right area, above throttle) ──
-    r_cx = W - 95
-    r_cy = H - 240
-    r_r  = 60
+    # ── Radar (next to altitude indicator) ──
+    r_cx = W // 4 + 30
+    r_cy = H - 100
+    r_r  = 75
     draw_radar(surface, r_cx, r_cy, r_r, orientation,
                player_pos or [0,0,0],
                enemies   or [])

@@ -94,7 +94,7 @@ class DS4Input:
         handler.on_hat     = lambda val:  print(f"dpad {val}")
     """
 
-    DEADZONE_DEFAULT = 0.12
+    DEADZONE_DEFAULT = 0.20
 
     def __init__(self, joystick_index: int = 0, deadzone: float = DEADZONE_DEFAULT):
         self.joystick_index = joystick_index
