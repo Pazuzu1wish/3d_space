@@ -1,4 +1,5 @@
 
+
 import pygame
 import math
 from .math_engine import (
@@ -17,12 +18,12 @@ from .math_engine import (
 #  - Crosshair
 # ──────────────────────────────────────────────
 
-# ── Palette ───────────────────────────────────
-HUD_GREEN = (0, 255, 140)
-HUD_DIM = (0, 160, 90)
-HUD_AMBER = (255, 180, 30)
-HUD_RED = (255, 60, 60)
-ALPHA_SURFACE = (0, 0, 0, 0)  # for per-surface alpha blits
+# ── Palette (R, G, B, Alpha) ──────────────────
+# The 4th value (0-255) controls transparency.
+HUD_GREEN = (0, 255, 140, 80)  # Main glowing lines/text
+HUD_DIM = (0, 160, 90, 80)  # Dimmed elements
+HUD_AMBER = (255, 180, 30, 160)  # Warnings / not ready
+HUD_RED = (255, 60, 60, 160)  # Critical / close enemies
 
 _FONT_CACHE = {}
 
@@ -41,11 +42,8 @@ def custom_font(size):
 # ──────────────────────────────────────────────
 
 def draw_heading_tape(surface, cx, y, orientation):
-    """Draws a fighter-style 0-360 degree horizontal compass tape at the top of the HUD."""
     forward, right, up = get_basis_from_quat(orientation)
 
-    # Calculate heading: Z is forward, X is right in world axes.
-    # atan2(X, Z) naturally maps to 0=North, 90=East, 180=South, 270=West
     heading_rad = math.atan2(forward[0], forward[2])
     heading_deg = math.degrees(heading_rad)
     if heading_deg < 0:
@@ -55,23 +53,20 @@ def draw_heading_tape(surface, cx, y, orientation):
     tape_h = 30
     x0 = cx - tape_w // 2
 
-    # Draw semi-transparent background
     tape_surf = pygame.Surface((tape_w, tape_h), pygame.SRCALPHA)
-    tape_surf.fill((0, 30, 0, 150))
+    tape_surf.fill((0, 30, 0, 40))  # Very subtle dark background
     pygame.draw.rect(tape_surf, HUD_DIM, (0, 0, tape_w, tape_h), 1)
     surface.blit(tape_surf, (x0, y))
 
-    # Center marker (triangle pointing down)
     pygame.draw.polygon(surface, HUD_GREEN, [
         (cx, y + tape_h),
         (cx - 6, y + tape_h + 6),
         (cx + 6, y + tape_h + 6)
     ])
 
-    px_per_deg = tape_w / 60.0  # Show exactly 60 degrees of FOV
+    px_per_deg = tape_w / 60.0
     font = custom_font(14)
 
-    # Find the visible degree range
     start_deg = int(heading_deg - 35)
     end_deg = int(heading_deg + 35)
 
@@ -80,13 +75,11 @@ def draw_heading_tape(surface, cx, y, orientation):
             diff = d - heading_deg
             sx = cx + int(diff * px_per_deg)
 
-            # Only draw ticks that fit cleanly inside the tape
             if x0 + 2 <= sx <= x0 + tape_w - 2:
                 norm_d = d % 360
                 if norm_d < 0: norm_d += 360
 
                 if norm_d % 15 == 0:
-                    # Major tick + Label
                     pygame.draw.line(surface, HUD_GREEN, (sx, y), (sx, y + 8), 2)
 
                     if norm_d == 0:
@@ -103,7 +96,6 @@ def draw_heading_tape(surface, cx, y, orientation):
                     lbl = font.render(txt, True, HUD_GREEN)
                     surface.blit(lbl, (sx - lbl.get_width() // 2, y + 12))
                 else:
-                    # Minor tick
                     pygame.draw.line(surface, HUD_DIM, (sx, y), (sx, y + 5), 1)
 
 
@@ -112,16 +104,13 @@ def draw_heading_tape(surface, cx, y, orientation):
 # ──────────────────────────────────────────────
 
 def draw_pitch_ladder(surface, cx, cy, orientation):
-    """Draws HUD pitch ladder lines locked to the world horizon."""
     forward, right, up = get_basis_from_quat(orientation)
 
     pitch_angle = math.asin(max(-1.0, min(1.0, -forward[1])))
     roll_angle = math.atan2(right[1], up[1])
 
-    # Pixels per radian - align with visual FOV (matches default math_engine fov=400)
     px_per_rad = 400.0
 
-    # Rotate contrary to aircraft roll to keep the ladder parallel with the ground
     cos_r = math.cos(-roll_angle)
     sin_r = math.sin(-roll_angle)
 
@@ -130,60 +119,47 @@ def draw_pitch_ladder(surface, cx, cy, orientation):
                 int(cy + px * sin_r + py * cos_r))
 
     font = custom_font(12)
-    gap = 40  # Clear space for the crosshair
-    w = 60  # Width of the pitch ladder lines
+    gap = 160
+    w = 90
 
     for deg in range(-90, 91, 10):
-        # ── Horizon Line (0 degrees) ──
         if deg == 0:
             y_off = (pitch_angle - 0) * px_per_rad
-            # Exclude lines completely off screen
             if abs(y_off) > 400: continue
 
-            # Left half
             pygame.draw.line(surface, HUD_GREEN, rot(-200, y_off), rot(-gap, y_off), 2)
-            # Right half
             pygame.draw.line(surface, HUD_GREEN, rot(gap, y_off), rot(200, y_off), 2)
             continue
 
-        # ── Pitch Lines ──
         y_off = (pitch_angle - math.radians(deg)) * px_per_rad
         if abs(y_off) > 350: continue
 
-        # Tails point toward horizon. (Sky > 0: point down. Ground < 0: point up)
         tail = 8 if deg > 0 else -8
         col = HUD_GREEN
 
         if deg > 0:
-            # Positive pitch (Solid lines)
-            # Left side
             pygame.draw.line(surface, col, rot(-(w + gap), y_off), rot(-gap, y_off), 2)
             pygame.draw.line(surface, col, rot(-(w + gap), y_off), rot(-(w + gap), y_off + tail), 2)
 
-            # Right side
             pygame.draw.line(surface, col, rot((w + gap), y_off), rot(gap, y_off), 2)
             pygame.draw.line(surface, col, rot((w + gap), y_off), rot((w + gap), y_off + tail), 2)
 
         else:
-            # Negative pitch (Dashed lines)
             dash_len = 12
             space = 12
 
-            # Left side
             pygame.draw.line(surface, col, rot(-(w + gap), y_off), rot(-(w + gap), y_off + tail), 2)
             for i in range(3):
                 dx1 = -(w + gap) + i * (dash_len + space)
                 dx2 = dx1 + dash_len
                 pygame.draw.line(surface, col, rot(dx1, y_off), rot(dx2, y_off), 2)
 
-            # Right side
             pygame.draw.line(surface, col, rot(w + gap, y_off), rot(w + gap, y_off + tail), 2)
             for i in range(3):
                 dx1 = gap + i * (dash_len + space)
                 dx2 = dx1 + dash_len
                 pygame.draw.line(surface, col, rot(dx1, y_off), rot(dx2, y_off), 2)
 
-        # ── Text Labels ──
         lbl = font.render(str(abs(deg)), True, col)
 
         lx, ly = rot(-(w + gap + 15), y_off)
@@ -197,13 +173,11 @@ def draw_pitch_ladder(surface, cx, cy, orientation):
 #  RADAR
 # ──────────────────────────────────────────────
 
-def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies,
-               radar_range=6000):
-    """Flat-disc radar with elevation ticks."""
+def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000):
     forward, right, up = get_basis_from_quat(orientation)
 
     disc = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
-    pygame.draw.circle(disc, (0, 30, 0, 180), (radius, radius), radius)
+    pygame.draw.circle(disc, (0, 30, 0, 50), (radius, radius), radius)
     pygame.draw.circle(disc, HUD_DIM, (radius, radius), radius, 1)
     pygame.draw.circle(disc, HUD_DIM, (radius, radius), radius // 2, 1)
 
@@ -216,8 +190,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies,
     for e in enemies:
         dx, dy, dz = e.x - px, e.y - py, e.z - pz
         dist = math.sqrt(dx * dx + dy * dy + dz * dz)
-        if dist > radar_range:
-            continue
+        if dist > radar_range: continue
 
         local_x = dx * right[0] + dy * right[1] + dz * right[2]
         local_y = dx * up[0] + dy * up[1] + dz * up[2]
@@ -240,9 +213,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies,
         color = HUD_RED if dist < radar_range * 0.3 else HUD_AMBER
         pygame.draw.circle(surface, color, (dot_x, dot_z), 3)
         if elev_px != 0:
-            pygame.draw.line(surface, color,
-                             (dot_x, dot_z),
-                             (dot_x, dot_z - elev_px), 1)
+            pygame.draw.line(surface, color, (dot_x, dot_z), (dot_x, dot_z - elev_px), 1)
 
     pygame.draw.circle(surface, HUD_GREEN, (cx, cy), 3)
     fwd_px = cy - (radius - 8)
@@ -324,31 +295,28 @@ def print_kph(surface, x, y):
 
 def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
                      orientation=None, player_pos=None, enemies=None):
-    """Draws the fully modernized 3D fighter HUD."""
+    # Create a completely transparent "glass" layer to draw the HUD on.
+    # This allows standard Pygame shapes to utilize our RGBA alpha channels!
+    hud_overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+
     cx, cy = W // 2, H // 2
 
-    # ── Crosshair ──
-    draw_crosshair(surface, cx, cy, weapons_ready)
+    # Draw everything onto the transparent overlay instead of the main surface
+    draw_crosshair(hud_overlay, cx, cy, weapons_ready)
 
-    # ── Throttle bar & Speed ──
-    draw_throttle_bar(surface, W - 40, H - 180, 140, throttle)
-    print_spd(surface, W - 130, H - 120)
-    draw_speed(surface, W - 120, H - 100, throttle)
-    print_kph(surface, W - 110, H - 80)
+    draw_throttle_bar(hud_overlay, W - 40, H - 180, 140, throttle)
+    print_spd(hud_overlay, W - 130, H - 120)
+    draw_speed(hud_overlay, W - 120, H - 100, throttle)
+    print_kph(hud_overlay, W - 110, H - 80)
 
-    if orientation is None:
-        return  # legacy fallback — skip 3D instruments
+    if orientation is not None:
+        draw_heading_tape(hud_overlay, cx, 30, orientation)
+        draw_pitch_ladder(hud_overlay, cx, cy, orientation)
 
-    # ── Heading Tape (Top Center) ──
-    draw_heading_tape(surface, cx, 30, orientation)
+        r_cx, r_cy, r_r = 90, H - 95, 75
+        draw_radar(hud_overlay, r_cx, r_cy, r_r, orientation,
+                   player_pos or [0, 0, 0],
+                   enemies or [])
 
-    # ── Pitch Ladder (Center, locked to horizon) ──
-    draw_pitch_ladder(surface, cx, cy, orientation)
-
-    # ── Radar (Now nicely anchored in the bottom-left replacing the ball) ──
-    r_cx = 90
-    r_cy = H - 95
-    r_r = 75
-    draw_radar(surface, r_cx, r_cy, r_r, orientation,
-               player_pos or [0, 0, 0],
-               enemies or [])
+    # Stamp the finished semi-transparent HUD onto the game screen
+    surface.blit(hud_overlay, (0, 0))
