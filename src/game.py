@@ -77,9 +77,9 @@ def main():
         # ly (stick up/down) → pitch around ship's own right axis
         # rx (right stick X) → yaw around ship's own up axis
         # lx (stick left/right) → roll around ship's own forward axis
-        PITCH_RATE = 1.5
+        PITCH_RATE = 2.0
         YAW_RATE   = 1.5
-        ROLL_RATE  = 2.0
+        ROLL_RATE  = 3.0
 
         if abs(ly) > 0.01:
             orientation = rotate_pitch(orientation,  ly * PITCH_RATE * dt)

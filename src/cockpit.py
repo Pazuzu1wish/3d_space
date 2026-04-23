@@ -253,12 +253,12 @@ def draw_throttle_bar(surface, x, y, h, throttle):
         ty = int(y + h * (1 - pct))
         pygame.draw.line(surface, HUD_DIM, (x - 4, ty), (x, ty), 1)
     # Labels
-    f = custom_font(9)
-    surface.blit(f.render("THR", True, HUD_DIM), (x - 8, y - 14))
+    f = custom_font(10)
+    surface.blit(f.render("THR", True, HUD_GREEN), (x - 8, y - 14))
     col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
 
-    surface.blit(f.render(f"{int(throttle*100):3d}%", True, HUD_DIM),
-                 (x - 50, y + h * 0.5))
+    surface.blit(f.render(f"{int(throttle*100):3d}%", True, col_throttle_per),
+                 (x - 10, y + h + 10))
 
 
 # ──────────────────────────────────────────────
@@ -290,10 +290,18 @@ def print_spd(surface, x, y):
 
 def draw_speed(surface, x, y, throttle):
     spd = int(throttle * 1500)
-    f = custom_font(12)
+    f = custom_font(14)
     col_speed = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
-    lbl = f.render(f"  {spd:4d}", True, col_speed)
+    lbl = f.render(f"{spd:4d}", True, col_speed)
     surface.blit(lbl, (x, y))
+
+def print_kph(surface, x, y):
+    f = custom_font(10)
+    lbl = f.render("K.P.H.", True, HUD_GREEN)
+    surface.blit(lbl, (x, y))
+
+
+
 
 
 # ──────────────────────────────────────────────
@@ -318,8 +326,9 @@ def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
     draw_throttle_bar(surface, W - 40, H - 180, 140, throttle)
 
     # ── Speed readout ──
-    print_spd(surface, W - 150, H - 60)
-    draw_speed(surface, W - 110, H - 40, throttle)
+    print_spd(surface, W - 130, H - 120)
+    draw_speed(surface, W - 120, H - 100, throttle)
+    print_kph(surface, W -110, H - 80)
 
     if orientation is None:
         return   # legacy fallback — skip 3D instruments
