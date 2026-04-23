@@ -3,7 +3,7 @@ import pygame
 
 class Laser:
     def __init__(self, ppos, prot):
-        fx, fy, fz = get_forward_vector(prot[0], prot[1])
+        fx, fy, fz = get_forward_from_quat(prot)
         # Start laser slightly ahead of the ship so it doesn't clip the camera
         self.x = ppos[0] + fx * 50
         self.y = ppos[1] + fy * 50
@@ -25,8 +25,8 @@ class Laser:
 
     def draw(self, surf, ppos, prot):
         # Project both the head and the tail of the laser
-        cx1, cy1, cz1 = world_to_camera(self.px, self.py, self.pz, *ppos, *prot)
-        cx2, cy2, cz2 = world_to_camera(self.x, self.y, self.z, *ppos, *prot)
+        cx1, cy1, cz1 = world_to_camera(self.px, self.py, self.pz, *ppos, prot)
+        cx2, cy2, cz2 = world_to_camera(self.x, self.y, self.z, *ppos, prot)
 
         proj1 = project_to_screen(cx1, cy1, cz1)
         proj2 = project_to_screen(cx2, cy2, cz2)

@@ -18,7 +18,7 @@ class Enemy:
     def draw(self, surf, ppos, prot):
         projected = {}
         for i, (vx, vy, vz) in enumerate(self.verts):
-            cx, cy, cz = world_to_camera(self.x + vx, self.y + vy, self.z + vz, *ppos, *prot)
+            cx, cy, cz = world_to_camera(self.x + vx, self.y + vy, self.z + vz, *ppos, prot)
             proj = project_to_screen(cx, cy, cz)
             if proj: projected[i] = proj
 

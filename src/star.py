@@ -16,10 +16,10 @@ class Star:
         self.brightness = random.uniform(0.3, 1.0)
 
     def draw(self, surf, ppos, prot):
-        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, *prot)
+        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, prot)
 
         if cz < -100:
-            fx, fy, fz = get_forward_vector(prot[0], prot[1])
+            fx, fy, fz = get_forward_from_quat(prot)
             dist = random.uniform(2000, 4000)
             self.x = ppos[0] + fx * dist + random.uniform(-1500, 1500)
             self.y = ppos[1] + fy * dist + random.uniform(-1500, 1500)

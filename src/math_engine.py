@@ -1,79 +1,162 @@
 import math
 import numpy as np
+
 # ──────────────────────────────────────────────
-#  3D MATH ENGINE (FIXED)
+#  QUATERNION MATH ENGINE
+#  Rotations are accumulated in body-local space,
+#  so pitch/yaw/roll inputs always feel relative
+#  to the cockpit regardless of current orientation.
 # ──────────────────────────────────────────────
+
+
+# ── Quaternion primitives ──────────────────────
+
+def quat_identity():
+    """w, x, y, z"""
+    return (1.0, 0.0, 0.0, 0.0)
+
+
+def quat_from_axis_angle(ax, ay, az, angle):
+    """Create a unit quaternion representing a rotation of `angle` radians
+    around the axis (ax, ay, az).  The axis must already be normalised."""
+    half = angle * 0.5
+    s = math.sin(half)
+    return (math.cos(half), ax * s, ay * s, az * s)
+
+
+def quat_mul(a, b):
+    """Hamilton product of two quaternions."""
+    aw, ax, ay, az = a
+    bw, bx, by, bz = b
+    return (
+        aw*bw - ax*bx - ay*by - az*bz,
+        aw*bx + ax*bw + ay*bz - az*by,
+        aw*by - ax*bz + ay*bw + az*bx,
+        aw*bz + ax*by - ay*bx + az*bw,
+    )
+
+
+def quat_normalise(q):
+    w, x, y, z = q
+    mag = math.sqrt(w*w + x*x + y*y + z*z) or 1.0
+    return (w/mag, x/mag, y/mag, z/mag)
+
+
+def quat_conjugate(q):
+    w, x, y, z = q
+    return (w, -x, -y, -z)
+
+
+def quat_rotate_vec(q, v):
+    """Rotate vector v = (vx, vy, vz) by unit quaternion q."""
+    vx, vy, vz = v
+    # p = pure quaternion form of v
+    p = (0.0, vx, vy, vz)
+    # rotated = q * p * q*
+    r = quat_mul(quat_mul(q, p), quat_conjugate(q))
+    return r[1], r[2], r[3]
+
+
+# ── Body-local rotation accumulation ──────────
+#
+# Call these every frame with the pilot's stick deltas.
+# Each rotation is applied around the ship's OWN axes,
+# so gimbal lock and world-relative weirdness disappear.
+
+def rotate_pitch(q, delta):
+    """Pitch: rotate around the ship's local X (right) axis."""
+    # local right = q rotated (1,0,0)
+    local_right = quat_rotate_vec(q, (1.0, 0.0, 0.0))
+    dq = quat_from_axis_angle(*local_right, delta)
+    return quat_normalise(quat_mul(dq, q))
+
+
+def rotate_yaw(q, delta):
+    """Yaw: rotate around the ship's local Y (up) axis."""
+    local_up = quat_rotate_vec(q, (0.0, 1.0, 0.0))
+    dq = quat_from_axis_angle(*local_up, delta)
+    return quat_normalise(quat_mul(dq, q))
+
+
+def rotate_roll(q, delta):
+    """Roll: rotate around the ship's local Z (forward) axis."""
+    local_fwd = quat_rotate_vec(q, (0.0, 0.0, 1.0))
+    dq = quat_from_axis_angle(*local_fwd, delta)
+    return quat_normalise(quat_mul(dq, q))
+
+
+# ── Derived basis vectors ──────────────────────
+
+def get_basis_from_quat(q):
+    """Return (forward, right, up) unit vectors from orientation quaternion."""
+    forward = quat_rotate_vec(q, (0.0, 0.0, 1.0))
+    right   = quat_rotate_vec(q, (1.0, 0.0, 0.0))
+    up      = quat_rotate_vec(q, (0.0, 1.0, 0.0))
+    return forward, right, up
+
+
+def get_forward_from_quat(q):
+    return quat_rotate_vec(q, (0.0, 0.0, 1.0))
+
+
+def get_right_from_quat(q):
+    return quat_rotate_vec(q, (1.0, 0.0, 0.0))
+
+
+# ── World → Camera transform ───────────────────
+
+def world_to_camera(x, y, z, px, py, pz, q):
+    """Transform world-space point (x,y,z) into camera space.
+
+    px,py,pz  – camera/player world position
+    q         – camera orientation quaternion (w,x,y,z)
+    """
+    # Translate
+    dx, dy, dz = x - px, y - py, z - pz
+    # Inverse-rotate by camera orientation (= conjugate rotation)
+    return quat_rotate_vec(quat_conjugate(q), (dx, dy, dz))
+
+
+# ── Projection ────────────────────────────────
+
+def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
+    if z <= 0.1:
+        return None
+    scale = fov / z
+    sx = int(x * scale + cx)
+    sy = int(y * scale + cy)
+    return sx, sy, scale
+
+
+# ── Legacy shims (kept so other modules don't break) ──────────────────────────
+#  These are thin wrappers; prefer the quat versions for new code.
+
 def get_forward_vector(pitch, yaw):
-    """Returns a normalized 3D forward vector based on camera pitch/yaw."""
+    """Legacy: forward from Euler pitch/yaw (no roll)."""
     fx = math.sin(yaw) * math.cos(pitch)
     fy = -math.sin(pitch)
     fz = math.cos(yaw) * math.cos(pitch)
     return fx, fy, fz
 
-def get_basis_vectors(pitch, yaw, roll):
-    cp, sp = math.cos(pitch), math.sin(pitch)
-    cy, sy = math.cos(yaw), math.sin(yaw)
-    cr, sr = math.cos(roll), math.sin(roll)
-
-    # Forward vector
-    fx = sy * cp
-    fy = -sp
-    fz = cy * cp
-
-    # Right vector (includes roll)
-    rx = cy * cr + sy * sp * sr
-    ry = cp * sr
-    rz = -sy * cr + cy * sp * sr
-
-    # Up vector (optional, but completes the system)
-    ux = -cy * sr + sy * sp * cr
-    uy = cp * cr
-    uz = sy * sr + cy * sp * cr
-
-    return (fx, fy, fz), (rx, ry, rz), (ux, uy, uz)
-
-
-def world_to_camera(x, y, z, px, py, pz, pitch, yaw, roll):
-    """Accurately transforms a World coordinate into a Camera-relative coordinate."""
-    # 1. Translate point relative to camera position
-    dx = x - px
-    dy = y - py
-    dz = z - pz
-
-    # 2. Inverse Yaw (Y-axis rotation)
-    x1 = dx * math.cos(yaw) - dz * math.sin(yaw)
-    z1 = dx * math.sin(yaw) + dz * math.cos(yaw)
-
-    # 3. Inverse Pitch (X-axis rotation)
-    y2 = dy * math.cos(pitch) + z1 * math.sin(pitch)
-    z2 = -dy * math.sin(pitch) + z1 * math.cos(pitch)
-
-    # 4. Inverse Roll (Z-axis rotation)
-    cx = x1 * math.cos(roll) + y2 * math.sin(roll)
-    cy = -x1 * math.sin(roll) + y2 * math.cos(roll)
-    cz = z2
-
-    return cx, cy, cz
-
-
-def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
-    if z <= 0.1:  # Behind camera
-        return None
-    scale = fov / z
-    sx, sy = int(x * scale + cx), int(y * scale + cy)
-    return sx, sy, scale
 
 def get_right_vector(pitch, yaw):
+    """Legacy: right from Euler pitch/yaw."""
     fx, fy, fz = get_forward_vector(pitch, yaw)
-
-    # Cross product: forward × up (0,1,0)
-    rx = fz
-    ry = 0
-    rz = -fx
-
-    # Normalize
+    rx, ry, rz = fz, 0.0, -fx
     length = math.sqrt(rx*rx + ry*ry + rz*rz) or 1.0
-    return rx / length, ry / length, rz / length
+    return rx/length, ry/length, rz/length
 
 
-
+def get_basis_vectors(pitch, yaw, roll):
+    """Legacy Euler basis — prefer get_basis_from_quat."""
+    cp, sp = math.cos(pitch), math.sin(pitch)
+    cy, sy = math.cos(yaw),   math.sin(yaw)
+    cr, sr = math.cos(roll),  math.sin(roll)
+    fx, fy, fz = sy*cp, -sp, cy*cp
+    rx = cy*cr + sy*sp*sr
+    ry = cp*sr
+    rz = -sy*cr + cy*sp*sr
+    ux = -cy*sr + sy*sp*cr
+    uy = cp*cr
+    uz = sy*sr + cy*sp*cr
+    return (fx,fy,fz), (rx,ry,rz), (ux,uy,uz)

@@ -20,7 +20,7 @@ class Particle:
         self.life -= dt
 
     def draw(self, surf, ppos, prot):
-        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, *prot)
+        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, prot)
         proj = project_to_screen(cx, cy, cz)
         if proj:
             sx, sy, scale = proj
