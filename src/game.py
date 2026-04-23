@@ -11,15 +11,16 @@ from .cockpit import draw_cockpit_hud
 from .controller import DS4Input
 from .star import Star
 from .particle import Particle
-from .enemy import SuicideDrone
+from .enemy import SuicideDrone, Dogfighter
 from .laser import Laser
 
 # ──────────────────────────────────────────────
 # CONSTANTS
 # ──────────────────────────────────────────────
 
-MAX_ENEMIES       = 3
-SPAWN_CHANCE      = 0.02            # probability per frame at 60 fps
+MAX_SUICIDE_DRONES = 3
+MAX_DOGFIGHTERS    = 3
+SPAWN_CHANCE       = 0.02            # probability per frame at 60 fps
 SPAWN_DIST_MIN    = 2000
 SPAWN_DIST_MAX    = 4000
 SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
@@ -64,6 +65,34 @@ def _spawn_drone(player_pos, orientation):
     height_offset = random.uniform(-SPAWN_HEIGHT_RANGE, SPAWN_HEIGHT_RANGE)
 
     return SuicideDrone(
+        player_pos[0] + sfx * dist,
+        player_pos[1] + height_offset,
+        player_pos[2] + sfz * dist,
+    )
+
+
+def _spawn_dogfighter(player_pos, orientation):
+    """
+    Spawn a Dogfighter ahead of the player in the yaw plane.
+    Uses the same spawning strategy as SuicideDrone for consistency.
+    """
+    fx, _, fz = get_forward_from_quat(orientation)
+
+    # Flatten to XZ and normalise
+    flat_len = math.sqrt(fx*fx + fz*fz) or 1.0
+    fx /= flat_len
+    fz /= flat_len
+
+    # Random yaw offset
+    yaw_offset = random.uniform(-SPAWN_YAW_SPREAD, SPAWN_YAW_SPREAD)
+    cos_y, sin_y = math.cos(yaw_offset), math.sin(yaw_offset)
+    sfx = fx * cos_y - fz * sin_y
+    sfz = fx * sin_y + fz * cos_y
+
+    dist = random.uniform(SPAWN_DIST_MIN, SPAWN_DIST_MAX)
+    height_offset = random.uniform(-SPAWN_HEIGHT_RANGE, SPAWN_HEIGHT_RANGE)
+
+    return Dogfighter(
         player_pos[0] + sfx * dist,
         player_pos[1] + height_offset,
         player_pos[2] + sfz * dist,
@@ -219,6 +248,18 @@ def main():
                         particles.append(Particle(e.x, e.y, e.z))
                     break
 
+            # Handle enemy projectiles (from Dogfighters)
+            if isinstance(e, Dogfighter):
+                for bolt in e.projectiles[:]:
+                    if bolt.hits_player(player_pos):
+                        dmg = 15
+                        player_hp = max(0, player_hp - dmg)
+                        hit_flash = HIT_FLASH_DURATION
+                        e.projectiles.remove(bolt)
+                        for _ in range(12):
+                            particles.append(Particle(player_pos[0], player_pos[1], player_pos[2]))
+                        break
+
             # Drone destroyed
             if e.hp <= 0:
                 for _ in range(25):
@@ -254,8 +295,23 @@ def main():
                 particles.remove(p)
 
         # ── SPAWN NEW ENEMIES ─────────────────────
-        if len(enemies) < MAX_ENEMIES and random.random() < SPAWN_CHANCE:
-            enemies.append(_spawn_drone(player_pos, orientation))
+        num_drones = sum(1 for e in enemies if isinstance(e, SuicideDrone))
+        num_fighters = sum(1 for e in enemies if isinstance(e, Dogfighter))
+
+        if random.random() < SPAWN_CHANCE:
+            can_spawn_drone = num_drones < MAX_SUICIDE_DRONES
+            can_spawn_fighter = num_fighters < MAX_DOGFIGHTERS
+
+            if can_spawn_drone and can_spawn_fighter:
+                # Randomly choose which type to spawn
+                if random.random() < 0.5:
+                    enemies.append(_spawn_drone(player_pos, orientation))
+                else:
+                    enemies.append(_spawn_dogfighter(player_pos, orientation))
+            elif can_spawn_drone:
+                enemies.append(_spawn_drone(player_pos, orientation))
+            elif can_spawn_fighter:
+                enemies.append(_spawn_dogfighter(player_pos, orientation))
 
         # ── DRAW ──────────────────────────────────
         screen.fill((5, 5, 15))
