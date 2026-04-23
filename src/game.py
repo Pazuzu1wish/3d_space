@@ -79,7 +79,7 @@ def main():
         # lx (stick left/right) → roll around ship's own forward axis
         PITCH_RATE = 1.5
         YAW_RATE   = 1.5
-        ROLL_RATE  = 1.0
+        ROLL_RATE  = 2.0
 
         if abs(ly) > 0.01:
             orientation = rotate_pitch(orientation,  ly * PITCH_RATE * dt)

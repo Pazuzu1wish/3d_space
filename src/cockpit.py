@@ -34,6 +34,10 @@ def _font(size):
             _FONT_CACHE[size] = pygame.font.SysFont(None, size)
     return _FONT_CACHE[size]
 
+def custom_font(size):
+    _FONT_CACHE[size] = pygame.font.Font('./assets/fonts/interdictionexpand.ttf', size)
+    return _FONT_CACHE[size]
+
 
 # ──────────────────────────────────────────────
 #  ATTITUDE INDICATOR
@@ -111,7 +115,7 @@ def draw_attitude_indicator(surface, cx, cy, radius, orientation):
                              (cx - radius + lx0, cy - radius + ly0),
                              (cx - radius + lx1, cy - radius + ly1), 1)
             if deg % 30 == 0:
-                txt = _font(10).render(f"{abs(deg)}", True, col)
+                txt = custom_font(12).render(f"{abs(deg)}", True, col)
                 surface.blit(txt, (cx - radius + lx1 + 3, cy - radius + ly1 - 5))
 
     # ── Horizon line (bright) ──
@@ -207,7 +211,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies,
 
         # Elevation tick (local_y)
         elev_px = int(local_y * scale * 0.5)
-        elev_px = max(-8, min(8, elev_px))
+        elev_px = max(-12, min(12, elev_px))
 
         color = HUD_RED if dist < radar_range * 0.3 else HUD_AMBER
         pygame.draw.circle(surface, color, (dot_x, dot_z), 3)
@@ -223,7 +227,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies,
     pygame.draw.line(surface, HUD_GREEN, (cx, cy), (cx, fwd_px), 1)
 
     # Label
-    lbl = _font(10).render("RADAR", True, HUD_DIM)
+    lbl = custom_font(12).render("RADAR", True, HUD_DIM)
     surface.blit(lbl, (cx - lbl.get_width()//2, cy + radius + 3))
 
 
@@ -232,7 +236,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies,
 # ──────────────────────────────────────────────
 
 def draw_throttle_bar(surface, x, y, h, throttle):
-    w = 12
+    w = 14
     # Background
     pygame.draw.rect(surface, HUD_DIM, (x, y, w, h), 1)
     # Fill
@@ -245,10 +249,12 @@ def draw_throttle_bar(surface, x, y, h, throttle):
         ty = int(y + h * (1 - pct))
         pygame.draw.line(surface, HUD_DIM, (x - 4, ty), (x, ty), 1)
     # Labels
-    f = _font(9)
-    surface.blit(f.render("THR", True, HUD_DIM), (x - 2, y - 14))
-    surface.blit(f.render(f"{int(throttle*100):3d}%", True, HUD_GREEN),
-                 (x - 4, y + h + 4))
+    f = custom_font(9)
+    surface.blit(f.render("THR", True, HUD_DIM), (x - 8, y - 14))
+    col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+
+    surface.blit(f.render(f"{int(throttle*100):3d}%", True, HUD_DIM),
+                 (x - 50, y + h * 0.5))
 
 
 # ──────────────────────────────────────────────
@@ -273,10 +279,16 @@ def draw_crosshair(surface, cx, cy, ready):
 #  SPEED READOUT
 # ──────────────────────────────────────────────
 
+def print_spd(surface, x, y):
+    f = custom_font(12)
+    lbl = f.render("SPEED", True, HUD_DIM)
+    surface.blit(lbl, (x, y))
+
 def draw_speed(surface, x, y, throttle):
     spd = int(throttle * 1500)
-    f = _font(12)
-    lbl = f.render(f"SPD  {spd:4d}", True, HUD_GREEN)
+    f = custom_font(12)
+    col_speed = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+    lbl = f.render(f"  {spd:4d}", True, col_speed)
     surface.blit(lbl, (x, y))
 
 
@@ -302,7 +314,8 @@ def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
     draw_throttle_bar(surface, W - 40, H - 180, 140, throttle)
 
     # ── Speed readout ──
-    draw_speed(surface, W - 110, H - 30, throttle)
+    print_spd(surface, W - 150, H - 60)
+    draw_speed(surface, W - 110, H - 40, throttle)
 
     if orientation is None:
         return   # legacy fallback — skip 3D instruments
