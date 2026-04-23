@@ -35,7 +35,11 @@ def _font(size):
     return _FONT_CACHE[size]
 
 def custom_font(size):
-    _FONT_CACHE[size] = pygame.font.Font('./assets/fonts/interdictionexpand.ttf', size)
+    if size not in _FONT_CACHE:
+        try:
+            _FONT_CACHE[size] = pygame.font.Font('./assets/fonts/interdictionexpand.ttf', size)
+        except Exception:
+            _FONT_CACHE[size] = pygame.font.SysFont(None, size)
     return _FONT_CACHE[size]
 
 
