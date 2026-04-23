@@ -14,7 +14,7 @@ class Laser:
 
         speed = 8000
         self.vx, self.vy, self.vz = fx * speed, fy * speed, fz * speed
-        self.life = 2.0
+        self.life = 1.5
 
     def update(self, dt):
         self.px, self.py, self.pz = self.x, self.y, self.z
