@@ -1,5 +1,5 @@
 import math
-
+import numpy as np
 # ──────────────────────────────────────────────
 #  3D MATH ENGINE (FIXED)
 # ──────────────────────────────────────────────
@@ -9,6 +9,28 @@ def get_forward_vector(pitch, yaw):
     fy = -math.sin(pitch)
     fz = math.cos(yaw) * math.cos(pitch)
     return fx, fy, fz
+
+def get_basis_vectors(pitch, yaw, roll):
+    cp, sp = math.cos(pitch), math.sin(pitch)
+    cy, sy = math.cos(yaw), math.sin(yaw)
+    cr, sr = math.cos(roll), math.sin(roll)
+
+    # Forward vector
+    fx = sy * cp
+    fy = -sp
+    fz = cy * cp
+
+    # Right vector (includes roll)
+    rx = cy * cr + sy * sp * sr
+    ry = cp * sr
+    rz = -sy * cr + cy * sp * sr
+
+    # Up vector (optional, but completes the system)
+    ux = -cy * sr + sy * sp * cr
+    uy = cp * cr
+    uz = sy * sr + cy * sp * cr
+
+    return (fx, fy, fz), (rx, ry, rz), (ux, uy, uz)
 
 
 def world_to_camera(x, y, z, px, py, pz, pitch, yaw, roll):
@@ -41,8 +63,17 @@ def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
     sx, sy = int(x * scale + cx), int(y * scale + cy)
     return sx, sy, scale
 
-def get_right_vector(yaw):
-    """Returns a horizontal right vector (X, Z) offset 90 degrees from forward."""
-    rx = math.cos(yaw)
-    rz = -math.sin(yaw)
-    return rx, rz
+def get_right_vector(pitch, yaw):
+    fx, fy, fz = get_forward_vector(pitch, yaw)
+
+    # Cross product: forward × up (0,1,0)
+    rx = fz
+    ry = 0
+    rz = -fx
+
+    # Normalize
+    length = math.sqrt(rx*rx + ry*ry + rz*rz) or 1.0
+    return rx / length, ry / length, rz / length
+
+
+

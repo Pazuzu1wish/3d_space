@@ -74,13 +74,17 @@ def main():
         player_pos[2] += fz * speed * dt
 
         if fire_pressed and weapons_cooldown <= 0:
-            right_x, right_z = get_right_vector(player_rot[1])
+            (_, _, _), (rx, ry, rz), _ = get_basis_vectors(
+                player_rot[0],
+                player_rot[1],
+                player_rot[2]
+            )
             offset = 40
             for side in (-1, 1):
                 wing_pos = [
-                    player_pos[0] + right_x * offset * side,
-                    player_pos[1],
-                    player_pos[2] + right_z * offset * side,
+                    player_pos[0] + rx * offset * side + fx * 20,
+                    player_pos[1] + ry * offset * side + fy * 20,
+                    player_pos[2] + rz * offset * side + fz * 20,
                 ]
                 lasers.append(Laser(wing_pos, player_rot))
             weapons_cooldown = 0.25
