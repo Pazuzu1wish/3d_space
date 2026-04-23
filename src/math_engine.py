@@ -40,3 +40,7 @@ def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
     scale = fov / z
     sx, sy = int(x * scale + cx), int(y * scale + cy)
     return sx, sy, scale
+
+def get_right_vector(yaw):
+    """Right vector perpendicular to forward, flat on the XZ plane."""
+    return math.cos(yaw), -math.sin(yaw)

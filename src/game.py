@@ -1,55 +1,16 @@
 import pygame
 import random
 from .math_engine import *
+from .cockpit import draw_cockpit_hud
 from .controller import DS4Input
 from .star import Star
 from .particle import Particle
 from .enemy import Enemy
 from .laser import Laser
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # ──────────────────────────────────────────────
-#  HUD & MAIN LOOP
+# MAIN LOOP
 # ──────────────────────────────────────────────
-def draw_cockpit_hud(surf, W, H, throttle, weapons_ready):
-    pygame.draw.rect(surf, (30, 40, 80), (0, 0, W, H), 8)
-    pygame.draw.rect(surf, (80, 140, 255), (4, 4, W - 8, H - 8), 2)
-
-    cx, cy = W // 2, H // 2
-    pygame.draw.circle(surf, (80, 255, 140), (cx, cy), 3)
-    pygame.draw.line(surf, (80, 255, 140), (cx - 20, cy), (cx - 8, cy), 2)
-    pygame.draw.line(surf, (80, 255, 140), (cx + 8, cy), (cx + 20, cy), 2)
-    pygame.draw.line(surf, (80, 255, 140), (cx, cy - 20), (cx, cy - 8), 2)
-    pygame.draw.line(surf, (80, 255, 140), (cx, cy + 8), (cx, cy + 20), 2)
-
-    bar_h = 200
-    pygame.draw.rect(surf, (40, 40, 60), (W - 40, H // 2 - bar_h // 2, 20, bar_h))
-    fill_h = int(bar_h * throttle)
-    pygame.draw.rect(surf, (60, 220, 120), (W - 40, H // 2 + bar_h // 2 - fill_h, 20, fill_h))
-    pygame.draw.rect(surf, (80, 140, 255), (W - 40, H // 2 - bar_h // 2, 20, bar_h), 1)
-
-    status = "ARMED" if weapons_ready else "COOLING"
-    color = (60, 220, 120) if weapons_ready else (255, 100, 100)
-    font = pygame.font.SysFont("Courier", 14, bold=True)
-    surf.blit(font.render(status, True, color), (W - 120, 20))
-
-    speed = f"{int(throttle * 2500):04d} KM/H"
-    surf.blit(pygame.font.SysFont("Courier", 24, bold=True).render(speed, True, (200, 220, 255)), (20, 20))
-
 
 def main():
     pygame.init()
@@ -81,25 +42,29 @@ def main():
             handler.process_event(event)
 
         # ── INPUT HANDLING ──
-        rx, ry = handler.stick_left()
-        r_roll = handler.axis(3)
-        l2, r2 = handler.trigger_left(), handler.trigger_right()
-        fire_pressed = handler.just_pressed('X')
+        lx, ly = handler.stick_left()
+        rx, _ = handler.stick_right()
+        fire_l = handler.trigger_left() > 0.5
+        fire_r = handler.trigger_right() > 0.5
+        fire_pressed = fire_l or fire_r
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]: ry = -1.0
-        if keys[pygame.K_s]: ry = 1.0
-        if keys[pygame.K_a]: rx = -1.0
-        if keys[pygame.K_d]: rx = 1.0
-        if keys[pygame.K_UP]: throttle = min(1.0, throttle + dt)
-        if keys[pygame.K_DOWN]: throttle = max(0.0, throttle - dt)
+        if keys[pygame.K_w]:     ly = -1.0
+        if keys[pygame.K_s]:     ly = 1.0
+        if keys[pygame.K_a]:     lx = -1.0
+        if keys[pygame.K_d]:     lx = 1.0
+        if keys[pygame.K_UP]:    throttle = min(1.0, throttle + dt)
+        if keys[pygame.K_DOWN]:  throttle = max(0.0, throttle - dt)
         if keys[pygame.K_SPACE]: fire_pressed = True
 
-        player_rot[0] += ry * dt * 1.5  # Pitch
-        player_rot[1] += rx * dt * 1.5  # Yaw
-        player_rot[2] += r_roll * dt * 1.0  # Roll
+        player_rot[0] += ly * dt * 1.5  # pitch  — left stick Y
+        player_rot[1] += rx * dt * 1.5  # yaw    — right stick X
+        player_rot[2] += lx * dt * 1.0  # roll   — left stick X
 
-        throttle = max(0.0, min(1.0, throttle + (r2 - l2) * dt * 0.8))
+        if handler.held('R1'): throttle = min(1.0, throttle + dt * 0.8)
+        if handler.held('L1'): throttle = max(0.0, throttle - dt * 0.8)
+
+        weapons_cooldown = max(0, weapons_cooldown - dt)
 
         # ── PHYSICS / MOVEMENT ──
         fx, fy, fz = get_forward_vector(player_rot[0], player_rot[1])
@@ -109,9 +74,16 @@ def main():
         player_pos[2] += fz * speed * dt
 
         if fire_pressed and weapons_cooldown <= 0:
-            lasers.append(Laser(player_pos, player_rot))
+            right_x, right_z = get_right_vector(player_rot[1])
+            offset = 40
+            for side in (-1, 1):
+                wing_pos = [
+                    player_pos[0] + right_x * offset * side,
+                    player_pos[1],
+                    player_pos[2] + right_z * offset * side,
+                ]
+                lasers.append(Laser(wing_pos, player_rot))
             weapons_cooldown = 0.25
-        weapons_cooldown = max(0, weapons_cooldown - dt)
 
         # ── UPDATE ENTITIES & COLLISIONS ──
         for l in lasers[:]:
