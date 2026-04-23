@@ -22,13 +22,13 @@ MAX_ENEMIES       = 3
 SPAWN_CHANCE      = 0.02            # probability per frame at 60 fps
 SPAWN_DIST_MIN    = 2000
 SPAWN_DIST_MAX    = 4000
-SPAWN_HEIGHT_RANGE = 800            # vertical spread around spawn point
-SPAWN_YAW_SPREAD  = 0.55            # radians either side of yaw-forward (≈ ±31°)
+SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
+SPAWN_YAW_SPREAD  = 10.55            # radians either side of yaw-forward (≈ ±31°)
 
 PLAYER_COLLISION_RADIUS = 80        # world units — drone kills at this range
 PLAYER_MAX_HP     = 100
 
-HIT_FLASH_DURATION = 0.15          # seconds screen flashes red on hit
+HIT_FLASH_DURATION = 0.25          # seconds screen flashes red on hit
 
 
 # ──────────────────────────────────────────────
@@ -271,11 +271,12 @@ def main():
             orientation=orientation,
             player_pos=player_pos,
             enemies=enemies,
+            player_hp=player_hp
         )
 
-        # Damage overlay + HP bar
+        # Damage overlay
         _draw_damage_overlay(screen, W, H, hit_flash / HIT_FLASH_DURATION)
-        _draw_hp_bar(screen, W, H, player_hp)
+
 
         pygame.display.flip()
         handler.update()

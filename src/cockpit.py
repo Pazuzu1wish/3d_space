@@ -288,13 +288,65 @@ def print_kph(surface, x, y):
     lbl = f.render("K.P.H.", True, HUD_GREEN)
     surface.blit(lbl, (x, y))
 
+# ──────────────────────────────────────────────
+#  HULL INTEGRITY BAR  (center-bottom)
+# ──────────────────────────────────────────────
+
+def draw_hull_bar(surface, W, H, player_hp, max_hp=100):
+    """
+    Centered at the bottom of the screen.
+    Uses the custom cockpit font and HUD colour palette.
+    """
+    ratio = max(0.0, player_hp / max_hp)
+    bar_w = 260
+    bar_h = 10
+    bar_x = W // 2 - bar_w // 2
+    bar_y = H - 28
+
+    # Colour shifts green → amber → red as HP drops
+    if ratio > 0.5:
+        col = HUD_GREEN
+    elif ratio > 0.25:
+        col = HUD_AMBER
+    else:
+        col = HUD_RED
+
+    # Track (empty bar)
+    pygame.draw.rect(surface, (20, 40, 20), (bar_x, bar_y, bar_w, bar_h),
+                     border_radius=3)
+    pygame.draw.rect(surface, HUD_DIM, (bar_x, bar_y, bar_w, bar_h),
+                     1, border_radius=3)
+
+    # Fill
+    fill_w = int(bar_w * ratio)
+    if fill_w > 0:
+        pygame.draw.rect(surface, col, (bar_x, bar_y, fill_w, bar_h),
+                         border_radius=3)
+
+    # Segment tick marks at 25 / 50 / 75 %
+    for pct in (0.25, 0.50, 0.75):
+        tx = bar_x + int(bar_w * pct)
+        pygame.draw.line(surface, (5, 5, 15), (tx, bar_y + 1), (tx, bar_y + bar_h - 1), 1)
+
+    # Label:  "HULL"  left of bar,  "xxx%" right of bar
+    f_lbl = custom_font(11)
+    f_val = custom_font(11)
+
+    lbl = f_lbl.render("HULL", True, HUD_DIM)
+    val = f_val.render(f"{int(ratio * 100):3d}%", True, col)
+
+    surface.blit(lbl, (bar_x - lbl.get_width() - 8,
+                       bar_y + bar_h // 2 - lbl.get_height() // 2))
+    surface.blit(val, (bar_x + bar_w + 8,
+                       bar_y + bar_h // 2 - val.get_height() // 2))
+
 
 # ──────────────────────────────────────────────
 #  MASTER DRAW CALL
 # ──────────────────────────────────────────────
 
 def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
-                     orientation=None, player_pos=None, enemies=None):
+                     orientation=None, player_pos=None, enemies=None, player_hp=100):
     # Create a completely transparent "glass" layer to draw the HUD on.
     # This allows standard Pygame shapes to utilize our RGBA alpha channels!
     hud_overlay = pygame.Surface((W, H), pygame.SRCALPHA)
@@ -308,6 +360,8 @@ def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
     print_spd(hud_overlay, W - 130, H - 120)
     draw_speed(hud_overlay, W - 120, H - 100, throttle)
     print_kph(hud_overlay, W - 110, H - 80)
+
+    draw_hull_bar(hud_overlay, W, H, player_hp)
 
     if orientation is not None:
         draw_heading_tape(hud_overlay, cx, 30, orientation)
