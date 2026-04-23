@@ -160,3 +160,25 @@ def get_basis_vectors(pitch, yaw, roll):
     uy = cp*cr
     uz = sy*sr + cy*sp*cr
     return (fx,fy,fz), (rx,ry,rz), (ux,uy,uz)
+
+def basis_from_forward(forward):
+    fx, fy, fz = forward
+    flen = math.sqrt(fx*fx + fy*fy + fz*fz) or 1.0
+    fx, fy, fz = fx/flen, fy/flen, fz/flen
+
+    world_up = (0.0, 1.0, 0.0)
+
+    # right = forward × up
+    rx = fy * world_up[2] - fz * world_up[1]
+    ry = fz * world_up[0] - fx * world_up[2]
+    rz = fx * world_up[1] - fy * world_up[0]
+
+    rlen = math.sqrt(rx*rx + ry*ry + rz*rz) or 1.0
+    rx, ry, rz = rx/rlen, ry/rlen, rz/rlen
+
+    # recompute up = right × forward
+    ux = ry * fz - rz * fy
+    uy = rz * fx - rx * fz
+    uz = rx * fy - ry * fx
+
+    return (fx, fy, fz), (rx, ry, rz), (ux, uy, uz)
