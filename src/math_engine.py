@@ -42,5 +42,7 @@ def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
     return sx, sy, scale
 
 def get_right_vector(yaw):
-    """Right vector perpendicular to forward, flat on the XZ plane."""
-    return math.cos(yaw), -math.sin(yaw)
+    """Returns a horizontal right vector (X, Z) offset 90 degrees from forward."""
+    rx = math.cos(yaw)
+    rz = -math.sin(yaw)
+    return rx, rz
