@@ -20,7 +20,7 @@ from .laser import Laser
 
 MAX_SUICIDE_DRONES = 2
 MAX_DOGFIGHTERS    = 2
-SPAWN_CHANCE       = 0.02            # probability per frame at 60 fps
+SPAWNS_PER_SECOND  = 1.2             # Expected number of spawns per second
 SPAWN_DIST_MIN    = 3500
 SPAWN_DIST_MAX    = 4000
 SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
@@ -306,7 +306,8 @@ def main():
         num_drones = sum(1 for e in enemies if isinstance(e, SuicideDrone))
         num_fighters = sum(1 for e in enemies if isinstance(e, Dogfighter))
 
-        if random.random() < SPAWN_CHANCE:
+        spawn_chance_this_frame = SPAWNS_PER_SECOND * dt
+        if random.random() < spawn_chance_this_frame:
             can_spawn_drone = num_drones < MAX_SUICIDE_DRONES
             can_spawn_fighter = num_fighters < MAX_DOGFIGHTERS
 
