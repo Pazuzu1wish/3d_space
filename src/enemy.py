@@ -229,7 +229,7 @@ PATTERNS = [
 
 class SuicideDrone(Enemy):
 
-    SPEED = 1520
+    SPEED = 1500
 
     def __init__(self, x,y,z):
         super().__init__(x,y,z)
@@ -290,7 +290,7 @@ class SuicideDrone(Enemy):
 
 class Dogfighter(Enemy):
 
-    SPEED = 1450
+    SPEED = 1500
     FIRE_RATE = 50.2
     FIRE_RANGE = 3000
     IDEAL_RANGE = 800      # How far behind the player it tries to stay
@@ -375,8 +375,8 @@ class Dogfighter(Enemy):
                    self.forward[1]*to_player_norm[1] +
                    self.forward[2]*to_player_norm[2])
 
-            if dot > 1:  # Lower threshold = shoots while maneuvering
-                self.fire_timer = self.FIRE_RATE #* random.uniform(0.7, 1.2)
+            if dot > .001:  # Lower threshold = shoots while maneuvering
+                self.fire_timer = self.FIRE_RATE * random.uniform(0.7, 1.2)
                 self._fire_projectile(to_player_norm, dist_to_player, global_projectiles)
 
         # Trails & hit flicker
