@@ -229,7 +229,7 @@ PATTERNS = [
 
 class SuicideDrone(Enemy):
 
-    SPEED = 520
+    SPEED = 1520
 
     def __init__(self, x,y,z):
         super().__init__(x,y,z)
@@ -290,16 +290,16 @@ class SuicideDrone(Enemy):
 
 class Dogfighter(Enemy):
 
-    SPEED = 750
-    FIRE_RATE = 4.2
-    FIRE_RANGE = 1600
+    SPEED = 1450
+    FIRE_RATE = 20.2
+    FIRE_RANGE = 3000
     IDEAL_RANGE = 800      # How far behind the player it tries to stay
-    CIRCLE_RADIUS = 1000    # Width of its strafing/circling pattern
+    CIRCLE_RADIUS = 2000    # Width of its strafing/circling pattern
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
 
-        self.hp = 1
+        self.hp = 3
         self.t = 0
         self.base_color = (30, 200, 255)
 
@@ -375,8 +375,8 @@ class Dogfighter(Enemy):
                    self.forward[1]*to_player_norm[1] +
                    self.forward[2]*to_player_norm[2])
 
-            if dot > 0.6:  # Lower threshold = shoots while maneuvering
-                self.fire_timer = self.FIRE_RATE * random.uniform(0.7, 1.2)
+            if dot > 0.2:  # Lower threshold = shoots while maneuvering
+                self.fire_timer = self.FIRE_RATE #* random.uniform(0.7, 1.2)
                 self._fire_projectile(to_player_norm, dist_to_player, global_projectiles)
 
         # Trails & hit flicker
@@ -387,7 +387,7 @@ class Dogfighter(Enemy):
 
     def _fire_projectile(self, aim_dir, dist, global_projectiles):
         """Spawn a bullet. Adapt this dict structure to match your bullet system."""
-        proj_speed = 1500
+        proj_speed = 4000
         # Add a portion of enemy velocity for realistic ballistics
         vx = aim_dir[0] * proj_speed + self.vx * 0.4
         vy = aim_dir[1] * proj_speed + self.vy * 0.4

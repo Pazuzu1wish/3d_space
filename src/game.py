@@ -19,10 +19,10 @@ from .laser import Laser
 # ──────────────────────────────────────────────
 
 MAX_SUICIDE_DRONES = 0
-MAX_DOGFIGHTERS    = 2
+MAX_DOGFIGHTERS    = 5
 SPAWNS_PER_SECOND  = 1.2             # Expected number of spawns per second
-SPAWN_DIST_MIN    = 3500
-SPAWN_DIST_MAX    = 4000
+SPAWN_DIST_MIN    = 4000
+SPAWN_DIST_MAX    = 5000
 SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
 SPAWN_YAW_SPREAD  = 3.55            # radians either side of yaw-forward (≈ ±31°)
 
