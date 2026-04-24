@@ -233,7 +233,7 @@ class SuicideDrone(Enemy):
 
     def __init__(self, x,y,z):
         super().__init__(x,y,z)
-        self.hp = 3
+        self.hp = 1
         self.base_color = (255, 30, 30)
 
         self.t = 0
@@ -290,10 +290,10 @@ class SuicideDrone(Enemy):
 
 class Dogfighter(Enemy):
 
-    SPEED = 550
-    FIRE_RATE = 2.2
-    FIRE_RANGE = 1800
-    IDEAL_RANGE = 1000      # How far behind the player it tries to stay
+    SPEED = 750
+    FIRE_RATE = 4.2
+    FIRE_RANGE = 1600
+    IDEAL_RANGE = 800      # How far behind the player it tries to stay
     CIRCLE_RADIUS = 1000    # Width of its strafing/circling pattern
 
     def __init__(self, x, y, z):
@@ -387,7 +387,7 @@ class Dogfighter(Enemy):
 
     def _fire_projectile(self, aim_dir, dist, global_projectiles):
         """Spawn a bullet. Adapt this dict structure to match your bullet system."""
-        proj_speed = 900
+        proj_speed = 1500
         # Add a portion of enemy velocity for realistic ballistics
         vx = aim_dir[0] * proj_speed + self.vx * 0.4
         vy = aim_dir[1] * proj_speed + self.vy * 0.4
@@ -397,7 +397,7 @@ class Dogfighter(Enemy):
             global_projectiles.append({
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'vx': vx, 'vy': vy, 'vz': vz,
-                'life': 2.5  # seconds before auto-delete
+                'life': 4.5  # seconds before auto-delete
             })
 
     def on_hit(self):
