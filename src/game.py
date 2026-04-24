@@ -213,9 +213,9 @@ def main():
         # ── MOVEMENT ──────────────────────────────
         fx, fy, fz = get_forward_from_quat(orientation)
         
-        MAX_THRUST = 2000
-        MAX_RETRO_THRUST = 1000
-        DRAG = 0.0001
+        MAX_THRUST = 500
+        MAX_RETRO_THRUST = 250
+        DRAG = 0.01
         
         if throttle > 0:
             thrust = throttle * MAX_THRUST
@@ -229,6 +229,15 @@ def main():
         player_vel[0] -= player_vel[0] * DRAG * dt
         player_vel[1] -= player_vel[1] * DRAG * dt
         player_vel[2] -= player_vel[2] * DRAG * dt
+        
+        # Cap max speed
+        MAX_SPEED = 1500.0
+        speed_sq = player_vel[0]**2 + player_vel[1]**2 + player_vel[2]**2
+        if speed_sq > MAX_SPEED**2:
+            speed = math.sqrt(speed_sq)
+            player_vel[0] = (player_vel[0] / speed) * MAX_SPEED
+            player_vel[1] = (player_vel[1] / speed) * MAX_SPEED
+            player_vel[2] = (player_vel[2] / speed) * MAX_SPEED
         
         player_pos[0] += player_vel[0] * dt
         player_pos[1] += player_vel[1] * dt
