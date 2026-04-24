@@ -278,16 +278,16 @@ class SuicideDrone(Enemy):
 
 class Dogfighter(Enemy):
 
-    SPEED = 440
-    FIRE_RATE = 1.6
+    SPEED = 550
+    FIRE_RATE = 2.2
     FIRE_RANGE = 1800
-    IDEAL_RANGE = 500      # How far behind the player it tries to stay
-    CIRCLE_RADIUS = 180    # Width of its strafing/circling pattern
+    IDEAL_RANGE = 1000      # How far behind the player it tries to stay
+    CIRCLE_RADIUS = 1000    # Width of its strafing/circling pattern
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
 
-        self.hp = 8
+        self.hp = 1
         self.t = 0
 
         self.fire_timer = random.uniform(0, self.FIRE_RATE)

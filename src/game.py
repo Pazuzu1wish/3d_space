@@ -19,7 +19,7 @@ from .laser import Laser
 # ──────────────────────────────────────────────
 
 MAX_SUICIDE_DRONES = 0
-MAX_DOGFIGHTERS    = 3
+MAX_DOGFIGHTERS    = 1
 SPAWN_CHANCE       = 0.02            # probability per frame at 60 fps
 SPAWN_DIST_MIN    = 2000
 SPAWN_DIST_MAX    = 4000
