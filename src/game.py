@@ -146,6 +146,7 @@ def main():
     handler.init()
 
     player_pos  = [0.0, 0.0, 0.0]
+    player_vel  = [0.0, 0.0, 0.0]
     orientation = quat_identity()
 
     throttle        = 0.0
@@ -187,11 +188,12 @@ def main():
         if keys[pygame.K_LEFT]:  rx = -1.0
         if keys[pygame.K_RIGHT]: rx =  1.0
         if keys[pygame.K_UP]:    throttle = min(1.0, throttle + dt)
-        if keys[pygame.K_DOWN]:  throttle = max(0.0, throttle - dt)
+        if keys[pygame.K_DOWN]:  throttle = max(-1.0, throttle - dt)
         if keys[pygame.K_SPACE]: fire_pressed = True
 
         if handler.held('R1'): throttle = min(1.0, throttle + dt * 0.8)
-        if handler.held('L1'): throttle = max(0.0, throttle - dt * 0.8)
+        if handler.held('L1'): throttle = max(-1.0, throttle - dt * 0.8)
+        if handler.just_pressed('R3'): throttle = 0.0
 
         # ── ROTATION ──────────────────────────────
         PITCH_RATE = 2.0
@@ -210,10 +212,29 @@ def main():
 
         # ── MOVEMENT ──────────────────────────────
         fx, fy, fz = get_forward_from_quat(orientation)
-        speed = throttle * 1500
-        player_pos[0] += fx * speed * dt
-        player_pos[1] += fy * speed * dt
-        player_pos[2] += fz * speed * dt
+        
+        MAX_THRUST = 2000
+        MAX_RETRO_THRUST = 1000
+        DRAG = 0.0001
+        
+        if throttle > 0:
+            thrust = throttle * MAX_THRUST
+        else:
+            thrust = throttle * MAX_RETRO_THRUST
+            
+        player_vel[0] += fx * thrust * dt
+        player_vel[1] += fy * thrust * dt
+        player_vel[2] += fz * thrust * dt
+        
+        player_vel[0] -= player_vel[0] * DRAG * dt
+        player_vel[1] -= player_vel[1] * DRAG * dt
+        player_vel[2] -= player_vel[2] * DRAG * dt
+        
+        player_pos[0] += player_vel[0] * dt
+        player_pos[1] += player_vel[1] * dt
+        player_pos[2] += player_vel[2] * dt
+        
+        current_speed = math.sqrt(player_vel[0]**2 + player_vel[1]**2 + player_vel[2]**2)
 
         # ── WEAPONS ───────────────────────────────
         if fire_pressed and weapons_cooldown <= 0:
@@ -341,7 +362,7 @@ def main():
                 pygame.draw.circle(screen, (255, 100, 100), (sx, sy), size)
 
         draw_cockpit_hud(
-            screen, W, H, throttle, weapons_cooldown <= 0,
+            screen, W, H, throttle, current_speed, weapons_cooldown <= 0,
             orientation=orientation,
             player_pos=player_pos,
             enemies=enemies,

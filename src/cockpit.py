@@ -229,21 +229,41 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
 
 def draw_throttle_bar(surface, x, y, h, throttle):
     w = 14
+    half_h = h // 2
+    center_y = y + half_h
+    
+    # Track outline
     pygame.draw.rect(surface, HUD_DIM, (x, y, w, h), 1)
-    fill_h = int(h * throttle)
-    if fill_h > 0:
+    
+    # Center line
+    pygame.draw.line(surface, HUD_DIM, (x - 4, center_y), (x + w, center_y), 2)
+    
+    if throttle > 0:
+        fill_h = int(half_h * throttle)
         col = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
-        pygame.draw.rect(surface, col, (x, y + h - fill_h, w, fill_h))
+        pygame.draw.rect(surface, col, (x, center_y - fill_h, w, fill_h))
+    elif throttle < 0:
+        fill_h = int(half_h * abs(throttle))
+        col = (0, 200, 255, 160) # Cyan for retro
+        pygame.draw.rect(surface, col, (x, center_y, w, fill_h))
 
     for pct in (0.25, 0.5, 0.75):
-        ty = int(y + h * (1 - pct))
-        pygame.draw.line(surface, HUD_DIM, (x - 4, ty), (x, ty), 1)
+        ty_up = int(center_y - half_h * pct)
+        ty_down = int(center_y + half_h * pct)
+        pygame.draw.line(surface, HUD_DIM, (x - 2, ty_up), (x, ty_up), 1)
+        pygame.draw.line(surface, HUD_DIM, (x - 2, ty_down), (x, ty_down), 1)
 
     f = custom_font(10)
     surface.blit(f.render("THR", True, HUD_GREEN), (x - 8, y - 14))
-    col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
-
-    surface.blit(f.render(f"{int(throttle * 100):3d}%", True, col_throttle_per),
+    
+    if throttle >= 0:
+        col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+        txt = f"{int(throttle * 100):3d}%"
+    else:
+        col_throttle_per = (0, 200, 255, 160)
+        txt = f"{int(abs(throttle) * 100):3d}%"
+        
+    surface.blit(f.render(txt, True, col_throttle_per),
                  (x - 10, y + h + 10))
 
 
@@ -275,10 +295,10 @@ def print_spd(surface, x, y):
     surface.blit(lbl, (x, y))
 
 
-def draw_speed(surface, x, y, throttle):
-    spd = int(throttle * 1500)
+def draw_speed(surface, x, y, current_speed):
+    spd = int(current_speed)
     f = custom_font(14)
-    col_speed = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+    col_speed = HUD_GREEN
     lbl = f.render(f"{spd:4d}", True, col_speed)
     surface.blit(lbl, (x, y))
 
@@ -349,7 +369,7 @@ def draw_hull_bar(surface, W, H, player_hp, max_hp=100):
 _HUD_OVERLAY = None
 _LAST_SIZE = (0, 0)
 
-def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
+def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      orientation=None, player_pos=None, enemies=None, player_hp=100):
     global _HUD_OVERLAY, _LAST_SIZE
 
@@ -368,7 +388,7 @@ def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
 
     draw_throttle_bar(_HUD_OVERLAY, W - 40, H - 180, 140, throttle)
     print_spd(_HUD_OVERLAY, W - 130, H - 120)
-    draw_speed(_HUD_OVERLAY, W - 120, H - 100, throttle)
+    draw_speed(_HUD_OVERLAY, W - 120, H - 100, current_speed)
     print_kph(_HUD_OVERLAY, W - 110, H - 80)
 
     draw_hull_bar(_HUD_OVERLAY, W, H, player_hp)
