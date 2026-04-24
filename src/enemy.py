@@ -291,7 +291,7 @@ class SuicideDrone(Enemy):
 class Dogfighter(Enemy):
 
     SPEED = 1450
-    FIRE_RATE = 20.2
+    FIRE_RATE = 50.2
     FIRE_RANGE = 3000
     IDEAL_RANGE = 800      # How far behind the player it tries to stay
     CIRCLE_RADIUS = 2000    # Width of its strafing/circling pattern
@@ -375,7 +375,7 @@ class Dogfighter(Enemy):
                    self.forward[1]*to_player_norm[1] +
                    self.forward[2]*to_player_norm[2])
 
-            if dot > 0.2:  # Lower threshold = shoots while maneuvering
+            if dot > 1:  # Lower threshold = shoots while maneuvering
                 self.fire_timer = self.FIRE_RATE #* random.uniform(0.7, 1.2)
                 self._fire_projectile(to_player_norm, dist_to_player, global_projectiles)
 
