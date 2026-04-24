@@ -77,7 +77,7 @@ def draw_heading_tape(surface, cx, y, orientation):
 
             if x0 + 2 <= sx <= x0 + tape_w - 2:
                 norm_d = d % 360
-                if norm_d < 0: norm_d += 360
+                #if norm_d < 0: norm_d += 360
 
                 if norm_d % 15 == 0:
                     pygame.draw.line(surface, HUD_GREEN, (sx, y), (sx, y + 8), 2)
