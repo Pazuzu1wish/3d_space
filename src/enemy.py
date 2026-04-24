@@ -94,7 +94,7 @@ class Enemy:
             if proj:
                 sx, sy, scale = proj
                 size = max(1, int(scale * 4 * life))
-                color = (int(80*life), int(200*life), 255)
+                color = (int(255*life), int(200*life), 255)
                 pygame.draw.circle(surf, color, (sx,sy), size)
 
     def _draw_engine_glow(self, surf, ppos, prot):
@@ -107,7 +107,7 @@ class Enemy:
         if proj:
             sx, sy, scale = proj
             size = max(2, int(scale * 6))
-            pygame.draw.circle(surf, (80,200,255), (sx,sy), size)
+            pygame.draw.circle(surf, (255,255,255), (sx,sy), size)
 
     def dist_to_player(self, player_pos):
         dx = self.x - player_pos[0]
