@@ -345,32 +345,42 @@ def draw_hull_bar(surface, W, H, player_hp, max_hp=100):
 #  MASTER DRAW CALL
 # ──────────────────────────────────────────────
 
+# Cache the overlay so we don't recreate it every frame
+_HUD_OVERLAY = None
+_LAST_SIZE = (0, 0)
+
 def draw_cockpit_hud(surface, W, H, throttle, weapons_ready,
                      orientation=None, player_pos=None, enemies=None, player_hp=100):
-    # Create a completely transparent "glass" layer to draw the HUD on.
-    # This allows standard Pygame shapes to utilize our RGBA alpha channels!
-    hud_overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+    global _HUD_OVERLAY, _LAST_SIZE
+
+    # Create it only once, or if the screen size changes
+    if _HUD_OVERLAY is None or _LAST_SIZE != (W, H):
+        _HUD_OVERLAY = pygame.Surface((W, H), pygame.SRCALPHA)
+        _LAST_SIZE = (W, H)
+    else:
+        # Clear the overlay with fully transparent pixels
+        _HUD_OVERLAY.fill((0, 0, 0, 0))
 
     cx, cy = W // 2, H // 2
 
-    # Draw everything onto the transparent overlay instead of the main surface
-    draw_crosshair(hud_overlay, cx, cy, weapons_ready)
+    # Draw everything onto the cached transparent overlay
+    draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
-    draw_throttle_bar(hud_overlay, W - 40, H - 180, 140, throttle)
-    print_spd(hud_overlay, W - 130, H - 120)
-    draw_speed(hud_overlay, W - 120, H - 100, throttle)
-    print_kph(hud_overlay, W - 110, H - 80)
+    draw_throttle_bar(_HUD_OVERLAY, W - 40, H - 180, 140, throttle)
+    print_spd(_HUD_OVERLAY, W - 130, H - 120)
+    draw_speed(_HUD_OVERLAY, W - 120, H - 100, throttle)
+    print_kph(_HUD_OVERLAY, W - 110, H - 80)
 
-    draw_hull_bar(hud_overlay, W, H, player_hp)
+    draw_hull_bar(_HUD_OVERLAY, W, H, player_hp)
 
     if orientation is not None:
-        draw_heading_tape(hud_overlay, cx, 30, orientation)
-        draw_pitch_ladder(hud_overlay, cx, cy, orientation)
+        draw_heading_tape(_HUD_OVERLAY, cx, 30, orientation)
+        draw_pitch_ladder(_HUD_OVERLAY, cx, cy, orientation)
 
         r_cx, r_cy, r_r = 90, H - 95, 75
-        draw_radar(hud_overlay, r_cx, r_cy, r_r, orientation,
+        draw_radar(_HUD_OVERLAY, r_cx, r_cy, r_r, orientation,
                    player_pos or [0, 0, 0],
                    enemies or [])
 
     # Stamp the finished semi-transparent HUD onto the game screen
-    surface.blit(hud_overlay, (0, 0))
+    surface.blit(_HUD_OVERLAY, (0, 0))

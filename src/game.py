@@ -18,15 +18,15 @@ from .laser import Laser
 # CONSTANTS
 # ──────────────────────────────────────────────
 
-MAX_SUICIDE_DRONES = 0
-MAX_DOGFIGHTERS    = 1
+MAX_SUICIDE_DRONES = 2
+MAX_DOGFIGHTERS    = 2
 SPAWN_CHANCE       = 0.02            # probability per frame at 60 fps
-SPAWN_DIST_MIN    = 2000
+SPAWN_DIST_MIN    = 3500
 SPAWN_DIST_MAX    = 4000
 SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
-SPAWN_YAW_SPREAD  = 10.55            # radians either side of yaw-forward (≈ ±31°)
+SPAWN_YAW_SPREAD  = 3.55            # radians either side of yaw-forward (≈ ±31°)
 
-PLAYER_COLLISION_RADIUS = 80        # world units — drone kills at this range
+PLAYER_COLLISION_RADIUS = 60        # world units — drone kills at this range
 PLAYER_MAX_HP     = 100
 
 HIT_FLASH_DURATION = 0.25          # seconds screen flashes red on hit
