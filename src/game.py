@@ -31,6 +31,13 @@ PLAYER_MAX_HP     = 100
 
 HIT_FLASH_DURATION = 0.25          # seconds screen flashes red on hit
 
+# ── Physics tuning ────────────────────────────
+THRUST_FORCE     = 2800.0   # acceleration at full throttle (units/s²)
+MAX_SPEED        = 1500.0   # soft speed cap — thrust tapers above this
+DRAG             = 0.00     # fractional speed bled per second (0 = Newtonian)
+BOOST_MULTIPLIER = 2.2      # thrust multiplier while boost is held
+BOOST_DRAG       = 0.15     # extra drag during boost to cap max boost speed
+
 
 # ──────────────────────────────────────────────
 # SPAWN HELPER
@@ -148,11 +155,16 @@ def main():
     player_pos  = [0.0, 0.0, 0.0]
     orientation = quat_identity()
 
-    throttle        = 0.0
+    throttle         = 0.0
     weapons_cooldown = 0.0
 
-    player_hp      = PLAYER_MAX_HP
-    hit_flash      = 0.0          # countdown timer for damage overlay
+    # ── Physics state ─────────────────────────
+    # Velocity is now a persistent world-space vector that accumulates
+    # thrust and bleeds off slowly via drag — giving a floaty space feel.
+    player_vel = [0.0, 0.0, 0.0]
+
+    player_hp  = PLAYER_MAX_HP
+    hit_flash  = 0.0          # countdown timer for damage overlay
 
     stars     = [Star(player_pos) for _ in range(250)]
     enemies   = []
@@ -163,6 +175,8 @@ def main():
     running = True
     while running:
         dt = clock.tick(60) / 1000.0
+        # Safety clamp: if the window is paused/frozen dt can spike badly
+        dt = min(dt, 0.05)
 
         # ── EVENTS ───────────────────────────────
         for event in pygame.event.get():
@@ -179,21 +193,26 @@ def main():
         fire_r = handler.trigger_right() > 0.5
         fire_pressed = fire_l or fire_r
 
+        # Boost: hold Circle (DS4) or Left-Shift (keyboard)
+        boost_held = handler.held('Circle')
+
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:     ly = -1.0
-        if keys[pygame.K_s]:     ly =  1.0
-        if keys[pygame.K_a]:     lx = -1.0
-        if keys[pygame.K_d]:     lx =  1.0
-        if keys[pygame.K_LEFT]:  rx = -1.0
-        if keys[pygame.K_RIGHT]: rx =  1.0
-        if keys[pygame.K_UP]:    throttle = min(1.0, throttle + dt)
-        if keys[pygame.K_DOWN]:  throttle = max(0.0, throttle - dt)
-        if keys[pygame.K_SPACE]: fire_pressed = True
+        if keys[pygame.K_w]:          ly = -1.0
+        if keys[pygame.K_s]:          ly =  1.0
+        if keys[pygame.K_a]:          lx = -1.0
+        if keys[pygame.K_d]:          lx =  1.0
+        if keys[pygame.K_LEFT]:       rx = -1.0
+        if keys[pygame.K_RIGHT]:      rx =  1.0
+        if keys[pygame.K_UP]:         throttle = min(1.0, throttle + dt * 1.5)
+        if keys[pygame.K_DOWN]:       throttle = max(0.0, throttle - dt * 1.5)
+        if keys[pygame.K_SPACE]:      fire_pressed = True
+        if keys[pygame.K_LSHIFT]:     boost_held = True
 
         if handler.held('R1'): throttle = min(1.0, throttle + dt * 0.8)
         if handler.held('L1'): throttle = max(0.0, throttle - dt * 0.8)
 
         # ── ROTATION ──────────────────────────────
+        # Rotation has no inertia — it should feel crisp and responsive.
         PITCH_RATE = 2.0
         YAW_RATE   = 1.5
         ROLL_RATE  = 3.0
@@ -208,12 +227,53 @@ def main():
         weapons_cooldown = max(0.0, weapons_cooldown - dt)
         hit_flash        = max(0.0, hit_flash - dt)
 
-        # ── MOVEMENT ──────────────────────────────
+        # ── PHYSICS: THRUST + DRAG ─────────────────
+        #
+        # Instead of teleporting the player along forward*speed each frame,
+        # we accumulate a world-space velocity vector:
+        #
+        #   1. Apply thrust in the current forward direction (F = throttle * THRUST_FORCE)
+        #   2. Boost multiplies thrust when the boost key is held
+        #   3. A soft speed cap tapers thrust as we approach MAX_SPEED — this
+        #      prevents runaway acceleration while keeping the feel of momentum
+        #   4. Drag gently bleeds the velocity each frame — in space this is
+        #      just a small retro-rocket assumption, enough to feel intentional
+        #      rather than chaotic. Set DRAG=0 for pure Newtonian.
+
         fx, fy, fz = get_forward_from_quat(orientation)
-        speed = throttle * 1500
-        player_pos[0] += fx * speed * dt
-        player_pos[1] += fy * speed * dt
-        player_pos[2] += fz * speed * dt
+
+        # Current speed along all axes
+        cur_speed = math.sqrt(
+            player_vel[0]**2 + player_vel[1]**2 + player_vel[2]**2
+        )
+
+        # Effective thrust: scale down smoothly as we near the speed cap
+        thrust_scale = max(0.0, 1.0 - (cur_speed / MAX_SPEED) ** 2)
+        effective_thrust = THRUST_FORCE * throttle * thrust_scale
+
+        if boost_held:
+            effective_thrust *= BOOST_MULTIPLIER
+            # Extra drag during boost prevents speed from growing forever
+            drag_this_frame = DRAG + BOOST_DRAG
+        else:
+            drag_this_frame = DRAG
+
+        # Integrate thrust onto velocity
+        player_vel[0] += fx * effective_thrust * dt
+        player_vel[1] += fy * effective_thrust * dt
+        player_vel[2] += fz * effective_thrust * dt
+
+        # Apply drag: exponential decay so high speeds bleed faster
+        # v *= (1 - drag * dt)  — stable for any dt > 0
+        decay = max(0.0, 1.0 - drag_this_frame * dt)
+        player_vel[0] *= decay
+        player_vel[1] *= decay
+        player_vel[2] *= decay
+
+        # Integrate velocity into position
+        player_pos[0] += player_vel[0] * dt
+        player_pos[1] += player_vel[1] * dt
+        player_pos[2] += player_vel[2] * dt
 
         # ── WEAPONS ───────────────────────────────
         if fire_pressed and weapons_cooldown <= 0:
@@ -261,14 +321,12 @@ def main():
                 dmg = 20
                 player_hp = max(0, player_hp - dmg)
                 hit_flash = HIT_FLASH_DURATION
-                # Big explosion
                 for _ in range(30):
                     particles.append(Particle(e.x, e.y, e.z))
                 enemies.remove(e)
                 continue
 
             # Cull enemies that are very far away AND well behind the camera
-            # (drones that are behind the player and failed to turn around)
             _, _, cz = world_to_camera(
                 e.x, e.y, e.z,
                 player_pos[0], player_pos[1], player_pos[2],
@@ -277,7 +335,7 @@ def main():
             if cz < -8000:
                 enemies.remove(e)
 
-        # ── UPDATE PROJECTILES ────────────────────────
+        # ── UPDATE PROJECTILES ────────────────────
         for bolt in enemy_projectiles[:]:
             bolt['x'] += bolt['vx'] * dt
             bolt['y'] += bolt['vy'] * dt
@@ -286,7 +344,7 @@ def main():
             if bolt['life'] <= 0:
                 enemy_projectiles.remove(bolt)
 
-        # ── CHECK PROJECTILE HITS ─────────────────────
+        # ── CHECK PROJECTILE HITS ─────────────────
         for bolt in enemy_projectiles[:]:
             if math.dist((bolt['x'], bolt['y'], bolt['z']), player_pos) < PLAYER_COLLISION_RADIUS:
                 dmg = 15
@@ -303,16 +361,15 @@ def main():
                 particles.remove(p)
 
         # ── SPAWN NEW ENEMIES ─────────────────────
-        num_drones = sum(1 for e in enemies if isinstance(e, SuicideDrone))
+        num_drones   = sum(1 for e in enemies if isinstance(e, SuicideDrone))
         num_fighters = sum(1 for e in enemies if isinstance(e, Dogfighter))
 
         spawn_chance_this_frame = SPAWNS_PER_SECOND * dt
         if random.random() < spawn_chance_this_frame:
-            can_spawn_drone = num_drones < MAX_SUICIDE_DRONES
+            can_spawn_drone   = num_drones   < MAX_SUICIDE_DRONES
             can_spawn_fighter = num_fighters < MAX_DOGFIGHTERS
 
             if can_spawn_drone and can_spawn_fighter:
-                # Randomly choose which type to spawn
                 if random.random() < 0.5:
                     enemies.append(_spawn_drone(player_pos, orientation))
                 else:
@@ -331,7 +388,7 @@ def main():
         for p in particles: p.draw(screen, *draw_args)
         for l in lasers:    l.draw(screen, *draw_args)
 
-        # Draw projectiles
+        # Draw enemy projectiles
         for bolt in enemy_projectiles:
             cx, cy, cz = world_to_camera(bolt['x'], bolt['y'], bolt['z'], *draw_args[0], draw_args[1])
             proj = project_to_screen(cx, cy, cz)
@@ -340,17 +397,19 @@ def main():
                 size = max(2, int(scale * 2))
                 pygame.draw.circle(screen, (255, 100, 100), (sx, sy), size)
 
+        # Report current speed to HUD throttle display
+        # We map world speed → 0..1 so the existing throttle bar stays meaningful
+        display_throttle = min(1.0, cur_speed / MAX_SPEED)
+
         draw_cockpit_hud(
-            screen, W, H, throttle, weapons_cooldown <= 0,
+            screen, W, H, display_throttle, weapons_cooldown <= 0,
             orientation=orientation,
             player_pos=player_pos,
             enemies=enemies,
-            player_hp=player_hp
+            player_hp=player_hp,
         )
 
-        # Damage overlay
         _draw_damage_overlay(screen, W, H, hit_flash / HIT_FLASH_DURATION)
-
 
         pygame.display.flip()
         handler.update()
