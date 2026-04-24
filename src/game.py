@@ -18,7 +18,7 @@ from .laser import Laser
 # CONSTANTS
 # ──────────────────────────────────────────────
 
-MAX_SUICIDE_DRONES = 3
+MAX_SUICIDE_DRONES = 0
 MAX_DOGFIGHTERS    = 3
 SPAWNS_PER_SECOND  = 1.2             # Expected number of spawns per second
 SPAWN_DIST_MIN    = 4000
