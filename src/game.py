@@ -191,13 +191,13 @@ def main():
         if keys[pygame.K_DOWN]:  throttle = max(-1.0, throttle - dt)
         if keys[pygame.K_SPACE]: fire_pressed = True
 
-        if handler.held('R1'): throttle = min(1.0, throttle + dt * 0.8)
-        if handler.held('L1'): throttle = max(-1.0, throttle - dt * 0.8)
+        if handler.held('R1'): throttle = min(1.0, throttle + dt * 2.8)
+        if handler.held('L1'): throttle = max(-1.0, throttle - dt * 2.8)
         if handler.just_pressed('R3'): throttle = 0.0
 
         # ── ROTATION ──────────────────────────────
-        PITCH_RATE = 2.0
-        YAW_RATE   = 1.5
+        PITCH_RATE = 3.0
+        YAW_RATE   = 2.5
         ROLL_RATE  = 3.0
 
         if abs(ly) > 0.01:
