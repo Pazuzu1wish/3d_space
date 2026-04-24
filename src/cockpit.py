@@ -19,11 +19,7 @@ from .math_engine import (
 # ──────────────────────────────────────────────
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-# The 4th value (0-255) controls transparency.
-HUD_GREEN = (0, 255, 140, 80)  # Main glowing lines/text
-HUD_DIM = (0, 160, 90, 80)  # Dimmed elements
-HUD_AMBER = (255, 180, 30, 160)  # Warnings / not ready
-HUD_RED = (255, 60, 60, 160)  # Critical / close enemies
+from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED
 
 _FONT_CACHE = {}
 
