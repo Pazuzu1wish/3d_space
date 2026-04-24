@@ -158,6 +158,7 @@ def main():
     enemies   = []
     lasers    = []
     particles = []
+    enemy_projectiles = []
 
     running = True
     while running:
@@ -237,7 +238,7 @@ def main():
 
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
-            e.update(dt, player_pos, orientation)
+            e.update(dt, player_pos, orientation, enemy_projectiles)
 
             # Laser hits
             for l in lasers[:]:
@@ -277,22 +278,23 @@ def main():
                 enemies.remove(e)
 
         # ── UPDATE PROJECTILES ────────────────────────
-        for e in enemies:
-            if isinstance(e, Dogfighter):
-                e.update_projectiles(dt)
+        for bolt in enemy_projectiles[:]:
+            bolt['x'] += bolt['vx'] * dt
+            bolt['y'] += bolt['vy'] * dt
+            bolt['z'] += bolt['vz'] * dt
+            bolt['life'] -= dt
+            if bolt['life'] <= 0:
+                enemy_projectiles.remove(bolt)
 
         # ── CHECK PROJECTILE HITS ─────────────────────
-        for e in enemies[:]:
-            if isinstance(e, Dogfighter):
-                for bolt in e.projectiles[:]:
-                    if math.dist((bolt['x'], bolt['y'], bolt['z']), player_pos) < PLAYER_COLLISION_RADIUS:
-                        dmg = 15
-                        player_hp = max(0, player_hp - dmg)
-                        hit_flash = HIT_FLASH_DURATION
-                        e.projectiles.remove(bolt)
-                        for _ in range(12):
-                            particles.append(Particle(player_pos[0], player_pos[1], player_pos[2]))
-                        break
+        for bolt in enemy_projectiles[:]:
+            if math.dist((bolt['x'], bolt['y'], bolt['z']), player_pos) < PLAYER_COLLISION_RADIUS:
+                dmg = 15
+                player_hp = max(0, player_hp - dmg)
+                hit_flash = HIT_FLASH_DURATION
+                enemy_projectiles.remove(bolt)
+                for _ in range(12):
+                    particles.append(Particle(player_pos[0], player_pos[1], player_pos[2]))
 
         # ── UPDATE PARTICLES ──────────────────────
         for p in particles[:]:
@@ -329,15 +331,13 @@ def main():
         for l in lasers:    l.draw(screen, *draw_args)
 
         # Draw projectiles
-        for e in enemies:
-            if isinstance(e, Dogfighter):
-                for bolt in e.projectiles:
-                    cx, cy, cz = world_to_camera(bolt['x'], bolt['y'], bolt['z'], *draw_args[0], draw_args[1])
-                    proj = project_to_screen(cx, cy, cz)
-                    if proj:
-                        sx, sy, scale = proj
-                        size = max(2, int(scale * 2))
-                        pygame.draw.circle(screen, (255, 100, 100), (sx, sy), size)
+        for bolt in enemy_projectiles:
+            cx, cy, cz = world_to_camera(bolt['x'], bolt['y'], bolt['z'], *draw_args[0], draw_args[1])
+            proj = project_to_screen(cx, cy, cz)
+            if proj:
+                sx, sy, scale = proj
+                size = max(2, int(scale * 2))
+                pygame.draw.circle(screen, (255, 100, 100), (sx, sy), size)
 
         draw_cockpit_hud(
             screen, W, H, throttle, weapons_cooldown <= 0,

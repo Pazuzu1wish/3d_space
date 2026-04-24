@@ -25,6 +25,8 @@ class Enemy:
         self.up      = (0,1,0)
 
         self.engine_trail = []
+        self.base_color = (255, 255, 255)
+
 
     def _camera_z(self, player_pos, player_orientation):
         px, py, pz = player_pos
@@ -81,10 +83,9 @@ class Enemy:
         self.engine_trail.append([ex, ey, ez, 0.5])
 
     def _update_engine_trail(self, dt):
-        for p in self.engine_trail[:]:
+        for p in self.engine_trail:
             p[3] -= dt
-            if p[3] <= 0:
-                self.engine_trail.remove(p)
+        self.engine_trail = [p for p in self.engine_trail if p[3] > 0]
 
     def _draw_engine_trail(self, surf, ppos, prot):
         for x,y,z,life in self.engine_trail:
@@ -113,6 +114,57 @@ class Enemy:
         dy = self.y - player_pos[1]
         dz = self.z - player_pos[2]
         return math.sqrt(dx*dx + dy*dy + dz*dz)
+
+    def draw(self, surf, ppos, prot):
+        self._draw_engine_trail(surf, ppos, prot)
+        self._draw_engine_glow(surf, ppos, prot)
+
+        world_verts = []
+        for vx,vy,vz in self.verts:
+            wx = self.x + vx*self.right[0] + vy*self.up[0] + vz*self.forward[0]
+            wy = self.y + vx*self.right[1] + vy*self.up[1] + vz*self.forward[1]
+            wz = self.z + vx*self.right[2] + vy*self.up[2] + vz*self.forward[2]
+            world_verts.append((wx,wy,wz))
+
+        projected=[]
+        cam_verts=[]
+        for wx,wy,wz in world_verts:
+            cx,cy,cz = world_to_camera(wx,wy,wz,*ppos, prot)
+            cam_verts.append((cx,cy,cz))
+            projected.append(project_to_screen(cx,cy,cz))
+
+        faces=[]
+        for f in self.faces:
+            i1,i2,i3=f
+            v1,v2,v3 = cam_verts[i1], cam_verts[i2], cam_verts[i3]
+
+            ux,uy,uz = v2[0]-v1[0],v2[1]-v1[1],v2[2]-v1[2]
+            vx2,vy2,vz2 = v3[0]-v1[0],v3[1]-v1[1],v3[2]-v1[2]
+
+            fnz = ux*vy2 - uy*vx2
+            if fnz >= 0: continue
+
+            p1,p2,p3 = projected[i1],projected[i2],projected[i3]
+            if not(p1 and p2 and p3): continue
+
+            length = math.sqrt(fnz**2)
+            if length > 0.0001:
+                normalized_z = fnz / length
+            else:
+                normalized_z = 0
+                
+            shade = max(0, min(255, int(255 * max(0.2, -normalized_z))))
+            color = (
+                int(self.base_color[0] * (shade/255)),
+                int(self.base_color[1] * (shade/255)),
+                int(self.base_color[2] * (shade/255))
+            )
+
+            faces.append(((v1[2]+v2[2]+v3[2])/3,(p1,p2,p3),color))
+
+        faces.sort(reverse=True)
+        for _,pts,color in faces:
+            pygame.draw.polygon(surf,color,[(p[0],p[1]) for p in pts])
 
 
 # ──────────────────────────────────────────────
@@ -182,6 +234,7 @@ class SuicideDrone(Enemy):
     def __init__(self, x,y,z):
         super().__init__(x,y,z)
         self.hp = 3
+        self.base_color = (255, 30, 30)
 
         self.t = 0
 
@@ -195,7 +248,7 @@ class SuicideDrone(Enemy):
         ]
         self.faces = [(0,1,2),(0,1,3),(0,2,3),(1,2,4)]
 
-    def update(self, dt, player_pos, player_orientation):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None):
         self.t += dt
 
         px,py,pz = player_pos
@@ -230,47 +283,6 @@ class SuicideDrone(Enemy):
         self.hp -= 1
         self._flicker = 1
 
-    def draw(self, surf, ppos, prot):
-        self._draw_engine_trail(surf, ppos, prot)
-        self._draw_engine_glow(surf, ppos, prot)
-
-        world_verts = []
-        for vx,vy,vz in self.verts:
-            wx = self.x + vx*self.right[0] + vy*self.up[0] + vz*self.forward[0]
-            wy = self.y + vx*self.right[1] + vy*self.up[1] + vz*self.forward[1]
-            wz = self.z + vx*self.right[2] + vy*self.up[2] + vz*self.forward[2]
-            world_verts.append((wx,wy,wz))
-
-        projected=[]
-        cam_verts=[]
-        for wx,wy,wz in world_verts:
-            cx,cy,cz = world_to_camera(wx,wy,wz,*ppos, prot)
-            cam_verts.append((cx,cy,cz))
-            projected.append(project_to_screen(cx,cy,cz))
-
-        faces=[]
-        for f in self.faces:
-            i1,i2,i3=f
-            v1,v2,v3 = cam_verts[i1], cam_verts[i2], cam_verts[i3]
-
-            ux,uy,uz = v2[0]-v1[0],v2[1]-v1[1],v2[2]-v1[2]
-            vx2,vy2,vz2 = v3[0]-v1[0],v3[1]-v1[1],v3[2]-v1[2]
-
-            fnz = ux*vy2 - uy*vx2
-            if fnz >= 0: continue
-
-            p1,p2,p3 = projected[i1],projected[i2],projected[i3]
-            if not(p1 and p2 and p3): continue
-
-            shade = max(0, min(255, int(200 * max(0.2, -fnz*0.002))))
-            color = (shade, 0, 0)
-
-            faces.append(((v1[2]+v2[2]+v3[2])/3,(p1,p2,p3),color))
-
-        faces.sort(reverse=True)
-        for _,pts,color in faces:
-            pygame.draw.polygon(surf,color,[(p[0],p[1]) for p in pts])
-
 
 # ──────────────────────────────────────────────
 #  DOGFIGHTER (UPGRADED)
@@ -289,11 +301,11 @@ class Dogfighter(Enemy):
 
         self.hp = 1
         self.t = 0
+        self.base_color = (30, 200, 255)
 
         self.fire_timer = random.uniform(0, self.FIRE_RATE)
         self.aggression = random.uniform(0.7, 1.3)
 
-        self.projectiles = []
         self._flicker = 0
         self.phase = random.uniform(0, math.pi * 2)  # Unique circling offset
 
@@ -307,7 +319,7 @@ class Dogfighter(Enemy):
         """Calculate player's forward vector from quaternion."""
         return get_forward_from_quat(orientation)
 
-    def update(self, dt, player_pos, player_orientation):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None):
         self.t += dt
         self.fire_timer -= dt
 
@@ -365,7 +377,7 @@ class Dogfighter(Enemy):
 
             if dot > 0.6:  # Lower threshold = shoots while maneuvering
                 self.fire_timer = self.FIRE_RATE * random.uniform(0.7, 1.2)
-                self._fire_projectile(to_player_norm, dist_to_player)
+                self._fire_projectile(to_player_norm, dist_to_player, global_projectiles)
 
         # Trails & hit flicker
         self._spawn_engine_trail()
@@ -373,7 +385,7 @@ class Dogfighter(Enemy):
         if self._flicker > 0:
             self._flicker -= dt * 8
 
-    def _fire_projectile(self, aim_dir, dist):
+    def _fire_projectile(self, aim_dir, dist, global_projectiles):
         """Spawn a bullet. Adapt this dict structure to match your bullet system."""
         proj_speed = 900
         # Add a portion of enemy velocity for realistic ballistics
@@ -381,63 +393,13 @@ class Dogfighter(Enemy):
         vy = aim_dir[1] * proj_speed + self.vy * 0.4
         vz = aim_dir[2] * proj_speed + self.vz * 0.4
 
-        self.projectiles.append({
-            'x': self.x, 'y': self.y, 'z': self.z,
-            'vx': vx, 'vy': vy, 'vz': vz,
-            'life': 2.5  # seconds before auto-delete
-        })
-
-    def update_projectiles(self, dt):
-        """Call this once per frame from your game loop to move bullets."""
-        for p in self.projectiles[:]:
-            p['x'] += p['vx'] * dt
-            p['y'] += p['vy'] * dt
-            p['z'] += p['vz'] * dt
-            p['life'] -= dt
-            if p['life'] <= 0:
-                self.projectiles.remove(p)
+        if global_projectiles is not None:
+            global_projectiles.append({
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'vx': vx, 'vy': vy, 'vz': vz,
+                'life': 2.5  # seconds before auto-delete
+            })
 
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
-
-    # ───────── draw method stays exactly the same ─────────
-    def draw(self, surf, ppos, prot):
-        self._draw_engine_trail(surf, ppos, prot)
-        self._draw_engine_glow(surf, ppos, prot)
-
-        world_verts = []
-        for vx, vy, vz in self.verts:
-            wx = self.x + vx*self.right[0] + vy*self.up[0] + vz*self.forward[0]
-            wy = self.y + vx*self.right[1] + vy*self.up[1] + vz*self.forward[1]
-            wz = self.z + vx*self.right[2] + vy*self.up[2] + vz*self.forward[2]
-            world_verts.append((wx, wy, wz))
-
-        projected = []
-        cam = []
-        for wx, wy, wz in world_verts:
-            cx, cy, cz = world_to_camera(wx, wy, wz, *ppos, prot)
-            cam.append((cx, cy, cz))
-            projected.append(project_to_screen(cx, cy, cz))
-
-        faces = []
-        for f in self.faces:
-            i1, i2, i3 = f
-            v1, v2, v3 = cam[i1], cam[i2], cam[i3]
-
-            ux, uy = v2[0]-v1[0], v2[1]-v1[1]
-            vx2, vy2 = v3[0]-v1[0], v3[1]-v1[1]
-
-            fnz = ux*vy2 - uy*vx2
-            if fnz >= 0: continue
-
-            p1, p2, p3 = projected[i1], projected[i2], projected[i3]
-            if not(p1 and p2 and p3): continue
-
-            shade = max(0, min(255, int(255*max(0.2, -fnz*0.002))))
-            color = (30, int(shade*0.8), shade)
-            faces.append(((v1[2]+v2[2]+v3[2])/3, (p1, p2, p3), color))
-
-        faces.sort(reverse=True)
-        for _, pts, color in faces:
-            pygame.draw.polygon(surf, color, [(p[0], p[1]) for p in pts])
