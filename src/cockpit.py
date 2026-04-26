@@ -1,5 +1,4 @@
 
-
 import pygame
 import math
 from .math_engine import (
@@ -233,12 +232,15 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
         true_x = plane_x
         true_y = plane_y - int(scaled_y)
 
+        if math.sqrt((true_x - cx)**2 + (true_y - cy)**2) > radius - 6:
+            continue
+
         # Depth Cueing: Brightness based on whether it is in front or behind us
         color = HUD_RED if dist < radar_range * 0.3 else HUD_AMBER
         alpha_color = color
         if scaled_z < 0:
             # Dim the color if the enemy is behind the player
-            alpha_color = (max(0, color[0]-100), max(0, color[1]-100), max(0, color[2]-100))
+            alpha_color = (int(color[0]*0.4), int(color[1]*0.4), int(color[2]*0.4))
 
         # Draw the "Stem" (Drop-line from entity to the equatorial plane)
         pygame.draw.line(surface, HUD_DIM, (plane_x, plane_y), (true_x, true_y), 1)
@@ -249,12 +251,89 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
         # Draw the actual Entity Blip
         pygame.draw.circle(surface, alpha_color, (true_x, true_y), 3)
 
-    # ─── 3. DRAW THE PLAYER MARKER ────────────────────────────────────────
+    # ─── 3. 6D CARDINALITY (WORLD AXES ON RADAR EDGES) ────────────────────
+    # 3D Matrix Tuple storing vectors relative to the absolute (0,0,0) world.
+    # N/S (Y-Axis), ST/P (X-Axis), F/A (Z-Axis)
+    cardinals = (
+        ("N",  (0,  1,  0)),   # North (Zenith)
+        ("S",  (0, -1,  0)),   # South (Nadir)
+        ("ST", (1,  0,  0)),   # Origin Starboard
+        ("P",  (-1, 0,  0)),   # Origin Port
+        ("F",  (0,  0,  1)),   # Origin Fore
+        ("A",  (0,  0, -1)),   # Origin Aft
+    )
+    
+    cardinal_font = custom_font(10)
+    edge_radius = radius - 8  # Set slightly inside the glass edge
+    
+    for label, (wx, wy, wz) in cardinals:
+        # Convert absolute world vector into the ship's relative basis
+        local_x = wx * right[0] + wy * right[1] + wz * right[2]
+        local_y = wx * up[0] + wy * up[1] + wz * up[2]
+        local_z = wx * forward[0] + wy * forward[1] + wz * forward[2]
+        
+        # Project vector to the physical edge of the 3D holosphere
+        scaled_x = local_x * edge_radius
+        scaled_y = local_y * edge_radius
+        scaled_z = local_z * edge_radius
+        
+        # Apply Isometric transformation to fit onto the 2D plane
+        plane_x = cx + int(scaled_x)
+        plane_y = cy - int(scaled_z * tilt_factor)
+        true_x = plane_x
+        true_y = plane_y - int(scaled_y)
+        
+        # Depth Cueing: Dim colors if point is rotating behind the player
+        if scaled_z < 0:
+            col = (HUD_GREEN[0]//3, HUD_GREEN[1]//3, HUD_GREEN[2]//3)  # Dim back
+        else:
+            col = HUD_GREEN  # Bright front
+            
+        # Draw Cardinal marker on edges
+        pygame.draw.circle(surface, col, (true_x, true_y), 2)
+        lbl = cardinal_font.render(label, True, col)
+        surface.blit(lbl, (true_x - lbl.get_width() // 2, true_y - lbl.get_height() - 4))
+        
+    # ─── 4. DRAW ABSOLUTE ORIGIN (HOME 0,0,0) ─────────────────────────────
+    # Plot the 0,0,0 coordinate physically within the radar radius if close enough
+    ox, oy, oz = -px, -py, -pz
+    dist_to_origin = math.sqrt(ox*ox + oy*oy + oz*oz)
+    if dist_to_origin <= radar_range:
+        local_ox = ox * right[0] + oy * right[1] + oz * right[2]
+        local_oy = ox * up[0] + oy * up[1] + oz * up[2]
+        local_oz = ox * forward[0] + oy * forward[1] + oz * forward[2]
+
+        scale = (radius - 6) / radar_range
+        scaled_ox = local_ox * scale
+        scaled_oy = local_oy * scale
+        scaled_oz = local_oz * scale
+
+        plane_ox = cx + int(scaled_ox)
+        plane_oy = cy - int(scaled_oz * tilt_factor)
+        true_ox = plane_ox
+        true_oy = plane_oy - int(scaled_oy)
+
+        # Clip against physical sphere boundary
+        if math.sqrt((true_ox - cx)**2 + (true_oy - cy)**2) <= radius - 6:
+            orig_col = (0, 200, 255) # Cyan
+            if scaled_oz < 0:
+                orig_col = (0, 80, 100) # Dim Cyan
+            
+            # Draw distinctive Cross marker for Origin
+            pygame.draw.line(surface, orig_col, (true_ox - 4, true_oy), (true_ox + 4, true_oy), 1)
+            pygame.draw.line(surface, orig_col, (true_ox, true_oy - 4), (true_ox, true_oy + 4), 1)
+            
+            lbl_orig = custom_font(10).render("ORIGIN", True, orig_col)
+            surface.blit(lbl_orig, (true_ox + 4, true_oy + 4))
+
+    # ─── 5. DRAW THE PLAYER MARKER ────────────────────────────────────────
     # Player is always in the exact center of the relative holosphere
     pygame.draw.circle(surface, HUD_GREEN, (cx, cy), 3)
     
     # Draw a small "forward" indicator vector attached to player
-    pygame.draw.line(surface, HUD_GREEN, (cx, cy), (cx, cy - 8), 2)
+    ind_x = cx + int(forward[0] * 12)
+    ind_y = cy - int(forward[2] * 12 * tilt_factor)
+    pygame.draw.line(surface, HUD_GREEN, (cx, cy), (ind_x, ind_y), 2)
 
     # Radar Label
     lbl = custom_font(12).render("3D SENSOR", True, HUD_GREEN)
