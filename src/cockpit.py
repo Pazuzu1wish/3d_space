@@ -171,52 +171,94 @@ def draw_pitch_ladder(surface, cx, cy, orientation):
 
 def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000):
     forward, right, up = get_basis_from_quat(orientation)
-
+    
+    # ─── 1. DRAW THE HOLOSPHERE WIREFRAME ─────────────────────────────────
+    tilt_factor = 0.5  # How much the radar is tilted (0.0 = edge on, 1.0 = top down)
+    
+    # Create a local surface for the radar background
     disc = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+    
+    # Outer spherical boundary (Dark green glass effect)
     pygame.draw.circle(disc, (0, 30, 0, 50), (radius, radius), radius)
     pygame.draw.circle(disc, HUD_DIM, (radius, radius), radius, 1)
-    pygame.draw.circle(disc, HUD_DIM, (radius, radius), radius // 2, 1)
-
+    
+    # Equatorial Plane (Ellipse)
+    # The height of the ellipse is radius * 2 * tilt_factor
+    eq_rect = pygame.Rect(0, radius - (radius * tilt_factor), radius * 2, radius * 2 * tilt_factor)
+    pygame.draw.ellipse(disc, HUD_DIM, eq_rect, 1)
+    
+    # Mid-range Equatorial Ring
+    mid_r = radius // 2
+    mid_rect = pygame.Rect(radius - mid_r, radius - (mid_r * tilt_factor), mid_r * 2, mid_r * 2 * tilt_factor)
+    pygame.draw.ellipse(disc, (HUD_DIM[0], HUD_DIM[1], HUD_DIM[2], 100), mid_rect, 1)
+    
+    # Crosshairs on the equatorial plane
+    pygame.draw.line(disc, HUD_DIM, (0, radius), (radius * 2, radius), 1) # X-axis
+    pygame.draw.line(disc, HUD_DIM, (radius, radius - radius * tilt_factor), 
+                     (radius, radius + radius * tilt_factor), 1) # Z-axis (tilted)
+    
+    # Polar Axis (Y-axis vertical line)
     pygame.draw.line(disc, HUD_DIM, (radius, 0), (radius, radius * 2), 1)
-    pygame.draw.line(disc, HUD_DIM, (0, radius), (radius * 2, radius), 1)
+    
+    # Blit the base holosphere to the HUD
     surface.blit(disc, (cx - radius, cy - radius))
 
+    # ─── 2. PLOT THE ENTITIES ─────────────────────────────────────────────
     px, py, pz = player_pos
 
     for e in enemies:
         dx, dy, dz = e.x - px, e.y - py, e.z - pz
         dist = math.sqrt(dx * dx + dy * dy + dz * dz)
-        if dist > radar_range: continue
+        if dist > radar_range: 
+            continue
 
+        # Get local coordinates relative to ship orientation
         local_x = dx * right[0] + dy * right[1] + dz * right[2]
-        local_y = dx * up[0] + dy * up[1] + dz * up[2]
-        local_z = dx * forward[0] + dy * forward[1] + dz * forward[2]
+        local_y = dx * up[0] + dy * up[1] + dz * up[2]     # Elevation
+        local_z = dx * forward[0] + dy * forward[1] + dz * forward[2] # Depth
 
+        # Scale to fit inside the sphere radius
         scale = (radius - 6) / radar_range
-        dot_x = int(local_x * scale) + cx
-        dot_z = int(-local_z * scale) + cy
+        scaled_x = local_x * scale
+        scaled_y = local_y * scale
+        scaled_z = local_z * scale
 
-        ddx, ddy = dot_x - cx, dot_z - cy
-        ddist = math.sqrt(ddx * ddx + ddy * ddy)
-        if ddist > radius - 4:
-            f = (radius - 4) / ddist
-            dot_x = int(cx + ddx * f)
-            dot_z = int(cy + ddy * f)
+        # Apply Pseudo-3D Isometric Projection
+        # 1. Point on the equatorial plane
+        plane_x = cx + int(scaled_x)
+        plane_y = cy - int(scaled_z * tilt_factor) # Subtract because screen Y goes down
 
-        elev_px = int(local_y * scale * 0.5)
-        elev_px = max(-12, min(12, elev_px))
+        # 2. True 3D point (accounting for elevation)
+        # Subtract scaled_y because positive Y (up) should go UP the screen
+        true_x = plane_x
+        true_y = plane_y - int(scaled_y)
 
+        # Depth Cueing: Brightness based on whether it is in front or behind us
         color = HUD_RED if dist < radar_range * 0.3 else HUD_AMBER
-        pygame.draw.circle(surface, color, (dot_x, dot_z), 3)
-        if elev_px != 0:
-            pygame.draw.line(surface, color, (dot_x, dot_z), (dot_x, dot_z - elev_px), 1)
+        alpha_color = color
+        if scaled_z < 0:
+            # Dim the color if the enemy is behind the player
+            alpha_color = (max(0, color[0]-100), max(0, color[1]-100), max(0, color[2]-100))
 
+        # Draw the "Stem" (Drop-line from entity to the equatorial plane)
+        pygame.draw.line(surface, HUD_DIM, (plane_x, plane_y), (true_x, true_y), 1)
+        
+        # Draw the plane marker (where the stem hits the equator)
+        pygame.draw.rect(surface, HUD_DIM, (plane_x - 1, plane_y - 1, 3, 3))
+        
+        # Draw the actual Entity Blip
+        pygame.draw.circle(surface, alpha_color, (true_x, true_y), 3)
+
+    # ─── 3. DRAW THE PLAYER MARKER ────────────────────────────────────────
+    # Player is always in the exact center of the relative holosphere
     pygame.draw.circle(surface, HUD_GREEN, (cx, cy), 3)
-    fwd_px = cy - (radius - 8)
-    pygame.draw.line(surface, HUD_GREEN, (cx, cy), (cx, fwd_px), 1)
+    
+    # Draw a small "forward" indicator vector attached to player
+    pygame.draw.line(surface, HUD_GREEN, (cx, cy), (cx, cy - 8), 2)
 
-    lbl = custom_font(12).render("RADAR", True, HUD_DIM)
-    surface.blit(lbl, (cx - lbl.get_width() // 2, cy + radius + 3))
+    # Radar Label
+    lbl = custom_font(12).render("3D SENSOR", True, HUD_GREEN)
+    surface.blit(lbl, (cx - lbl.get_width() // 2, cy + radius + 5))
 
 
 # ──────────────────────────────────────────────
