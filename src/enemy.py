@@ -222,6 +222,15 @@ PATTERNS = [
     _pattern_corkscrew,
 ]
 
+PATTERN_MAP = {
+    'direct': _pattern_direct,
+    'weave': _pattern_weave,
+    'wobble': _pattern_wobble,
+    'spiral': _pattern_spiral,
+    'zigzag': _pattern_zigzag,
+    'corkscrew': _pattern_corkscrew,
+}
+
 
 # ──────────────────────────────────────────────
 #  SUICIDE DRONE
@@ -248,17 +257,64 @@ class SuicideDrone(Enemy):
         ]
         self.faces = [(0,1,2),(0,1,3),(0,2,3),(1,2,4)]
 
+        # Add to SuicideDrone.__init__:
+        self.pattern = None   # None = dynamic tail-check each frame
+        self._pattern_cache = None   # avoid flipping pattern every single frame
+        self._pattern_check_timer = 0.0
+
+    def set_pattern(self, pattern_name):
+        if pattern_name in PATTERN_MAP:
+            self.pattern = PATTERN_MAP[pattern_name]
+
     def update(self, dt, player_pos, player_orientation, global_projectiles=None):
         self.t += dt
+        self._pattern_check_timer += dt
 
-        px,py,pz = player_pos
-        dx,dy,dz = px-self.x, py-self.y, pz-self.z
-        dist = math.sqrt(dx*dx+dy*dy+dz*dz) or 1
+        px, py, pz = player_pos
+        dx, dy, dz = px-self.x, py-self.y, pz-self.z
+        dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 1
+        nx, ny, nz = dx/dist, dy/dist, dz/dist
 
-        nx,ny,nz = dx/dist, dy/dist, dz/dist
+        # ── PATTERN SELECTION ─────────────────────
+        # Re-evaluate every 0.5s so it doesn't thrash frame-to-frame
+        if self.pattern is not None:
+            # Scripted drones: fixed pattern assigned by director
+            active_pattern = self.pattern
+        elif self._pattern_check_timer >= 0.5:
+            self._pattern_check_timer = 0.0
+            fwd = get_forward_from_quat(player_orientation)
 
-        offset = self.pattern(self.t, self.pattern_phase, self.SPEED)
-        target_v = (nx*self.SPEED + offset[0], ny*self.SPEED + offset[1], nz*self.SPEED + offset[2])
+            # Dot of (drone→player) against player forward.
+            # drone is BEHIND player when this is negative,
+            # because drone-to-player points same way as player-forward
+            # only when drone is ahead. Behind = dot strongly negative.
+            to_player_nx = -nx  # flip: player→drone becomes drone→player direction... 
+            # actually cleaner: dot of (player→drone) against player fwd
+            # player→drone = (dx,dy,dz)/dist, already computed as (nx,ny,nz)
+            dot = nx*fwd[0] + ny*fwd[1] + nz*fwd[2]
+
+            # dot > 0.85: drone is in front of player — definitely not safe
+            # dot < -0.82: drone is within ~35° of directly behind — safe cone
+            if dot < -0.82:
+                self._pattern_cache = _pattern_direct
+            else:
+                if self._pattern_cache is _pattern_direct:
+                    # Just left the safe cone — pick a new evasive pattern
+                    self._pattern_cache = random.choice(PATTERNS[1:])
+                elif self._pattern_cache is None:
+                    self._pattern_cache = random.choice(PATTERNS[1:])
+
+            active_pattern = self._pattern_cache
+        else:
+            active_pattern = self._pattern_cache or _pattern_weave
+
+        # ── MOVEMENT ──────────────────────────────
+        offset = active_pattern(self.t, self.pattern_phase, self.SPEED)
+        target_v = (
+            nx*self.SPEED + offset[0],
+            ny*self.SPEED + offset[1],
+            nz*self.SPEED + offset[2],
+        )
 
         self._apply_banking(target_v, dt)
 
@@ -272,7 +328,6 @@ class SuicideDrone(Enemy):
         self.z += self.vz*dt
 
         self._update_orientation()
-
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
 
@@ -282,6 +337,10 @@ class SuicideDrone(Enemy):
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
+        # Getting hit breaks it out of direct immediately
+        if self._pattern_cache is _pattern_direct:
+            self._pattern_cache = random.choice(PATTERNS[1:])
+
 
 
 # ──────────────────────────────────────────────

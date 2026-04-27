@@ -1,5 +1,4 @@
 import pygame
-import random
 import math
 from .math_engine import (
     world_to_camera, project_to_screen, quat_identity
@@ -11,8 +10,10 @@ from .particle import Particle
 from .enemy import SuicideDrone, Dogfighter
 from .laser import Laser
 from .player import Player
-from .constants import SPAWNS_PER_SECOND, MAX_SUICIDE_DRONES, MAX_DOGFIGHTERS, HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS
-from .utils import spawn_drone, spawn_dogfighter, draw_damage_overlay, draw_hp_bar
+from .constants import HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS
+from .utils import draw_damage_overlay, draw_hp_bar
+from .director import WaveDirector
+from .encounters import ENCOUNTER_SCRIPT
 
 # ──────────────────────────────────────────────
 # MAIN LOOP
@@ -76,25 +77,7 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
         p.update(dt)
         if p.life <= 0:
             particles.remove(p)
-
-    # ── SPAWN NEW ENEMIES ─────────────────────
-    num_drones = sum(1 for e in enemies if isinstance(e, SuicideDrone))
-    num_fighters = sum(1 for e in enemies if isinstance(e, Dogfighter))
-
-    spawn_chance_this_frame = SPAWNS_PER_SECOND * dt
-    if random.random() < spawn_chance_this_frame:
-        can_spawn_drone = num_drones < MAX_SUICIDE_DRONES
-        can_spawn_fighter = num_fighters < MAX_DOGFIGHTERS
-
-        if can_spawn_drone and can_spawn_fighter:
-            if random.random() < 0.5:
-                enemies.append(spawn_drone(player.pos, player.orientation))
-            else:
-                enemies.append(spawn_dogfighter(player.pos, player.orientation))
-        elif can_spawn_drone:
-            enemies.append(spawn_drone(player.pos, player.orientation))
-        elif can_spawn_fighter:
-            enemies.append(spawn_dogfighter(player.pos, player.orientation))
+    # NOTE: Enemy spawning is now handled by WaveDirector.update() in main()
 
 def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, particles):
     screen.fill((5, 5, 15))
@@ -135,7 +118,8 @@ def main():
     handler = DS4Input()
     handler.init()
 
-    player = Player()
+    player  = Player()
+    director = WaveDirector(ENCOUNTER_SCRIPT)
 
     stars     = [Star(player.pos) for _ in range(250)]
     enemies   = []
@@ -160,6 +144,7 @@ def main():
         # ── UPDATE ────────────────────────────────
         player.update(dt, handler, keys, lasers, particles, enemy_projectiles)
         update_entities(dt, player, enemies, lasers, enemy_projectiles, particles)
+        director.update(dt, player.pos, player.orientation, enemies)
 
         # ── DRAW ──────────────────────────────────
         draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, particles)
