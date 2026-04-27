@@ -101,8 +101,10 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
         screen, W, H, player.throttle, player.current_speed, player.weapons_cooldown <= 0,
         orientation=player.orientation,
         player_pos=player.pos,
+        player_vel=tuple(player.vel),
         enemies=enemies,
-        player_hp=player.hp
+        player_hp=player.hp,
+        active_target=player.active_target
     )
 
     # Damage overlay
@@ -145,6 +147,14 @@ def main():
         player.update(dt, handler, keys, lasers, particles, enemy_projectiles)
         update_entities(dt, player, enemies, lasers, enemy_projectiles, particles)
         director.update(dt, player.pos, player.orientation, enemies)
+
+        # ── TARGETING ──────────────────────────────────────
+        # Keep target valid after kills/culls
+        player.clear_dead_target(enemies)
+        if player._key_target_closest:
+            player.target_closest(enemies)
+        elif player._key_cycle_target:
+            player.cycle_targets(enemies)
 
         # ── DRAW ──────────────────────────────────
         draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, particles)

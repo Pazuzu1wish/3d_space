@@ -128,6 +128,49 @@ def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
     return sx, sy, scale
 
 
+# ── Targeting math ────────────────────────────
+
+def calculate_lead_position(player_pos, player_vel, target_pos, target_vel, proj_speed):
+    """
+    First-order kinematic intercept: returns the 3-D world coordinate
+    the player should aim at so that a projectile (at proj_speed) will
+    meet the target.
+
+    Accounts for the player's own velocity because bullets inherit it.
+    """
+    rel_x = target_pos[0] - player_pos[0]
+    rel_y = target_pos[1] - player_pos[1]
+    rel_z = target_pos[2] - player_pos[2]
+    dist = math.sqrt(rel_x**2 + rel_y**2 + rel_z**2) or 1.0
+
+    # Time-of-flight approximation (first order)
+    t = dist / proj_speed
+
+    # Relative velocity (target minus player — bullets inherit our momentum)
+    rel_vx = target_vel[0] - player_vel[0]
+    rel_vy = target_vel[1] - player_vel[1]
+    rel_vz = target_vel[2] - player_vel[2]
+
+    return (
+        target_pos[0] + rel_vx * t,
+        target_pos[1] + rel_vy * t,
+        target_pos[2] + rel_vz * t,
+    )
+
+
+def is_in_front_of_camera(world_pos, player_pos, player_orientation):
+    """
+    Returns True if world_pos is in the positive-Z half of camera space
+    (i.e. the point is in front of the player).
+    """
+    cx, cy, cz = world_to_camera(
+        world_pos[0], world_pos[1], world_pos[2],
+        player_pos[0], player_pos[1], player_pos[2],
+        player_orientation,
+    )
+    return cz > 0.1
+
+
 # ── Legacy shims (kept so other modules don't break) ──────────────────────────
 #  These are thin wrappers; prefer the quat versions for new code.
 

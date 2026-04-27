@@ -16,6 +16,10 @@ class Player:
         self.hp = PLAYER_MAX_HP
         self.hit_flash = 0.0
 
+        # Targeting
+        self.active_target = None          # the currently locked enemy object
+        self._target_key_cd = 0.0         # prevents key repeat on T/Y
+
     @property
     def current_speed(self):
         return math.sqrt(self.vel[0]**2 + self.vel[1]**2 + self.vel[2]**2)
@@ -38,6 +42,15 @@ class Player:
         if keys[pygame.K_DOWN]:  self.throttle = max(-1.0, self.throttle - dt)
         if keys[pygame.K_SPACE]: fire_pressed = True
 
+        # ── TARGETING KEYS ────────────────────────
+        # Resolved later via target_closest() / cycle_targets()
+        # (called from game.py after enemies list is available)
+        self._key_target_closest = keys[pygame.K_t] and self._target_key_cd <= 0
+        self._key_cycle_target   = keys[pygame.K_y] and self._target_key_cd <= 0
+        if keys[pygame.K_t] or keys[pygame.K_y]:
+            if self._target_key_cd <= 0:
+                self._target_key_cd = 0.25   # 250 ms debounce
+
         if handler.held('R1'): self.throttle = min(1.0, self.throttle + dt * 2.8)
         if handler.held('L1'): self.throttle = max(-1.0, self.throttle - dt * 2.8)
         if handler.just_pressed('R3'): self.throttle = 0.0
@@ -56,6 +69,7 @@ class Player:
 
         self.weapons_cooldown = max(0.0, self.weapons_cooldown - dt)
         self.hit_flash        = max(0.0, self.hit_flash - dt)
+        self._target_key_cd   = max(0.0, self._target_key_cd  - dt)
 
         # ── MOVEMENT ──────────────────────────────
         fx, fy, fz = get_forward_from_quat(self.orientation)
@@ -111,3 +125,31 @@ class Player:
     def take_damage(self, amount):
         self.hp = max(0, self.hp - amount)
         self.hit_flash = HIT_FLASH_DURATION
+
+    # ── TARGETING METHODS ────────────────────────────────────────────
+
+    def target_closest(self, enemies):
+        """Lock onto the nearest living enemy."""
+        if not enemies:
+            self.active_target = None
+            return
+        self.active_target = min(
+            enemies,
+            key=lambda e: math.dist(self.pos, (e.x, e.y, e.z))
+        )
+
+    def cycle_targets(self, enemies):
+        """Advance to the next enemy in the list (wraps around)."""
+        if not enemies:
+            self.active_target = None
+            return
+        if self.active_target not in enemies:
+            self.active_target = enemies[0]
+            return
+        idx = enemies.index(self.active_target)
+        self.active_target = enemies[(idx + 1) % len(enemies)]
+
+    def clear_dead_target(self, enemies):
+        """Nullify the active target if it has been destroyed."""
+        if self.active_target is not None and self.active_target not in enemies:
+            self.active_target = None

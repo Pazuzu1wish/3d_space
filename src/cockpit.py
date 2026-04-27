@@ -6,6 +6,10 @@ from .math_engine import (
     get_forward_from_quat,
     quat_rotate_vec,
     quat_conjugate,
+    world_to_camera,
+    project_to_screen,
+    calculate_lead_position,
+    is_in_front_of_camera,
 )
 
 # ──────────────────────────────────────────────
@@ -403,6 +407,155 @@ def draw_crosshair(surface, cx, cy, ready):
 
 
 # ──────────────────────────────────────────────
+#  TARGET BRACKETS + LEAD INDICATOR (PIP)
+# ──────────────────────────────────────────────
+
+_LASER_SPEED = 4000.0   # Must match Laser class speed
+
+# Dim colour for untargeted enemies (slightly transparent red-brown)
+_HUD_DIM_TARGET  = (180, 40, 40, 90)
+# Bright red for the active target bracket
+_HUD_ACT_BRACKET = (255, 60, 60, 220)
+# Amber for the lead PIP circle + leash line
+_HUD_LEAD_PIP    = (255, 200, 50, 200)
+# Dim leash line colour
+_HUD_LEASH       = (255, 80, 80, 70)
+
+
+def _draw_dim_bracket(surface, sx, sy, half=14):
+    """Faint corner-bracket [ ] for an untargeted enemy."""
+    c = _HUD_DIM_TARGET
+    t = 1
+    # left vertical, right vertical
+    pygame.draw.line(surface, c, (sx - half, sy - half), (sx - half, sy + half), t)
+    pygame.draw.line(surface, c, (sx + half, sy - half), (sx + half, sy + half), t)
+    # short horizontal serifs
+    pygame.draw.line(surface, c, (sx - half, sy - half), (sx - half + 5, sy - half), t)
+    pygame.draw.line(surface, c, (sx - half, sy + half), (sx - half + 5, sy + half), t)
+    pygame.draw.line(surface, c, (sx + half, sy - half), (sx + half - 5, sy - half), t)
+    pygame.draw.line(surface, c, (sx + half, sy + half), (sx + half - 5, sy + half), t)
+
+
+def _draw_active_bracket(surface, sx, sy, half=18):
+    """Bright angled bracket < > for the active/locked target."""
+    c = _HUD_ACT_BRACKET
+    t = 2
+    # chevron-style corners
+    arm = 8
+    # top-left
+    pygame.draw.line(surface, c, (sx - half + arm, sy - half), (sx - half, sy - half), t)
+    pygame.draw.line(surface, c, (sx - half, sy - half),       (sx - half, sy - half + arm), t)
+    # top-right
+    pygame.draw.line(surface, c, (sx + half - arm, sy - half), (sx + half, sy - half), t)
+    pygame.draw.line(surface, c, (sx + half, sy - half),       (sx + half, sy - half + arm), t)
+    # bottom-left
+    pygame.draw.line(surface, c, (sx - half, sy + half - arm), (sx - half, sy + half), t)
+    pygame.draw.line(surface, c, (sx - half, sy + half),       (sx - half + arm, sy + half), t)
+    # bottom-right
+    pygame.draw.line(surface, c, (sx + half, sy + half - arm), (sx + half, sy + half), t)
+    pygame.draw.line(surface, c, (sx + half, sy + half),       (sx + half - arm, sy + half), t)
+    # corner pips
+    for qx, qy in ((sx - half, sy - half), (sx + half, sy - half),
+                   (sx - half, sy + half), (sx + half, sy + half)):
+        pygame.draw.circle(surface, c, (qx, qy), 2)
+
+
+def draw_target_brackets(
+        surface, player_pos, player_vel, player_orientation,
+        enemies, active_target, W, H):
+    """
+    Draw HUD brackets for every visible enemy:
+      - Untargeted: dim [ ] bracket
+      - Active target: bright < > bracket + distance / hull readout
+      - Lead PIP: amber circle + leash line
+    """
+    font = custom_font(11)
+
+    active_screen = None   # store for leash line later
+
+    for enemy in enemies:
+        # Project the enemy's world position to screen
+        cx, cy, cz = world_to_camera(
+            enemy.x, enemy.y, enemy.z,
+            player_pos[0], player_pos[1], player_pos[2],
+            player_orientation
+        )
+        if cz <= 0.1:
+            continue   # behind the camera — skip
+
+        proj = project_to_screen(cx, cy, cz)
+        if proj is None:
+            continue
+        sx, sy, _ = proj
+
+        # Clip to screen bounds (with a margin so partially-off labels render)
+        if not (-120 <= sx <= W + 120 and -120 <= sy <= H + 120):
+            continue
+
+        if enemy is active_target:
+            _draw_active_bracket(surface, sx, sy)
+            active_screen = (sx, sy)
+
+            # Distance & hull readout
+            dist_m = int(math.sqrt(
+                (enemy.x - player_pos[0])**2 +
+                (enemy.y - player_pos[1])**2 +
+                (enemy.z - player_pos[2])**2
+            ))
+            # Determine max HP by class type so % shows correctly
+            max_hp = getattr(enemy, 'MAX_HP', None)
+            if max_hp is None:
+                # Fall back to a common lookup
+                from .enemy import SuicideDrone, Dogfighter
+                if isinstance(enemy, Dogfighter):
+                    max_hp = 3
+                else:
+                    max_hp = 1
+            hull_pct = int(max(0, enemy.hp / max_hp) * 100)
+
+            dist_lbl = font.render(f"{dist_m:,} m", True, _HUD_ACT_BRACKET)
+            hull_lbl = font.render(f"HULL {hull_pct}%", True, _HUD_ACT_BRACKET)
+            surface.blit(dist_lbl, (sx - dist_lbl.get_width() // 2, sy + 22))
+            surface.blit(hull_lbl, (sx - hull_lbl.get_width() // 2, sy + 22 + 14))
+
+        else:
+            _draw_dim_bracket(surface, sx, sy)
+
+    # ── LEAD INDICATOR (PIP) ──────────────────────────────────────────────
+    if active_target is not None and active_screen is not None:
+        target_vel = (active_target.vx, active_target.vy, active_target.vz)
+        target_pos = (active_target.x, active_target.y, active_target.z)
+
+        lead_3d = calculate_lead_position(
+            player_pos, player_vel, target_pos, target_vel, _LASER_SPEED
+        )
+
+        if is_in_front_of_camera(lead_3d, player_pos, player_orientation):
+            lcx, lcy, lcz = world_to_camera(
+                lead_3d[0], lead_3d[1], lead_3d[2],
+                player_pos[0], player_pos[1], player_pos[2],
+                player_orientation
+            )
+            lproj = project_to_screen(lcx, lcy, lcz)
+            if lproj is not None:
+                lx, ly, _ = lproj
+
+                # Faint leash line from target bracket to lead pip
+                leash_surf = pygame.Surface((W, H), pygame.SRCALPHA)
+                pygame.draw.line(leash_surf, _HUD_LEASH,
+                                 active_screen, (lx, ly), 1)
+                surface.blit(leash_surf, (0, 0))
+
+                # Lead pip: outer circle + cross-hair
+                c = _HUD_LEAD_PIP
+                pygame.draw.circle(surface, c, (lx, ly), 9, 1)
+                pygame.draw.line(surface,   c, (lx - 5, ly), (lx + 5, ly), 1)
+                pygame.draw.line(surface,   c, (lx, ly - 5), (lx, ly + 5), 1)
+                pygame.draw.circle(surface, c, (lx, ly), 2)
+
+
+
+# ──────────────────────────────────────────────
 #  SPEED READOUT
 # ──────────────────────────────────────────────
 
@@ -487,7 +640,8 @@ _HUD_OVERLAY = None
 _LAST_SIZE = (0, 0)
 
 def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
-                     orientation=None, player_pos=None, enemies=None, player_hp=100):
+                     orientation=None, player_pos=None, player_vel=None,
+                     enemies=None, player_hp=100, active_target=None):
     global _HUD_OVERLAY, _LAST_SIZE
 
     # Create it only once, or if the screen size changes
@@ -519,5 +673,18 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                    player_pos or [0, 0, 0],
                    enemies or [])
 
+        # ── Target brackets and lead indicator
+        if enemies and player_pos is not None:
+            draw_target_brackets(
+                _HUD_OVERLAY,
+                player_pos,
+                player_vel or (0.0, 0.0, 0.0),
+                orientation,
+                enemies,
+                active_target,
+                W, H
+            )
+
     # Stamp the finished semi-transparent HUD onto the game screen
     surface.blit(_HUD_OVERLAY, (0, 0))
+
