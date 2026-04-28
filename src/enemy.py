@@ -259,7 +259,7 @@ class SuicideDrone(Enemy):
         self.faces = [(0,1,2),(0,1,3),(0,2,3),(1,2,4)]
 
         # Add to SuicideDrone.__init__:
-        self.pattern = None   # None = dynamic tail-check each frame
+        self.pattern = _pattern_weave   # None = dynamic tail-check each frame
         self._pattern_cache = None   # avoid flipping pattern every single frame
         self._pattern_check_timer = 0.0
 

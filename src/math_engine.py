@@ -118,7 +118,7 @@ def world_to_camera(x, y, z, px, py, pz, q):
 
 # ── Projection ────────────────────────────────
 
-def project_to_screen(x, y, z, fov=400, cx=450, cy=310):
+def project_to_screen(x, y, z, fov=400, cx=640, cy=370):
     if z <= 0.1:
         return None
     scale = fov / z

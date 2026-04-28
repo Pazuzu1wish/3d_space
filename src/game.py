@@ -177,7 +177,7 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
 
 def main():
     pygame.init()
-    W, H = 900, 620
+    W, H = 1280, 760
     screen = pygame.display.set_mode((W, H))
     pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
     clock = pygame.time.Clock()
