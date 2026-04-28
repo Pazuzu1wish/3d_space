@@ -10,6 +10,10 @@ DODGE_IMPULSE   = 1200.0
 DODGE_THRESHOLD = 0.5
 DODGE_FLASH_DUR = 0.12
 
+SHIELD_MAX       = 100
+SHIELD_RECHARGE  = 25.0   # units per second
+SHIELD_DELAY     = 3.0    # seconds after last hit before recharge starts
+
 class Player:
     def __init__(self, pos=(0.0, 0.0, 0.0)):
         self.pos = list(pos)
@@ -28,9 +32,20 @@ class Player:
         # Dodge system
         self.dodge_cooldown = 0.0
         self.dodge_flash = 0.0
-        DODGE_COOLDOWN = 1.5
-        DODGE_IMPULSE = 1200.0
-        DODGE_THRESHOLD = 0.5
+
+        # Shield system
+        self.shield = SHIELD_MAX
+        self.shield_regen_timer = 0.0
+        self.shield_flash = 0.0
+
+    @property
+    def shield_charge(self):
+        """0.0 = depleted, 1.0 = full."""
+        return self.shield / SHIELD_MAX
+
+    @property
+    def shield_recharging(self):
+        return self.shield_regen_timer <= 0 and self.shield < SHIELD_MAX
 
     @property
     def current_speed(self):
@@ -70,6 +85,11 @@ class Player:
         # ── DODGE ─────────────────────────────────
         self.dodge_cooldown = max(0.0, self.dodge_cooldown - dt)
         self.dodge_flash = max(0.0, self.dodge_flash - dt)
+
+        # ── SHIELD RECHARGE ───────────────────────
+        self.shield_regen_timer = max(0.0, self.shield_regen_timer - dt)
+        if self.shield_regen_timer <= 0 and self.shield < SHIELD_MAX:
+            self.shield = min(SHIELD_MAX, self.shield + SHIELD_RECHARGE * dt)
 
         if handler.held('Circle') and self.dodge_cooldown <= 0:
             dlx, dly = handler.stick_left()
@@ -152,10 +172,16 @@ class Player:
                 enemy_projectiles.remove(bolt)
                 for _ in range(12):
                     particles.append(Particle(self.pos[0], self.pos[1], self.pos[2]))
-                    
+
     def take_damage(self, amount):
-        self.hp = max(0, self.hp - amount)
+        self.shield_regen_timer = SHIELD_DELAY
         self.hit_flash = HIT_FLASH_DURATION
+        if self.shield > 0:
+            absorbed = min(self.shield, amount)
+            self.shield -= absorbed
+            amount -= absorbed
+        if amount > 0:
+            self.hp = max(0, self.hp - amount)
 
     # ── TARGETING METHODS ────────────────────────────────────────────
 
