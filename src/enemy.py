@@ -521,3 +521,451 @@ class Dogfighter(Enemy):
         # Getting hit aggros them instantly!
         self.mode = 'attack_run'
         self.mode_timer = 3.0
+
+# ===========================================================
+# Sniper
+# ===========================================================
+
+class Sniper(Enemy):
+    SPEED = 1200
+    FIRE_RANGE = 7000
+    FLEE_RANGE = 3500  # If player gets closer than this, run away!
+
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
+
+        self.hp = 2
+        self.max_hp = 2
+        self.base_color = (150, 255, 100)  # Bright green
+
+        self.state = 'aiming'  # 'aiming', 'charging', 'fleeing'
+        self.timer = random.uniform(2.0, 4.0)
+
+        self._flicker = 0
+
+        # Sleek, needle-like ship shape
+        self.verts = [(0, 0, 80), (-10, 0, -40), (10, 0, -40), (0, -15, -40)]
+        self.faces = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)]
+
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None):
+        self.timer -= dt
+        px, py, pz = player_pos
+
+        dx = px - self.x
+        dy = py - self.y
+        dz = pz - self.z
+        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        nx, ny, nz = dx / dist, dy / dist, dz / dist
+
+        # ─── STATE LOGIC ───
+        if dist < self.FLEE_RANGE:
+            self.state = 'fleeing'
+            self.base_color = (150, 255, 100)  # Reset to green
+        elif self.state == 'fleeing' and dist > self.FLEE_RANGE + 1000:
+            self.state = 'aiming'
+            self.timer = 2.0
+
+        if self.state == 'aiming' and self.timer <= 0:
+            self.state = 'charging'
+            self.timer = 1.5  # Takes 1.5 seconds to charge railgun
+
+        if self.state == 'charging':
+            # Flash bright yellow/red to warn the player!
+            flash = int((math.sin(self.timer * 20) + 1) * 127)
+            self.base_color = (255, flash, flash)
+
+            if self.timer <= 0:
+                # FIRE RAILGUN!
+                if global_projectiles is not None:
+                    global_projectiles.append({
+                        'x': self.x, 'y': self.y, 'z': self.z,
+                        'vx': nx * 12000,  # Ludicrous speed
+                        'vy': ny * 12000,
+                        'vz': nz * 12000,
+                        'life': 2.0,
+                        'damage': 40,
+                        'homing': False,
+                        'color': (255, 255, 255),  # Blinding white
+                        'size_mult': 4.0  # Huge beam
+                    })
+                self.state = 'aiming'
+                self.timer = random.uniform(4.0, 6.0)
+                self.base_color = (150, 255, 100)  # Back to green
+
+        # ─── MOVEMENT LOGIC ───
+        if self.state == 'fleeing':
+            # Fly away from the player (negative normal)
+            target_v = (-nx * self.SPEED, -ny * self.SPEED, -nz * self.SPEED)
+        elif self.state == 'aiming':
+            # Slowly drift sideways while keeping nose on player
+            target_v = (self.right[0] * 300, self.right[1] * 300, self.right[2] * 300)
+        elif self.state == 'charging':
+            # Dead stop in space
+            target_v = (0, 0, 0)
+
+        # Look at the player (override normal banking so nose is always pointed at you)
+        self.forward = (nx, ny, nz)
+        temp_up = (0, 1, 0) if abs(ny) < 0.99 else (1, 0, 0)
+        rx = ny * temp_up[2] - nz * temp_up[1]
+        ry = nz * temp_up[0] - nx * temp_up[2]
+        rz = nx * temp_up[1] - ny * temp_up[0]
+        rlen = math.sqrt(rx * rx + ry * ry + rz * rz) or 1
+        self.right = (rx / rlen, ry / rlen, rz / rlen)
+
+        self.up = (
+            self.right[1] * nz - self.right[2] * ny,
+            self.right[2] * nx - self.right[0] * nz,
+            self.right[0] * ny - self.right[1] * nx
+        )
+
+        blend = min(1.0, dt * 3.0)
+        self.vx += (target_v[0] - self.vx) * blend
+        self.vy += (target_v[1] - self.vy) * blend
+        self.vz += (target_v[2] - self.vz) * blend
+
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
+
+        self._spawn_engine_trail()
+        self._update_engine_trail(dt)
+
+    def on_hit(self):
+        self.hp -= 1
+
+# =============================================================
+# Corvette
+# =============================================================
+
+class Corvette(Enemy):
+    SPEED = 500
+    FIRE_RANGE = 4000
+
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
+
+        self.hp = 30
+        self.max_hp = 30
+        self.base_color = (180, 180, 200)  # Battleship Grey
+
+        self.turret_timer = 0.0
+        self._flicker = 0
+        self.t = random.uniform(0, 100)
+
+        # A large, blocky, slow-moving gunboat
+        self.verts = [
+            (0, 20, 100), (-40, 0, 50), (40, 0, 50),
+            (-40, 0, -80), (40, 0, -80), (0, -20, -80)
+        ]
+        self.faces = [
+            (0, 1, 2), (1, 3, 4), (1, 4, 2),
+            (3, 5, 4), (0, 2, 4), (0, 3, 1)
+        ]
+
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+        self.t += dt
+        self.turret_timer -= dt
+
+        px, py, pz = player_pos
+        dx, dy, dz = px - self.x, py - self.y, pz - self.z
+        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        nx, ny, nz = dx / dist, dy / dist, dz / dist
+
+        # Movement: Slowly lumber towards the player, but don't try hard to aim
+        target_v = (nx * self.SPEED, ny * self.SPEED, nz * self.SPEED)
+
+        self._apply_banking(target_v, dt)
+        blend = min(1.0, dt * 1.5)  # Very slow turning/acceleration
+        self.vx += (target_v[0] - self.vx) * blend
+        self.vy += (target_v[1] - self.vy) * blend
+        self.vz += (target_v[2] - self.vz) * blend
+
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
+        self._update_orientation()
+
+        # Omni-directional Turrets (Does not need to point at the player!)
+        if dist < self.FIRE_RANGE and self.turret_timer <= 0:
+            self.turret_timer = 0.3  # Fires constantly
+
+            if global_projectiles is not None:
+                # Adds inaccuracy since it's a turret swiveling
+                spread = 0.05
+                ax = nx + random.uniform(-spread, spread)
+                ay = ny + random.uniform(-spread, spread)
+                az = nz + random.uniform(-spread, spread)
+                n = math.sqrt(ax * ax + ay * ay + az * az) or 1
+                ax, ay, az = ax / n, ay / n, az / n
+
+                global_projectiles.append({
+                    'x': self.x, 'y': self.y, 'z': self.z,
+                    'vx': ax * 4000 + self.vx * 0.5,
+                    'vy': ay * 4000 + self.vy * 0.5,
+                    'vz': az * 4000 + self.vz * 0.5,
+                    'life': 4.0,
+                    'damage': 5,
+                    'homing': False,
+                    'color': (50, 255, 50),  # Green lasers
+                    'size_mult': 1.5
+                })
+
+        self._spawn_engine_trail()
+        self._update_engine_trail(dt)
+        if self._flicker > 0: self._flicker -= dt * 8
+
+    def on_hit(self):
+        self.hp -= 1
+        self._flicker = 1
+
+# =============================================================
+# Minelayer
+# =============================================================
+
+class Minelayer(Enemy):
+    SPEED = 1400
+
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
+        self.hp = 6
+        self.max_hp = 6
+        self.base_color = (255, 140, 0)  # Industrial Orange
+
+        self.mine_timer = 3.0
+        self._flicker = 0
+
+        # Wide, flat wing shape
+        self.verts = [(0, 0, 40), (-60, 0, -20), (60, 0, -20), (0, 15, -10)]
+        self.faces = [(0, 1, 3), (0, 3, 2), (1, 2, 3), (0, 2, 1)]
+
+        self.cross_vector = (random.choice([-1, 1]), random.uniform(-0.5, 0.5), 0)
+
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+        self.mine_timer -= dt
+
+        px, py, pz = player_pos
+        dx, dy, dz = px - self.x, py - self.y, pz - self.z
+        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+
+        # Flies ACROSS the player's field of view to lay a wall of mines
+        # rather than flying straight at them.
+        target_v = (
+            self.cross_vector[0] * self.SPEED,
+            self.cross_vector[1] * self.SPEED,
+            (dz / dist) * self.SPEED * 0.5  # Slowly match Z depth
+        )
+
+        self._apply_banking(target_v, dt)
+        blend = min(1.0, dt * 2.0)
+        self.vx += (target_v[0] - self.vx) * blend
+        self.vy += (target_v[1] - self.vy) * blend
+        self.vz += (target_v[2] - self.vz) * blend
+
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
+        self._update_orientation()
+
+        # Drop Mines
+        if self.mine_timer <= 0 and dist < 6000:
+            self.mine_timer = 2.0
+            if global_projectiles is not None:
+                global_projectiles.append({
+                    'x': self.x, 'y': self.y, 'z': self.z,
+                    'vx': 0, 'vy': 0, 'vz': 0,  # Stationary!
+                    'life': 25.0,  # Lasts a very long time
+                    'damage': 25,  # Hurts a lot
+                    'homing': False,
+                    'color': (255, 30, 30),  # Glowing red mine
+                    'size_mult': 6.0  # Huge hitbox
+                })
+
+        self._spawn_engine_trail()
+        self._update_engine_trail(dt)
+        if self._flicker > 0: self._flicker -= dt * 8
+
+    def on_hit(self):
+        self.hp -= 1
+        self._flicker = 1
+        # Re-evaluate cross vector when hit to evade
+        self.cross_vector = (random.choice([-1, 1]), random.uniform(-1, 1), 0)
+
+# =============================================================
+# Stealth Interceptor
+# =============================================================
+
+class StealthInterceptor(Enemy):
+    SPEED = 2500  # Extremely fast
+    DECLOAK_RANGE = 1800
+
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
+        self.hp = 2
+        self.max_hp = 2
+        self.base_color = (20, 20, 30)  # Nearly invisible black/grey
+
+        self.stealthed = True
+        self.state = 'flanking'  # flanking, attacking, fleeing
+        self.shotgun_timer = 0.5
+
+        self._flicker = 0
+
+        # Sleek dart shape
+        self.verts = [(0, 0, 50), (-15, 0, -30), (15, 0, -30), (0, 5, -20)]
+        self.faces = [(0, 1, 3), (0, 3, 2), (1, 2, 3)]
+
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+        px, py, pz = player_pos
+        dx, dy, dz = px - self.x, py - self.y, pz - self.z
+        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        nx, ny, nz = dx / dist, dy / dist, dz / dist
+
+        # State Machine
+        if self.state == 'flanking':
+            self.stealthed = True
+            self.base_color = (20, 20, 30)
+
+            # Fly to a point to the SIDE of the player
+            pfw = get_forward_from_quat(player_orientation)
+            target_x = px + pfw[2] * 1000  # Perpendicular-ish trick
+            target_y = py + 500
+            target_z = pz - pfw[0] * 1000
+
+            if dist < self.DECLOAK_RANGE:
+                self.state = 'attacking'
+                self.stealthed = False
+                self.base_color = (100, 100, 255)  # Lights up neon blue!
+                self.shotgun_timer = 0.5
+
+        elif self.state == 'attacking':
+            target_x, target_y, target_z = px, py, pz
+            self.shotgun_timer -= dt
+
+            if self.shotgun_timer <= 0:
+                # Fire Shotgun blast
+                if global_projectiles is not None:
+                    for _ in range(7):
+                        spread = 0.15
+                        ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread,
+                                                                                               spread), nz + random.uniform(
+                            -spread, spread)
+                        global_projectiles.append({
+                            'x': self.x, 'y': self.y, 'z': self.z,
+                            'vx': ax * 3000, 'vy': ay * 3000, 'vz': az * 3000,
+                            'life': 1.5, 'damage': 8, 'homing': False,
+                            'color': (100, 100, 255), 'size_mult': 1.2
+                        })
+                self.state = 'fleeing'
+
+        elif self.state == 'fleeing':
+            target_x, target_y, target_z = px - nx * 4000, py - ny * 4000, pz - nz * 4000
+            if dist > 3500:
+                self.state = 'flanking'
+
+        # Movement
+        tdx, tdy, tdz = target_x - self.x, target_y - self.y, target_z - self.z
+        tdist = math.sqrt(tdx * tdx + tdy * tdy + tdz * tdz) or 1
+        target_v = ((tdx / tdist) * self.SPEED, (tdy / tdist) * self.SPEED, (tdz / tdist) * self.SPEED)
+
+        self._apply_banking(target_v, dt)
+        blend = min(1.0, dt * 5.0)  # Very agile
+        self.vx += (target_v[0] - self.vx) * blend
+        self.vy += (target_v[1] - self.vy) * blend
+        self.vz += (target_v[2] - self.vz) * blend
+
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
+        self._update_orientation()
+
+        # Engine trail only visible when decloaked
+        if not self.stealthed:
+            self._spawn_engine_trail()
+        self._update_engine_trail(dt)
+        if self._flicker > 0: self._flicker -= dt * 8
+
+    def on_hit(self):
+        self.hp -= 1
+        self._flicker = 1
+
+# =============================================================
+# Carrier
+# =============================================================
+
+class Carrier(Enemy):
+    SPEED = 200
+
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
+        self.hp = 50  # Boss-level HP
+        self.max_hp = 50
+        self.base_color = (150, 100, 200)  # Deep Purple
+
+        self.spawn_timer = 4.0
+        self._flicker = 0
+
+        # Massive Star Destroyer wedge shape
+        self.verts = [
+            (0, 0, 300), (-120, 20, -150), (120, 20, -150),
+            (-120, -20, -150), (120, -20, -150)
+        ]
+        self.faces = [
+            (0, 1, 2),  # Top
+            (0, 3, 4),  # Bottom
+            (0, 1, 3),  # Left side
+            (0, 2, 4),  # Right side
+            (1, 2, 4),  # Back (split)
+            (1, 3, 4)
+        ]
+
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+        self.spawn_timer -= dt
+
+        px, py, pz = player_pos
+        dx, dy, dz = px - self.x, py - self.y, pz - self.z
+        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        nx, ny, nz = dx / dist, dy / dist, dz / dist
+
+        # Behavior: Tries to stay exactly 8000 meters away from the player
+        if dist < 7000:
+            target_v = (-nx * self.SPEED, -ny * self.SPEED, -nz * self.SPEED)  # Back up
+        elif dist > 9000:
+            target_v = (nx * self.SPEED, ny * self.SPEED, nz * self.SPEED)  # Move forward
+        else:
+            target_v = (0, 0, 0)  # Hold position
+
+        self._apply_banking(target_v, dt)
+        blend = min(1.0, dt * 0.5)  # Turns like a whale
+        self.vx += (target_v[0] - self.vx) * blend
+        self.vy += (target_v[1] - self.vy) * blend
+        self.vz += (target_v[2] - self.vz) * blend
+
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
+        self._update_orientation()
+
+        # SPAWN DRONES
+        if self.spawn_timer <= 0 and dist < 12000:
+            self.spawn_timer = 5.0  # Spawns a drone every 5 seconds
+
+            if global_enemies is not None:
+                # Import here to avoid circular dependencies if Enemy is in the same file
+                # You might need to adjust this depending on how you structured your files
+                drone = SuicideDrone(
+                    self.x - self.forward[0] * 100,
+                    self.y - self.forward[1] * 100 - 50,  # Drops out of the bottom
+                    self.z - self.forward[2] * 100
+                )
+                drone.vx = self.vx
+                drone.vy = self.vy - 500  # "Drops" downward initially
+                drone.vz = self.vz
+                global_enemies.append(drone)
+
+        self._spawn_engine_trail()
+        self._update_engine_trail(dt)
+        if self._flicker > 0: self._flicker -= dt * 8
+
+    def on_hit(self):
+        self.hp -= 1
+        self._flicker = 1
