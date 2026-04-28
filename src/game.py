@@ -28,9 +28,10 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
     for e in enemies[:]:
         e.update(dt, player.pos, player.orientation, enemy_projectiles)
 
-        # Laser hits
+        # Laser hits (using squared distance to avoid sqrt)
         for l in lasers[:]:
-            if math.dist((l.x, l.y, l.z), (e.x, e.y, e.z)) < 80:
+            dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
+            if (dx*dx + dy*dy + dz*dz) < 6400:  # 80^2
                 e.on_hit()
                 lasers.remove(l)
                 for _ in range(8):

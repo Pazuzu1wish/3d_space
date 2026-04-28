@@ -243,6 +243,7 @@ class SuicideDrone(Enemy):
     def __init__(self, x,y,z):
         super().__init__(x,y,z)
         self.hp = 1
+        self.max_hp = 1
         self.base_color = (255, 30, 30)
 
         self.t = 0
@@ -359,6 +360,7 @@ class Dogfighter(Enemy):
         super().__init__(x, y, z)
 
         self.hp = 3
+        self.max_hp = 3
         self.t = 0
         self.base_color = (30, 200, 255)
 

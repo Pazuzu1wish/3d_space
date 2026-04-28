@@ -501,21 +501,14 @@ def draw_target_brackets(
             _draw_active_bracket(surface, sx, sy)
             active_screen = (sx, sy)
 
-            # Distance & hull readout
+            # Distance & hull readout (using squared distance to avoid sqrt)
             dist_m = int(math.sqrt(
                 (enemy.x - player_pos[0])**2 +
                 (enemy.y - player_pos[1])**2 +
                 (enemy.z - player_pos[2])**2
             ))
-            # Determine max HP by class type so % shows correctly
-            max_hp = getattr(enemy, 'MAX_HP', None)
-            if max_hp is None:
-                # Fall back to a common lookup
-                from .enemy import SuicideDrone, Dogfighter
-                if isinstance(enemy, Dogfighter):
-                    max_hp = 3
-                else:
-                    max_hp = 1
+            # Get max HP from the enemy object
+            max_hp = enemy.max_hp
             hull_pct = int(max(0, enemy.hp / max_hp) * 100)
 
             dist_lbl = font.render(f"{dist_m:,} m", True, _HUD_ACT_BRACKET)
