@@ -129,25 +129,27 @@ class Player:
     # ── TARGETING METHODS ────────────────────────────────────────────
 
     def target_closest(self, enemies):
-        """Lock onto the nearest living enemy."""
-        if not enemies:
+        """Lock onto the nearest living, non-stealthed enemy."""
+        visible = [e for e in enemies if not getattr(e, 'stealthed', False)]
+        if not visible:
             self.active_target = None
             return
         self.active_target = min(
-            enemies,
+            visible,
             key=lambda e: math.dist(self.pos, (e.x, e.y, e.z))
         )
 
     def cycle_targets(self, enemies):
-        """Advance to the next enemy in the list (wraps around)."""
-        if not enemies:
+        """Advance to the next non-stealthed enemy in the list (wraps around)."""
+        visible = [e for e in enemies if not getattr(e, 'stealthed', False)]
+        if not visible:
             self.active_target = None
             return
-        if self.active_target not in enemies:
-            self.active_target = enemies[0]
+        if self.active_target not in visible:
+            self.active_target = visible[0]
             return
-        idx = enemies.index(self.active_target)
-        self.active_target = enemies[(idx + 1) % len(enemies)]
+        idx = visible.index(self.active_target)
+        self.active_target = visible[(idx + 1) % len(visible)]
 
     def clear_dead_target(self, enemies):
         """Nullify the active target if it has been destroyed."""

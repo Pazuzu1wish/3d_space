@@ -267,7 +267,7 @@ class SuicideDrone(Enemy):
         if pattern_name in PATTERN_MAP:
             self.pattern = PATTERN_MAP[pattern_name]
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.t += dt
         self._pattern_check_timer += dt
 
@@ -380,7 +380,7 @@ class Dogfighter(Enemy):
     def _player_forward(self, orientation):
         return get_forward_from_quat(orientation)
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.t += dt
         self.mg_timer -= dt
         self.bolt_timer -= dt
@@ -547,7 +547,7 @@ class Sniper(Enemy):
         self.verts = [(0, 0, 80), (-10, 0, -40), (10, 0, -40), (0, -15, -40)]
         self.faces = [(0, 1, 2), (0, 1, 3), (0, 2, 3), (1, 2, 3)]
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.timer -= dt
         px, py, pz = player_pos
 

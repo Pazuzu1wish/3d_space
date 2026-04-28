@@ -26,7 +26,7 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
 
     # ── UPDATE ENEMIES ────────────────────────
     for e in enemies[:]:
-        e.update(dt, player.pos, player.orientation, enemy_projectiles)
+        e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
 
         # Laser hits (using squared distance to avoid sqrt)
         for l in lasers[:]:

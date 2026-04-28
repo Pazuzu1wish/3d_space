@@ -227,6 +227,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
     physical_bound_sq = (radius - 6) ** 2
 
     for e in enemies:
+        if getattr(e, 'stealthed', False): continue  # Stealth Interceptor — hidden from radar
         dx, dy, dz = e.x - px, e.y - py, e.z - pz
         dist_sq = dx * dx + dy * dy + dz * dz
 
@@ -479,6 +480,7 @@ def draw_target_brackets(
     active_screen = None   # store for leash line later
 
     for enemy in enemies:
+        if getattr(enemy, 'stealthed', False): continue  # Stealth Interceptor — hidden from HUD
         # Project the enemy's world position to screen
         cx, cy, cz = world_to_camera(
             enemy.x, enemy.y, enemy.z,
