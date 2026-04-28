@@ -87,12 +87,16 @@ class Player:
         YAW_RATE   = 2.5
         ROLL_RATE  = 3.0
 
-        if abs(ly) > 0.01:
-            self.orientation = rotate_pitch(self.orientation,  ly * PITCH_RATE * dt)
+        dodge_mode = handler.held('Circle')
+
+        if not dodge_mode:
+            if abs(ly) > 0.01:
+                self.orientation = rotate_pitch(self.orientation, ly * PITCH_RATE * dt)
+            if abs(lx) > 0.01:
+                self.orientation = rotate_roll(self.orientation, lx * ROLL_RATE * dt)
+
         if abs(rx) > 0.01:
-            self.orientation = rotate_yaw  (self.orientation,  rx * YAW_RATE   * dt)
-        if abs(lx) > 0.01:
-            self.orientation = rotate_roll (self.orientation,  lx * ROLL_RATE  * dt)
+            self.orientation = rotate_yaw(self.orientation, rx * YAW_RATE * dt)
 
         self.weapons_cooldown = max(0.0, self.weapons_cooldown - dt)
         self.hit_flash        = max(0.0, self.hit_flash - dt)
