@@ -63,13 +63,39 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
             enemies.remove(e)
 
     # ── UPDATE PROJECTILES ────────────────────────
-    for bolt in enemy_projectiles[:]:
-        bolt['x'] += bolt['vx'] * dt
-        bolt['y'] += bolt['vy'] * dt
-        bolt['z'] += bolt['vz'] * dt
-        bolt['life'] -= dt
-        if bolt['life'] <= 0:
-            enemy_projectiles.remove(bolt)
+        # ── UPDATE PROJECTILES ────────────────────────
+        for bolt in enemy_projectiles[:]:
+            # Process Homing Logic
+            if bolt.get('homing', False):
+                dx = player.pos[0] - bolt['x']
+                dy = player.pos[1] - bolt['y']
+                dz = player.pos[2] - bolt['z']
+                dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1
+
+                # Steering strength (higher = tighter turning)
+                turn_rate = 2.0 * dt
+
+                # Normalize current velocity
+                spd = math.sqrt(bolt['vx'] ** 2 + bolt['vy'] ** 2 + bolt['vz'] ** 2) or 1
+
+                # Blend current direction with direction to player
+                new_nx = (bolt['vx'] / spd) + (dx / dist) * turn_rate
+                new_ny = (bolt['vy'] / spd) + (dy / dist) * turn_rate
+                new_nz = (bolt['vz'] / spd) + (dz / dist) * turn_rate
+
+                new_norm = math.sqrt(new_nx ** 2 + new_ny ** 2 + new_nz ** 2) or 1
+                bolt['vx'] = (new_nx / new_norm) * spd
+                bolt['vy'] = (new_ny / new_norm) * spd
+                bolt['vz'] = (new_nz / new_norm) * spd
+
+            # Move the bolt
+            bolt['x'] += bolt['vx'] * dt
+            bolt['y'] += bolt['vy'] * dt
+            bolt['z'] += bolt['vz'] * dt
+            bolt['life'] -= dt
+
+            if bolt['life'] <= 0:
+                enemy_projectiles.remove(bolt)
 
     # ── UPDATE PARTICLES ──────────────────────
     for p in particles[:]:
@@ -93,8 +119,16 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
         proj = project_to_screen(cx, cy, cz)
         if proj:
             sx, sy, scale = proj
-            size = max(2, int(scale * 2))
-            pygame.draw.circle(screen, (255, 100, 100), (sx, sy), size)
+            # Grab customized traits, or fallback to defaults
+            color = bolt.get('color', (255, 100, 100))
+            size_mult = bolt.get('size_mult', 1.0)
+
+            size = max(2, int(scale * 2 * size_mult))
+            pygame.draw.circle(screen, color, (sx, sy), size)
+
+            # If it's a homing bolt, draw an inner white core to make it look intense
+            if bolt.get('homing', False) and size > 2:
+                pygame.draw.circle(screen, (255, 255, 255), (sx, sy), int(size / 2))
 
     draw_cockpit_hud(
         screen, W, H, player.throttle, player.current_speed, player.weapons_cooldown <= 0,

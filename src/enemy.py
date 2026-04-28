@@ -342,33 +342,34 @@ class SuicideDrone(Enemy):
         if self._pattern_cache is _pattern_direct:
             self._pattern_cache = random.choice(PATTERNS[1:])
 
-
-
 # ──────────────────────────────────────────────
 #  DOGFIGHTER (UPGRADED)
 # ──────────────────────────────────────────────
 
 class Dogfighter(Enemy):
-
-    SPEED = 1500
-    FIRE_RATE = 50.2
-    FIRE_RANGE = 3000
-    IDEAL_RANGE = 800      # How far behind the player it tries to stay
-    CIRCLE_RADIUS = 2000    # Width of its strafing/circling pattern
+    SPEED = 1800  # Slightly faster to catch up
+    FIRE_RANGE = 4500
+    IDEAL_RANGE = 1000  # Distance to hover behind player
+    CIRCLE_RADIUS = 1500  # Width of circling pattern
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
 
-        self.hp = 3
-        self.max_hp = 3
+        self.hp = 5  # Buffed HP
+        self.max_hp = 5
         self.t = 0
         self.base_color = (30, 200, 255)
 
-        self.fire_timer = random.uniform(0, self.FIRE_RATE)
-        self.aggression = random.uniform(0.7, 1.3)
+        # Weapon Timers
+        self.mg_timer = 0.0
+        self.bolt_timer = random.uniform(2.0, 5.0)
+
+        # AI States: 'positioning' or 'attack_run'
+        self.mode = 'positioning'
+        self.mode_timer = random.uniform(2.0, 4.0)
+        self.phase = random.uniform(0, math.pi * 2)
 
         self._flicker = 0
-        self.phase = random.uniform(0, math.pi * 2)  # Unique circling offset
 
         self.verts = [
             (0, 0, 60), (-40, 5, -10), (40, 5, -10),
@@ -377,40 +378,56 @@ class Dogfighter(Enemy):
         self.faces = [(0, 1, 3), (0, 2, 4), (1, 2, 5)]
 
     def _player_forward(self, orientation):
-        """Calculate player's forward vector from quaternion."""
         return get_forward_from_quat(orientation)
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None):
         self.t += dt
-        self.fire_timer -= dt
+        self.mg_timer -= dt
+        self.bolt_timer -= dt
+        self.mode_timer -= dt
 
         px, py, pz = player_pos
 
-        # 1. Find point behind the player
-        pfw = self._player_forward(player_orientation)
-        behind_x = px - pfw[0] * self.IDEAL_RANGE
-        behind_y = py - pfw[1] * self.IDEAL_RANGE
-        behind_z = pz - pfw[2] * self.IDEAL_RANGE
+        # ─── AI STATE MACHINE ──────────────────────────────────────────────────
+        if self.mode_timer <= 0:
+            if self.mode == 'positioning':
+                self.mode = 'attack_run'
+                self.mode_timer = random.uniform(2.0, 4.0)  # Spend 2-4 seconds shooting
+            else:
+                self.mode = 'positioning'
+                self.mode_timer = random.uniform(3.0, 5.0)  # Spend 3-5 seconds repositioning
+                self.phase = random.uniform(0, math.pi * 2)
 
-        # 2. Add lateral offset so it circles/strafes instead of lining up perfectly
-        offset_x = math.sin(self.t * 0.8 + self.phase) * self.CIRCLE_RADIUS
-        offset_y = math.cos(self.t * 0.6 + self.phase) * self.CIRCLE_RADIUS * 0.4
-        offset_z = math.sin(self.t * 0.5 + self.phase) * self.CIRCLE_RADIUS * 0.3
+        if self.mode == 'positioning':
+            # Evade and maneuver into the player's blind spot
+            pfw = self._player_forward(player_orientation)
+            behind_x = px - pfw[0] * self.IDEAL_RANGE
+            behind_y = py - pfw[1] * self.IDEAL_RANGE
+            behind_z = pz - pfw[2] * self.IDEAL_RANGE
 
-        target_x = behind_x + offset_x
-        target_y = behind_y + offset_y
-        target_z = behind_z + offset_z
+            offset_x = math.sin(self.t * 0.8 + self.phase) * self.CIRCLE_RADIUS
+            offset_y = math.cos(self.t * 0.6 + self.phase) * self.CIRCLE_RADIUS * 0.4
+            offset_z = math.sin(self.t * 0.5 + self.phase) * self.CIRCLE_RADIUS * 0.3
 
-        # 3. Direction & speed towards that target
+            target_x = behind_x + offset_x
+            target_y = behind_y + offset_y
+            target_z = behind_z + offset_z
+        else:
+            # Fly directly at the player (this forces the nose to point at them)
+            # Add a slight prediction lead so they don't trail behind moving targets
+            target_x = px
+            target_y = py
+            target_z = pz
+
+        # ─── MOVEMENT & BANKING ────────────────────────────────────────────────
         dx = target_x - self.x
         dy = target_y - self.y
         dz = target_z - self.z
-        dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 1.0
+        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
 
-        nx, ny, nz = dx/dist, dy/dist, dz/dist
+        nx, ny, nz = dx / dist, dy / dist, dz / dist
         target_v = (nx * self.SPEED, ny * self.SPEED, nz * self.SPEED)
 
-        # 4. Apply banking & blend velocity (unchanged from your original)
         self._apply_banking(target_v, dt)
         blend = min(1.0, dt * 4.0)
         self.vx += (target_v[0] - self.vx) * blend
@@ -423,22 +440,31 @@ class Dogfighter(Enemy):
 
         self._update_orientation()
 
-        # 5. Firing logic
+        # ─── WEAPONS SYSTEM ────────────────────────────────────────────────────
         to_px = px - self.x
         to_py = py - self.y
         to_pz = pz - self.z
-        dist_to_player = math.sqrt(to_px**2 + to_py**2 + to_pz**2) or 1.0
+        dist_to_player = math.sqrt(to_px ** 2 + to_py ** 2 + to_pz ** 2) or 1.0
 
-        if dist_to_player < self.FIRE_RANGE and self.fire_timer <= 0:
-            # Check if roughly facing player
-            to_player_norm = (to_px/dist_to_player, to_py/dist_to_player, to_pz/dist_to_player)
-            dot = (self.forward[0]*to_player_norm[0] +
-                   self.forward[1]*to_player_norm[1] +
-                   self.forward[2]*to_player_norm[2])
+        # Only fire if in an attack run, within range
+        if self.mode == 'attack_run' and dist_to_player < self.FIRE_RANGE:
+            to_player_norm = (to_px / dist_to_player, to_py / dist_to_player, to_pz / dist_to_player)
 
-            if dot > .001:  # Lower threshold = shoots while maneuvering
-                self.fire_timer = self.FIRE_RATE * random.uniform(0.7, 1.2)
-                self._fire_projectile(to_player_norm, dist_to_player, global_projectiles)
+            # Dot product: 0.85 means the enemy is facing within ~30 degrees of you
+            dot = (self.forward[0] * to_player_norm[0] +
+                   self.forward[1] * to_player_norm[1] +
+                   self.forward[2] * to_player_norm[2])
+
+            if dot > 0.85:
+                # 1. Fire Machine Gun (Rapid, Light Damage, slight spread)
+                if self.mg_timer <= 0:
+                    self.mg_timer = 0.15  # Shoots very fast!
+                    self._fire_projectile(to_player_norm, global_projectiles, w_type='mg')
+
+                # 2. Fire Heavy Homing Bolt
+                if self.bolt_timer <= 0:
+                    self.bolt_timer = random.uniform(5.0, 8.0)  # Long reload
+                    self._fire_projectile(to_player_norm, global_projectiles, w_type='bolt')
 
         # Trails & hit flicker
         self._spawn_engine_trail()
@@ -446,21 +472,52 @@ class Dogfighter(Enemy):
         if self._flicker > 0:
             self._flicker -= dt * 8
 
-    def _fire_projectile(self, aim_dir, dist, global_projectiles):
-        """Spawn a bullet. Adapt this dict structure to match your bullet system."""
-        proj_speed = 4000
-        # Add a portion of enemy velocity for realistic ballistics
-        vx = aim_dir[0] * proj_speed + self.vx * 0.4
-        vy = aim_dir[1] * proj_speed + self.vy * 0.4
-        vz = aim_dir[2] * proj_speed + self.vz * 0.4
+    def _fire_projectile(self, aim_dir, global_projectiles, w_type='mg'):
+        if global_projectiles is None: return
 
-        if global_projectiles is not None:
+        if w_type == 'mg':
+            proj_speed = 5000
+            # Add spread/inaccuracy to machine gun so player can dodge
+            spread = 0.03
+            ax = aim_dir[0] + random.uniform(-spread, spread)
+            ay = aim_dir[1] + random.uniform(-spread, spread)
+            az = aim_dir[2] + random.uniform(-spread, spread)
+            n = math.sqrt(ax * ax + ay * ay + az * az) or 1
+            ax, ay, az = ax / n, ay / n, az / n
+
+            vx = ax * proj_speed + self.vx * 0.3
+            vy = ay * proj_speed + self.vy * 0.3
+            vz = az * proj_speed + self.vz * 0.3
+
             global_projectiles.append({
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'vx': vx, 'vy': vy, 'vz': vz,
-                'life': 4.5  # seconds before auto-delete
+                'life': 3.0,
+                'damage': 2,
+                'homing': False,
+                'color': (255, 200, 50),  # Yellow/Orange tracers
+                'size_mult': 1.0
+            })
+
+        elif w_type == 'bolt':
+            proj_speed = 2200  # Slower, allowing it to turn and track
+            vx = aim_dir[0] * proj_speed + self.vx * 0.5
+            vy = aim_dir[1] * proj_speed + self.vy * 0.5
+            vz = aim_dir[2] * proj_speed + self.vz * 0.5
+
+            global_projectiles.append({
+                'x': self.x, 'y': self.y, 'z': self.z,
+                'vx': vx, 'vy': vy, 'vz': vz,
+                'life': 6.0,
+                'damage': 15,
+                'homing': True,
+                'color': (200, 50, 255),  # Scary purple bolt
+                'size_mult': 2.5
             })
 
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
+        # Getting hit aggros them instantly!
+        self.mode = 'attack_run'
+        self.mode_timer = 3.0
