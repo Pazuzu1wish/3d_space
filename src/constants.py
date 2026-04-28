@@ -3,7 +3,7 @@
 # ──────────────────────────────────────────────
 
 MAX_SUICIDE_DRONES = 0
-MAX_DOGFIGHTERS    = 3
+MAX_DOGFIGHTERS    = 0
 SPAWNS_PER_SECOND  = 1.2             # Expected number of spawns per second
 SPAWN_DIST_MIN    = 4000
 SPAWN_DIST_MAX    = 5000
