@@ -7,8 +7,6 @@ from .cockpit import draw_cockpit_hud
 from .controller import DS4Input
 from .star import Star
 from .particle import Particle
-from .enemy import SuicideDrone, Dogfighter
-from .laser import Laser
 from .player import Player
 from .constants import HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS
 from .utils import draw_damage_overlay
