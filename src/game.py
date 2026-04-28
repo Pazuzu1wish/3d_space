@@ -11,7 +11,7 @@ from .enemy import SuicideDrone, Dogfighter
 from .laser import Laser
 from .player import Player
 from .constants import HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS
-from .utils import draw_damage_overlay, draw_hp_bar
+from .utils import draw_damage_overlay
 from .director import WaveDirector
 from .encounters import ENCOUNTER_SCRIPT
 

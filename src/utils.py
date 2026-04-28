@@ -81,19 +81,3 @@ def draw_damage_overlay(screen, W, H, intensity):
     pygame.draw.rect(overlay, (220, 20, 20, alpha), (0, 0, W, H))
     screen.blit(overlay, (0, 0))
 
-def draw_hp_bar(screen, W, H, hp, max_hp=PLAYER_MAX_HP):
-    bar_w = 200
-    bar_h = 10
-    x = 20
-    y = H - 30
-    ratio = max(0.0, hp / max_hp)
-    col = (60, 220, 60) if ratio > 0.5 else (255, 200, 30) if ratio > 0.25 else (255, 50, 50)
-    pygame.draw.rect(screen, (40, 40, 40), (x, y, bar_w, bar_h), border_radius=4)
-    pygame.draw.rect(screen, col,          (x, y, int(bar_w * ratio), bar_h), border_radius=4)
-    pygame.draw.rect(screen, (100, 100, 100), (x, y, bar_w, bar_h), 1, border_radius=4)
-    try:
-        font = pygame.font.SysFont("Courier New", 11)
-    except Exception:
-        font = pygame.font.SysFont(None, 12)
-    lbl = font.render(f"HULL  {hp:3d}%", True, col)
-    screen.blit(lbl, (x, y - 14))

@@ -12,6 +12,9 @@ from .math_engine import (
     is_in_front_of_camera,
 )
 
+# ── Palette (R, G, B, Alpha) ──────────────────
+from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED
+
 # ──────────────────────────────────────────────
 #  COCKPIT HUD
 #  - Heading Tape (Compass)
@@ -21,8 +24,9 @@ from .math_engine import (
 #  - Crosshair
 # ──────────────────────────────────────────────
 
-# ── Palette (R, G, B, Alpha) ──────────────────
-from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED
+# -----------------------------------------------
+# Font and Cache
+# -----------------------------------------------
 
 _FONT_CACHE = {}
 
