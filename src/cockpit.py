@@ -416,7 +416,7 @@ def draw_crosshair(surface, cx, cy, ready):
 #  TARGET BRACKETS + LEAD INDICATOR (PIP)
 # ──────────────────────────────────────────────
 
-_LASER_SPEED = 4000.0   # Must match Laser class speed
+_LASER_SPEED = 16000.0   # Must match Laser class speed
 
 # Dim colour for untargeted enemies (slightly transparent red-brown)
 _HUD_DIM_TARGET  = (180, 40, 40, 90)
