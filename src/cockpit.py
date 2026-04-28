@@ -393,6 +393,57 @@ def draw_throttle_bar(surface, x, y, h, throttle):
     surface.blit(f.render(txt, True, col_throttle_per),
                  (x - 10, y + h + 10))
 
+# ──────────────────────────────────────────────
+#  DODGE BAR
+# ──────────────────────────────────────────────
+
+def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
+    """
+    Vertical bar mirroring the throttle bar on the left side.
+    Drains on dodge, refills over cooldown.
+    Flashes white-green on fire.
+    """
+    w = 14
+
+    # Track outline
+    pygame.draw.rect(surface, HUD_DIM, (x, y, w, h), 1)
+
+    # Fill colour — flash takes priority
+    if dodge_flash > 0:
+        flash_t = dodge_flash / 0.12          # normalise to 0..1
+        r = int(HUD_GREEN[0] + (255 - HUD_GREEN[0]) * flash_t)
+        g = int(HUD_GREEN[1] + (255 - HUD_GREEN[1]) * flash_t)
+        b = int(HUD_GREEN[2] + (255 - HUD_GREEN[2]) * flash_t)
+        col = (r, g, b)
+    elif dodge_ready:
+        col = HUD_GREEN
+    else:
+        col = HUD_AMBER
+
+    fill_h = int(h * dodge_charge)
+    if fill_h > 0:
+        # Bar fills from bottom up
+        pygame.draw.rect(surface, col, (x, y + h - fill_h, w, fill_h))
+
+    # Tick marks at 25 / 50 / 75 %
+    for pct in (0.25, 0.5, 0.75):
+        ty = int(y + h * (1.0 - pct))
+        pygame.draw.line(surface, HUD_DIM, (x + w, ty), (x + w + 2, ty), 1)
+
+    f = custom_font(10)
+    surface.blit(f.render("DCH", True, HUD_GREEN), (x - 8, y - 14))
+
+    # Ready / charging label
+    if dodge_ready:
+        status = "RDY"
+        scol   = HUD_GREEN
+    else:
+        pct    = int(dodge_charge * 100)
+        status = f"{pct:3d}%"
+        scol   = HUD_AMBER
+
+    surface.blit(f.render(status, True, scol), (x - 10, y + h + 10))
+
 
 # ──────────────────────────────────────────────
 #  CROSSHAIR
@@ -638,7 +689,9 @@ _LAST_SIZE = (0, 0)
 
 def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      orientation=None, player_pos=None, player_vel=None,
-                     enemies=None, player_hp=100, active_target=None):
+                     enemies=None, player_hp=100, active_target=None,
+                     dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0):
+
     global _HUD_OVERLAY, _LAST_SIZE
 
     # Create it only once, or if the screen size changes
@@ -655,6 +708,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
     draw_throttle_bar(_HUD_OVERLAY, W - 40, H - 180, 140, throttle)
+    draw_dodge_bar(_HUD_OVERLAY, 20, H - 180, 140,
+                   dodge_charge, dodge_ready, dodge_flash)
     print_spd(_HUD_OVERLAY, W - 130, H - 120)
     draw_speed(_HUD_OVERLAY, W - 120, H - 100, current_speed)
     print_kph(_HUD_OVERLAY, W - 110, H - 80)

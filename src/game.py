@@ -164,7 +164,10 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
         player_vel=tuple(player.vel),
         enemies=enemies,
         player_hp=player.hp,
-        active_target=player.active_target
+        active_target=player.active_target,
+        dodge_charge=player.dodge_charge,
+        dodge_ready=player.dodge_ready,
+        dodge_flash=player.dodge_flash,
     )
 
     # Damage overlay

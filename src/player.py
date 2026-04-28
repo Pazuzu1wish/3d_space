@@ -5,6 +5,11 @@ from .constants import PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SP
 from .laser import Laser
 from .particle import Particle
 
+DODGE_COOLDOWN  = 1.5
+DODGE_IMPULSE   = 1200.0
+DODGE_THRESHOLD = 0.5
+DODGE_FLASH_DUR = 0.12
+
 class Player:
     def __init__(self, pos=(0.0, 0.0, 0.0)):
         self.pos = list(pos)
@@ -19,6 +24,13 @@ class Player:
         # Targeting
         self.active_target = None          # the currently locked enemy object
         self._target_key_cd = 0.0         # prevents key repeat on T/Y
+
+        # Dodge system
+        self.dodge_cooldown = 0.0
+        self.dodge_flash = 0.0
+        DODGE_COOLDOWN = 1.5
+        DODGE_IMPULSE = 1200.0
+        DODGE_THRESHOLD = 0.5
 
     @property
     def current_speed(self):
@@ -54,6 +66,21 @@ class Player:
         if handler.held('R1'): self.throttle = min(1.0, self.throttle + dt * 2.8)
         if handler.held('L1'): self.throttle = max(-1.0, self.throttle - dt * 2.8)
         if handler.just_pressed('R3'): self.throttle = 0.0
+
+        # ── DODGE ─────────────────────────────────
+        self.dodge_cooldown = max(0.0, self.dodge_cooldown - dt)
+        self.dodge_flash = max(0.0, self.dodge_flash - dt)
+
+        if handler.held('Circle') and self.dodge_cooldown <= 0:
+            dlx, dly = handler.stick_left()
+            if abs(dlx) > DODGE_THRESHOLD or abs(dly) > DODGE_THRESHOLD:
+                _, right, up = get_basis_from_quat(self.orientation)
+                # ly negative = stick up = toward cockpit ceiling
+                self.vel[0] += (right[0] * dlx - up[0] * dly) * DODGE_IMPULSE
+                self.vel[1] += (right[1] * dlx - up[1] * dly) * DODGE_IMPULSE
+                self.vel[2] += (right[2] * dlx - up[2] * dly) * DODGE_IMPULSE
+                self.dodge_cooldown = DODGE_COOLDOWN
+                self.dodge_flash = DODGE_FLASH_DUR
 
         # ── ROTATION ──────────────────────────────
         PITCH_RATE = 3.0
@@ -155,3 +182,12 @@ class Player:
         """Nullify the active target if it has been destroyed."""
         if self.active_target is not None and self.active_target not in enemies:
             self.active_target = None
+
+    @property
+    def dodge_charge(self):
+        """0.0 = just fired, 1.0 = fully ready."""
+        return 1.0 - (self.dodge_cooldown / DODGE_COOLDOWN)
+
+    @property
+    def dodge_ready(self):
+        return self.dodge_cooldown <= 0
