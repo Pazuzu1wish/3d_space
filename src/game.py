@@ -28,7 +28,7 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
     for e in enemies[:]:
         e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
 
-        # Laser hits (using squared distance to avoid sqrt)
+        # Laser hits
         for l in lasers[:]:
             dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
             if (dx*dx + dy*dy + dz*dz) < 6400:  # 80^2
@@ -45,7 +45,7 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
             enemies.remove(e)
             continue
 
-        # Collision with player — drone is a kamikaze
+        # Collision with player
         if e.dist_to_player(player.pos) < PLAYER_COLLISION_RADIUS:
             player.take_damage(20)
             for _ in range(30):
@@ -53,7 +53,7 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
             enemies.remove(e)
             continue
 
-        # Cull enemies that are very far away AND well behind the camera
+        # Cull enemies far behind the camera
         _, _, cz = world_to_camera(
             e.x, e.y, e.z,
             player.pos[0], player.pos[1], player.pos[2],
@@ -63,46 +63,39 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
             enemies.remove(e)
 
     # ── UPDATE PROJECTILES ────────────────────────
-        # ── UPDATE PROJECTILES ────────────────────────
-        for bolt in enemy_projectiles[:]:
-            # Process Homing Logic
-            if bolt.get('homing', False):
-                dx = player.pos[0] - bolt['x']
-                dy = player.pos[1] - bolt['y']
-                dz = player.pos[2] - bolt['z']
-                dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1
+    for bolt in enemy_projectiles[:]:
+        if bolt.get('homing', False):
+            dx = player.pos[0] - bolt['x']
+            dy = player.pos[1] - bolt['y']
+            dz = player.pos[2] - bolt['z']
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 1
 
-                # Steering strength (higher = tighter turning)
-                turn_rate = 2.0 * dt
+            turn_rate = 2.0 * dt
 
-                # Normalize current velocity
-                spd = math.sqrt(bolt['vx'] ** 2 + bolt['vy'] ** 2 + bolt['vz'] ** 2) or 1
+            spd = math.sqrt(bolt['vx']**2 + bolt['vy']**2 + bolt['vz']**2) or 1
 
-                # Blend current direction with direction to player
-                new_nx = (bolt['vx'] / spd) + (dx / dist) * turn_rate
-                new_ny = (bolt['vy'] / spd) + (dy / dist) * turn_rate
-                new_nz = (bolt['vz'] / spd) + (dz / dist) * turn_rate
+            new_nx = (bolt['vx'] / spd) + (dx / dist) * turn_rate
+            new_ny = (bolt['vy'] / spd) + (dy / dist) * turn_rate
+            new_nz = (bolt['vz'] / spd) + (dz / dist) * turn_rate
 
-                new_norm = math.sqrt(new_nx ** 2 + new_ny ** 2 + new_nz ** 2) or 1
-                bolt['vx'] = (new_nx / new_norm) * spd
-                bolt['vy'] = (new_ny / new_norm) * spd
-                bolt['vz'] = (new_nz / new_norm) * spd
+            new_norm = math.sqrt(new_nx**2 + new_ny**2 + new_nz**2) or 1
+            bolt['vx'] = (new_nx / new_norm) * spd
+            bolt['vy'] = (new_ny / new_norm) * spd
+            bolt['vz'] = (new_nz / new_norm) * spd
 
-            # Move the bolt
-            bolt['x'] += bolt['vx'] * dt
-            bolt['y'] += bolt['vy'] * dt
-            bolt['z'] += bolt['vz'] * dt
-            bolt['life'] -= dt
+        bolt['x'] += bolt['vx'] * dt
+        bolt['y'] += bolt['vy'] * dt
+        bolt['z'] += bolt['vz'] * dt
+        bolt['life'] -= dt
 
-            if bolt['life'] <= 0:
-                enemy_projectiles.remove(bolt)
+        if bolt['life'] <= 0:
+            enemy_projectiles.remove(bolt)
 
     # ── UPDATE PARTICLES ──────────────────────
     for p in particles[:]:
         p.update(dt)
         if p.life <= 0:
             particles.remove(p)
-    # NOTE: Enemy spawning is now handled by WaveDirector.update() in main()
 
 def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, particles):
     screen.fill((5, 5, 15))
