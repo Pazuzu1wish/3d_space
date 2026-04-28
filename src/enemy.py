@@ -238,7 +238,7 @@ PATTERN_MAP = {
 
 class SuicideDrone(Enemy):
 
-    SPEED = 1500
+    SPEED = 1400
 
     def __init__(self, x,y,z):
         super().__init__(x,y,z)
@@ -347,7 +347,7 @@ class SuicideDrone(Enemy):
 # ──────────────────────────────────────────────
 
 class Dogfighter(Enemy):
-    SPEED = 1800  # Slightly faster to catch up
+    SPEED = 1400  # Slightly faster to catch up
     FIRE_RANGE = 4500
     IDEAL_RANGE = 1000  # Distance to hover behind player
     CIRCLE_RADIUS = 1500  # Width of circling pattern

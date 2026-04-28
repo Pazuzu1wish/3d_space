@@ -1,11 +1,56 @@
 import math
 import random
 
-from .enemy import SuicideDrone, Dogfighter
-from .utils import spawn_drone, spawn_dogfighter
+from .enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
+from .utils import (
+    spawn_drone, spawn_dogfighter, spawn_sniper,
+    spawn_corvette, spawn_minelayer, spawn_stealth_interceptor,
+)
 from .constants import (
     SPAWNS_PER_SECOND, MAX_SUICIDE_DRONES, MAX_DOGFIGHTERS,
 )
+
+# ── Per-type population caps ───────────────────────────────────────────────
+MAX_SNIPERS     = 2
+MAX_CORVETTES   = 1
+MAX_MINELAYERS  = 2
+MAX_STEALTH     = 2
+# Carriers are scripted-only — no filler cap needed
+
+# ── Filler spawn table ────────────────────────────────────────────────────
+# (enemy_class, spawn_fn, cap_attr, weight)
+# Weight controls relative probability when multiple types are eligible.
+# Higher = more likely.  Exotic types get lower weight so they feel special.
+_FILLER_TABLE = [
+    (SuicideDrone,       spawn_drone,                 'MAX_SUICIDE_DRONES', 3),
+    (Dogfighter,         spawn_dogfighter,             'MAX_DOGFIGHTERS',    3),
+    (Sniper,             spawn_sniper,                 'MAX_SNIPERS',        1),
+    (Corvette,           spawn_corvette,               'MAX_CORVETTES',      1),
+    (Minelayer,          spawn_minelayer,              'MAX_MINELAYERS',     1),
+    (StealthInterceptor, spawn_stealth_interceptor,    'MAX_STEALTH',        2),
+]
+
+_CAPS = {
+    SuicideDrone:       MAX_SUICIDE_DRONES,
+    Dogfighter:         MAX_DOGFIGHTERS,
+    Sniper:             MAX_SNIPERS,
+    Corvette:           MAX_CORVETTES,
+    Minelayer:          MAX_MINELAYERS,
+    StealthInterceptor: MAX_STEALTH,
+}
+
+# ── Encounter etype → class map (for _spawn_encounter) ───────────────────
+from .enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
+
+_ETYPE_MAP = {
+    'drone':    SuicideDrone,
+    'fighter':  Dogfighter,
+    'sniper':   Sniper,
+    'corvette': Corvette,
+    'minelayer':Minelayer,
+    'stealth':  StealthInterceptor,
+    'carrier':  Carrier,
+}
 
 
 class WaveDirector:
@@ -20,12 +65,11 @@ class WaveDirector:
     """
 
     def __init__(self, script):
-        self.script   = script
-        self.pending  = list(script)    # encounters not yet triggered
-        self.active   = []              # list of sets-of-enemies still alive
+        self.script  = script
+        self.pending = list(script)   # encounters not yet triggered
+        self.active  = []             # list of in-flight scripted groups
         self.filler_suppressed = False
 
-        # Procedural filler state
         self.spawn_timer = 0.0
         self.elapsed     = 0.0
 
@@ -40,35 +84,26 @@ class WaveDirector:
         for enc in self.pending[:]:
             ox, oy, oz = enc['origin']
             px, py, pz = player_pos
-            dist = math.sqrt((ox-px)**2 + (oy-py)**2 + (oz-pz)**2)
+            dist = math.sqrt((ox - px) ** 2 + (oy - py) ** 2 + (oz - pz) ** 2)
 
             if dist < enc['trigger_dist']:
                 spawned = self._spawn_encounter(enc, player_pos, enemies)
                 self.pending.remove(enc)
 
                 if not enc.get('filler', True):
-                    # Track this group so we know when it is cleared
                     self.active.append({'enemies': spawned, 'filler_ok': False})
                     self.filler_suppressed = True
 
-        # ── EXPIRE COMPLETED SCRIPTED ENCOUNTERS ─────────────────
+        # ── EXPIRE COMPLETED SCRIPTED ENCOUNTERS ──────────────────
         if self.active:
             still_alive = []
             for group in self.active:
-                # Keep enemies that are still in the global enemies list
                 surviving = [e for e in group['enemies'] if e in enemies]
                 if surviving:
                     group['enemies'] = surviving
                     still_alive.append(group)
-                # else: all dead — group is done
-
             self.active = still_alive
-
-            # Re-evaluate suppression — suppress only while any
-            # non-filler group is still alive
-            self.filler_suppressed = any(
-                not g['filler_ok'] for g in self.active
-            )
+            self.filler_suppressed = any(not g['filler_ok'] for g in self.active)
 
         # ── PROCEDURAL FILLER ─────────────────────────────────────
         if not self.filler_suppressed:
@@ -86,33 +121,27 @@ class WaveDirector:
         return max(2.0, 6.0 - self.elapsed * 0.02)
 
     def _spawn_encounter(self, enc, player_pos, enemies):
-        """Spawn all enemies in an encounter; return list of spawned objects."""
+        """Instantiate all enemies in a scripted encounter."""
         ox, oy, oz = enc['origin']
-        px, py, pz = player_pos
         spawned = []
 
-        for (etype, (rx, ry, rz)) in enc['enemies']:
-            pos = (ox + rx, oy + ry, oz + rz)
+        for etype, (rx, ry, rz) in enc['enemies']:
+            cls = _ETYPE_MAP.get(etype)
+            if cls is None:
+                print(f"[WaveDirector] Unknown etype '{etype}' — skipped")
+                continue
 
-            if etype == 'drone':
-                e = SuicideDrone(*pos)
-                # Assign pattern based on where the drone sits relative to
-                # the encounter origin vs. the player's approach direction.
-                # Drones off to the sides get weave; those directly ahead get
-                # a more aggressive direct approach.
-                lateral = math.sqrt(rx*rx + ry*ry)
+            e = cls(ox + rx, oy + ry, oz + rz)
+
+            # Give scripted drones a sensible movement pattern
+            if cls is SuicideDrone:
+                lateral = math.sqrt(rx * rx + ry * ry)
                 if lateral > 300:
                     e.set_pattern('weave')
                 elif rz > 0:
-                    # Behind the player's expected approach — intercept
                     e.set_pattern('direct')
                 else:
                     e.set_pattern('wobble')
-
-            elif etype == 'fighter':
-                e = Dogfighter(*pos)
-            else:
-                continue
 
             enemies.append(e)
             spawned.append(e)
@@ -120,19 +149,21 @@ class WaveDirector:
         return spawned
 
     def _spawn_filler(self, player_pos, player_orientation, enemies):
-        """Procedural background spawning — mirrors the old game.py logic."""
-        num_drones   = sum(1 for e in enemies if isinstance(e, SuicideDrone))
-        num_fighters = sum(1 for e in enemies if isinstance(e, Dogfighter))
+        """Weighted random filler spawn, respecting per-type caps."""
+        # Count current enemies by type
+        counts = {}
+        for e in enemies:
+            counts[type(e)] = counts.get(type(e), 0) + 1
 
-        can_drone   = num_drones   < MAX_SUICIDE_DRONES
-        can_fighter = num_fighters < MAX_DOGFIGHTERS
+        # Build eligible pool
+        pool = []
+        for cls, fn, _cap_name, weight in _FILLER_TABLE:
+            cap = _CAPS.get(cls, 0)
+            if counts.get(cls, 0) < cap:
+                pool.extend([(cls, fn)] * weight)
 
-        if can_drone and can_fighter:
-            if random.random() < 0.5:
-                enemies.append(spawn_drone(player_pos, player_orientation))
-            else:
-                enemies.append(spawn_dogfighter(player_pos, player_orientation))
-        elif can_drone:
-            enemies.append(spawn_drone(player_pos, player_orientation))
-        elif can_fighter:
-            enemies.append(spawn_dogfighter(player_pos, player_orientation))
+        if not pool:
+            return   # all caps reached
+
+        _, spawn_fn = random.choice(pool)
+        enemies.append(spawn_fn(player_pos, player_orientation))
