@@ -109,7 +109,41 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
 
     draw_args = (player.pos, player.orientation)
     for star in stars:  star.draw(screen, *draw_args)
-    for e in enemies:   e.draw(screen, *draw_args)
+
+    # ── DRAW ENEMIES & SNIPER LASERS ────────────────
+    for e in enemies:
+        e.draw(screen, *draw_args)
+
+        # If this is a Sniper in the charging state, draw the targeting beam!
+        if getattr(e, 'state', '') == 'charging':
+            # 1. Figure out where the sniper is on the screen
+            cx, cy, cz = world_to_camera(e.x, e.y, e.z, *draw_args[0], draw_args[1])
+
+            if cz > 0.1:  # Only draw if the sniper is in front of the camera
+                proj = project_to_screen(cx, cy, cz)
+                if proj:
+                    sx, sy, scale = proj
+
+                    # 2. Calculate intensity (Charge timer goes 1.5 down to 0)
+                    intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', 1.5) / 1.5))
+
+                    # 3. Add an unstable jitter effect that gets worse as it charges
+                    jitter = math.sin(pygame.time.get_ticks() * 0.05) * (5 * intensity)
+                    jx, jy = sx + jitter, sy - jitter
+
+                    # 4. Draw outer red glow (gets thicker)
+                    thickness = max(1, int(8 * intensity))
+                    pygame.draw.line(screen, (255, 0, 0), (jx, jy), (W//2, H//2), thickness)
+
+                    # 5. Draw inner white-hot core right before firing
+                    if intensity > 0.4:
+                        pygame.draw.line(screen, (255, 255, 255), (jx, jy), (W//2, H//2), max(1, thickness - 3))
+
+                    # 6. Draw a bright glare on the front of the sniper's ship
+                    glare = int(35 * intensity * scale)
+                    if glare > 0:
+                        pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
+
     for p in particles: p.draw(screen, *draw_args)
     for l in lasers:    l.draw(screen, *draw_args)
 
