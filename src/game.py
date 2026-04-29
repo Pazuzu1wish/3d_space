@@ -8,7 +8,13 @@ from .controller import DS4Input
 from .star import Star
 from .particle import Particle
 from .player import Player
-from .constants import HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS
+from .constants import (
+    HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
+    ENEMY_HIT_RADIUS_SQ, ENEMY_CULL_DISTANCE, HOMING_TURN_RATE,
+    PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
+    COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
+    SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER
+)
 from .utils import draw_damage_overlay
 from .director import WaveDirector
 from .encounters import ENCOUNTER_SCRIPT
@@ -31,24 +37,24 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
         # Laser hits
         for l in lasers[:]:
             dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
-            if (dx*dx + dy*dy + dz*dz) < 6400:  # 80^2
+            if (dx*dx + dy*dy + dz*dz) < ENEMY_HIT_RADIUS_SQ:
                 e.on_hit()
                 lasers.remove(l)
-                for _ in range(8):
+                for _ in range(PARTICLES_ON_HIT):
                     particles.append(Particle(e.x, e.y, e.z))
                 break
 
         # Drone destroyed
         if e.hp <= 0:
-            for _ in range(25):
+            for _ in range(PARTICLES_ON_DESTROY):
                 particles.append(Particle(e.x, e.y, e.z))
             enemies.remove(e)
             continue
 
         # Collision with player
         if e.dist_to_player(player.pos) < PLAYER_COLLISION_RADIUS:
-            player.take_damage(20)
-            for _ in range(30):
+            player.take_damage(COLLISION_DAMAGE)
+            for _ in range(PARTICLES_ON_PLAYER_HIT):
                 particles.append(Particle(e.x, e.y, e.z))
             enemies.remove(e)
             continue
@@ -59,7 +65,7 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
             player.pos[0], player.pos[1], player.pos[2],
             player.orientation,
         )
-        if cz < -8000:
+        if cz < ENEMY_CULL_DISTANCE:
             enemies.remove(e)
 
     # ── UPDATE PROJECTILES ────────────────────────
@@ -68,9 +74,10 @@ def update_entities(dt, player, enemies, lasers, enemy_projectiles, particles):
             dx = player.pos[0] - bolt['x']
             dy = player.pos[1] - bolt['y']
             dz = player.pos[2] - bolt['z']
-            dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 1
+            dist_sq = dx*dx + dy*dy + dz*dz
+            dist = math.sqrt(dist_sq) if dist_sq > 0 else 1
 
-            turn_rate = 2.0 * dt
+            turn_rate = HOMING_TURN_RATE * dt
 
             spd = math.sqrt(bolt['vx']**2 + bolt['vy']**2 + bolt['vz']**2) or 1
 
@@ -112,16 +119,16 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
             # 1. Figure out where the sniper is on the screen
             cx, cy, cz = world_to_camera(e.x, e.y, e.z, *draw_args[0], draw_args[1])
 
-            if cz > 0.1:  # Only draw if the sniper is in front of the camera
+            if cz > CAMERA_CLIP_NEAR:  # Only draw if the sniper is in front of the camera
                 proj = project_to_screen(cx, cy, cz)
                 if proj:
                     sx, sy, scale = proj
 
-                    # 2. Calculate intensity (Charge timer goes 1.5 down to 0)
-                    intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', 1.5) / 1.5))
+                    # 2. Calculate intensity (Charge timer goes SNIPER_CHARGE_TIME down to 0)
+                    intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', SNIPER_CHARGE_TIME) / SNIPER_CHARGE_TIME))
 
                     # 3. Add an unstable jitter effect that gets worse as it charges
-                    jitter = math.sin(pygame.time.get_ticks() * 0.05) * (5 * intensity)
+                    jitter = math.sin(pygame.time.get_ticks() * 0.05) * (SNIPER_CHARGE_JITTER * intensity)
                     jx, jy = sx + jitter, sy - jitter
 
                     # 4. Draw outer red glow (gets thicker)
@@ -129,11 +136,11 @@ def draw_game(screen, W, H, player, stars, enemies, lasers, enemy_projectiles, p
                     pygame.draw.line(screen, (255, 0, 0), (jx, jy), (W//2, H//2), thickness)
 
                     # 5. Draw inner white-hot core right before firing
-                    if intensity > 0.4:
+                    if intensity > SNIPER_CHARGE_CORE_THRESHOLD:
                         pygame.draw.line(screen, (255, 255, 255), (jx, jy), (W//2, H//2), max(1, thickness - 3))
 
                     # 6. Draw a bright glare on the front of the sniper's ship
-                    glare = int(35 * intensity * scale)
+                    glare = int(SNIPER_GLARE_MULTIPLIER * intensity * scale)
                     if glare > 0:
                         pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
 

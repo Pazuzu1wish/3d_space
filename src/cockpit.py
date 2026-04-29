@@ -13,7 +13,7 @@ from .math_engine import (
 )
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED
+from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
 
 # ──────────────────────────────────────────────
 #  COCKPIT HUD
@@ -410,7 +410,7 @@ def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
 
     # Fill colour — flash takes priority
     if dodge_flash > 0:
-        flash_t = dodge_flash / 0.12          # normalise to 0..1
+        flash_t = dodge_flash / DODGE_FLASH_DURATION  # normalise to 0..1
         r = int(HUD_GREEN[0] + (255 - HUD_GREEN[0]) * flash_t)
         g = int(HUD_GREEN[1] + (255 - HUD_GREEN[1]) * flash_t)
         b = int(HUD_GREEN[2] + (255 - HUD_GREEN[2]) * flash_t)

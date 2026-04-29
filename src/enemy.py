@@ -8,6 +8,7 @@ from .math_engine import (
     basis_from_forward,
     get_forward_from_quat,
 )
+from .constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
 
 
 # ──────────────────────────────────────────────
@@ -102,7 +103,7 @@ class Enemy:
             proj = project_to_screen(cx, cy, cz)
             if proj:
                 sx, sy, scale = proj
-                ratio = max(0.0, life / (self.trail_life or 0.1))
+                ratio = max(0.0, life / (self.trail_life or TRAIL_LIFE_DIVISOR))
                 size = max(1, int(scale * base_size * 4 * ratio))
 
                 # Fade color out as it dies
@@ -467,7 +468,7 @@ class Dogfighter(Enemy):
 
             if dot > 0.85:
                 if self.mg_timer <= 0:
-                    self.mg_timer = 0.15
+                    self.mg_timer = MG_COOLDOWN
                     self._fire_projectile(to_player_norm, global_projectiles, w_type='mg')
 
                 if self.bolt_timer <= 0:
@@ -893,7 +894,7 @@ class StealthInterceptor(Enemy):
             if self.shotgun_timer <= 0:
                 if global_projectiles is not None:
                     for _ in range(7):
-                        spread = 0.15
+                        spread = WEAPON_SPREAD
                         ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread,
                                                                                                spread), nz + random.uniform(
                             -spread, spread)
