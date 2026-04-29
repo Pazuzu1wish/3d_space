@@ -21,6 +21,41 @@ DRAG = 0.01
 MAX_SPEED = 2000.0
 
 # ──────────────────────────────────────────────
+# COMBAT & COLLISION CONSTANTS
+# ──────────────────────────────────────────────
+
+ENEMY_HIT_RADIUS_SQ = 6400          # squared radius for laser-enemy collision (80^2)
+ENEMY_CULL_DISTANCE = -8000         # enemies behind this are culled
+HOMING_TURN_RATE = 2.0              # homing projectile turn rate per second
+PARTICLES_ON_HIT = 8                # particles spawned when enemy hit
+PARTICLES_ON_DESTROY = 25           # particles spawned when enemy destroyed
+PARTICLES_ON_PLAYER_HIT = 30        # particles spawned when player hit
+COLLISION_DAMAGE = 20               # damage taken from enemy collision
+
+# ──────────────────────────────────────────────
+# CONTROLLER CONSTANTS
+# ──────────────────────────────────────────────
+
+DEADZONE_DEFAULT = 0.20             # radial deadzone for analog sticks
+CONTROLLER_LOG_THRESHOLD = 0.15     # threshold for logging controller input
+TRIGGER_LOG_THRESHOLD = 0.1         # threshold for logging trigger movement
+
+# ──────────────────────────────────────────────
+# UI & VISUAL CONSTANTS
+# ──────────────────────────────────────────────
+
+DODGE_FLASH_DURATION = 0.12         # seconds for dodge flash effect
+HIT_FLASH_NORMALIZE = 0.12          # normalize factor for hit flash
+CAMERA_CLIP_NEAR = 0.1              # near clipping plane for camera
+SNIPER_CHARGE_TIME = 1.5            # seconds for sniper charge phase
+SNIPER_CHARGE_JITTER = 5.0          # jitter multiplier for sniper beam
+SNIPER_CHARGE_CORE_THRESHOLD = 0.4  # intensity threshold for white core
+SNIPER_GLARE_MULTIPLIER = 35        # multiplier for sniper glare size
+MG_COOLDOWN = 0.15                  # machine gun cooldown in seconds
+WEAPON_SPREAD = 0.15                # weapon spread in radians
+TRAIL_LIFE_DIVISOR = 0.1            # divisor for trail life ratio calculation
+
+# ──────────────────────────────────────────────
 # UI CONSTANTS
 # ──────────────────────────────────────────────
 

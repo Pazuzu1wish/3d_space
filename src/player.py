@@ -1,14 +1,13 @@
 import pygame
 import math
 from .math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
-from .constants import PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED, HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS
+from .constants import (
+    PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
+    HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
+    DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION
+)
 from .laser import Laser
 from .particle import Particle
-
-DODGE_COOLDOWN  = 1.5
-DODGE_IMPULSE   = 1200.0
-DODGE_THRESHOLD = 0.5
-DODGE_FLASH_DUR = 0.12
 
 SHIELD_MAX       = 100
 SHIELD_RECHARGE  = 25.0   # units per second
@@ -100,7 +99,7 @@ class Player:
                 self.vel[1] += (right[1] * dlx - up[1] * dly) * DODGE_IMPULSE
                 self.vel[2] += (right[2] * dlx - up[2] * dly) * DODGE_IMPULSE
                 self.dodge_cooldown = DODGE_COOLDOWN
-                self.dodge_flash = DODGE_FLASH_DUR
+                self.dodge_flash = DODGE_FLASH_DURATION
 
         # ── ROTATION ──────────────────────────────
         PITCH_RATE = 3.0
