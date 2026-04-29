@@ -52,7 +52,16 @@ class Game:
         self.enemy_projectiles = []
 
         self.running = True
+        
+        # Track which enemies are registered in spatial partition
+        self._registered_enemies = set()
 
+    def _sync_enemy_registration(self, enemies):
+        """Register any new enemies with spatial partition."""
+        for e in enemies:
+            if id(e) not in self._registered_enemies:
+                self.spatial.register_entity(e, (e.x, e.y, e.z), radius=50.0)
+                self._registered_enemies.add(id(e))
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
         # ── UPDATE LASERS (using pool) ─────────────────────────
@@ -65,15 +74,6 @@ class Game:
         for e in enemies[:]:
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
 
-            # Laser hits — iterate active lasers directly (lasers aren’t in the spatial partition)
-            for l in self.laser_pool.get_active()[:]:
-                dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
-                if (dx*dx + dy*dy + dz*dz) < ENEMY_HIT_RADIUS_SQ:
-                    e.on_hit()
-                    l.life = 0  # Pool’s own update() will recycle it next tick
-                    for _ in range(PARTICLES_ON_HIT):
-                        self.particle_pool.spawn(e.x, e.y, e.z)
-                    break
 
             # Drone destroyed
             if e.hp <= 0:
@@ -81,6 +81,7 @@ class Game:
                     self.particle_pool.spawn(e.x, e.y, e.z)
                 # Remove from spatial partition
                 self.spatial.unregister_entity(e)
+                self._registered_enemies.discard(id(e))
                 enemies.remove(e)
                 continue
 
@@ -91,6 +92,7 @@ class Game:
                     self.particle_pool.spawn(e.x, e.y, e.z)
                 # Remove from spatial partition
                 self.spatial.unregister_entity(e)
+                self._registered_enemies.discard(id(e))
                 enemies.remove(e)
                 continue
 
@@ -103,7 +105,26 @@ class Game:
             if cz < ENEMY_CULL_DISTANCE:
                 # Remove from spatial partition
                 self.spatial.unregister_entity(e)
+                self._registered_enemies.discard(id(e))
                 enemies.remove(e)
+
+        # ── LASER HITS (spatial query) ─────────────────────────────
+        # Iterate active lasers and query nearby enemies using spatial partition
+        for l in self.laser_pool.get_active()[:]:
+            # Query enemies near the laser position (~collision radius)
+            nearby_enemies = self.spatial.query_collision((l.x, l.y, l.z), 100.0)
+            
+            for e in nearby_enemies:
+                if e not in enemies:  # Skip if enemy was already removed
+                    continue
+                    
+                dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
+                if (dx*dx + dy*dy + dz*dz) < ENEMY_HIT_RADIUS_SQ:
+                    e.on_hit()
+                    l.life = 0  # Pool's own update() will recycle it next tick
+                    for _ in range(PARTICLES_ON_HIT):
+                        self.particle_pool.spawn(e.x, e.y, e.z)
+                    break
 
         # ── UPDATE PROJECTILES ────────────────────────
         for bolt in enemy_projectiles[:]:
@@ -244,6 +265,7 @@ class Game:
 
             # ── UPDATE ────────────────────────────────
             self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles)
+            self._sync_enemy_registration(self.enemies)
             self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
             self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
 
