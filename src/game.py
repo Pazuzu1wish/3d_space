@@ -177,13 +177,7 @@ class Game:
 
         # Draw particles from pool
         for p in self.particle_pool.get_active_particles():
-            # Create temporary particle object for drawing
-            temp_particle = type('TempParticle', (), {
-                'x': p['x'], 'y': p['y'], 'z': p['z'],
-                'life': p['life'], 'color': p['color']
-            })()
-            temp_particle.draw = lambda surf, ppos, prot: self._draw_particle(surf, ppos, prot, p)
-            temp_particle.draw(screen, *draw_args)
+            self._draw_particle(screen, *draw_args, p)
         
         # Draw lasers from pool
         for l in self.laser_pool.get_active():
