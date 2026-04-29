@@ -3,9 +3,6 @@ import pygame
 import math
 from .math_engine import (
     get_basis_from_quat,
-    get_forward_from_quat,
-    quat_rotate_vec,
-    quat_conjugate,
     world_to_camera,
     project_to_screen,
     calculate_lead_position,
