@@ -8,6 +8,7 @@ from .controller import DS4Input
 from .star import Star
 from .particle import Particle
 from .player import Player
+from .laser import Laser
 from .constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     ENEMY_HIT_RADIUS_SQ, ENEMY_CULL_DISTANCE, HOMING_TURN_RATE,
@@ -18,6 +19,8 @@ from .constants import (
 from .utils import draw_damage_overlay
 from .director import WaveDirector
 from .encounters import ENCOUNTER_SCRIPT
+from .object_pool import ParticlePool, LaserPool
+from .spatial_partition import SpatialPartition
 
 # ──────────────────────────────────────────────
 # MAIN LOOP
@@ -37,40 +40,51 @@ class Game:
         self.player = Player()
         self.director = WaveDirector(ENCOUNTER_SCRIPT)
 
+        # Initialize object pools for performance
+        self.particle_pool = ParticlePool(Particle, initial_size=300, max_size=1500)
+        self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
+        
+        # Initialize spatial partitioning for collision detection
+        self.spatial = SpatialPartition(world_size=20000.0, cell_size=500.0)
+
         self.stars = [Star(self.player.pos) for _ in range(250)]
         self.enemies = []
-        self.lasers = []
-        self.particles = []
         self.enemy_projectiles = []
 
         self.running = True
 
 
-    def update_entities(self, dt, player, enemies, lasers, enemy_projectiles, particles):
-        # ── UPDATE LASERS ─────────────────────────
-        for l in lasers[:]:
-            l.update(dt)
-            if l.life <= 0:
-                lasers.remove(l)
+    def update_entities(self, dt, player, enemies, enemy_projectiles):
+        # ── UPDATE LASERS (using pool) ─────────────────────────
+        self.laser_pool.update(dt)
+        
+        # ── UPDATE PARTICLES (using pool) ──────────────────────
+        self.particle_pool.update(dt)
 
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
 
-            # Laser hits
-            for l in lasers[:]:
+            # Laser hits - using spatial partitioning for efficient collision detection
+            nearby_lasers = self.spatial.query_collision((e.x, e.y, e.z), radius=50.0)
+            for l in nearby_lasers:
                 dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
                 if (dx*dx + dy*dy + dz*dz) < ENEMY_HIT_RADIUS_SQ:
                     e.on_hit()
-                    lasers.remove(l)
+                    # Release laser back to pool
+                    self.laser_pool._active.remove(l)
+                    self.laser_pool._pool.append(l)
+                    # Spawn particles using pool
                     for _ in range(PARTICLES_ON_HIT):
-                        particles.append(Particle(e.x, e.y, e.z))
+                        self.particle_pool.spawn(e.x, e.y, e.z)
                     break
 
             # Drone destroyed
             if e.hp <= 0:
                 for _ in range(PARTICLES_ON_DESTROY):
-                    particles.append(Particle(e.x, e.y, e.z))
+                    self.particle_pool.spawn(e.x, e.y, e.z)
+                # Remove from spatial partition
+                self.spatial.unregister_entity(e)
                 enemies.remove(e)
                 continue
 
@@ -78,7 +92,9 @@ class Game:
             if e.dist_to_player(player.pos) < PLAYER_COLLISION_RADIUS:
                 player.take_damage(COLLISION_DAMAGE)
                 for _ in range(PARTICLES_ON_PLAYER_HIT):
-                    particles.append(Particle(e.x, e.y, e.z))
+                    self.particle_pool.spawn(e.x, e.y, e.z)
+                # Remove from spatial partition
+                self.spatial.unregister_entity(e)
                 enemies.remove(e)
                 continue
 
@@ -89,6 +105,8 @@ class Game:
                 player.orientation,
             )
             if cz < ENEMY_CULL_DISTANCE:
+                # Remove from spatial partition
+                self.spatial.unregister_entity(e)
                 enemies.remove(e)
 
         # ── UPDATE PROJECTILES ────────────────────────
@@ -121,13 +139,7 @@ class Game:
             if bolt['life'] <= 0:
                 enemy_projectiles.remove(bolt)
 
-        # ── UPDATE PARTICLES ──────────────────────
-        for p in particles[:]:
-            p.update(dt)
-            if p.life <= 0:
-                particles.remove(p)
-
-    def draw_game(self, screen, W, H, player, stars, enemies, lasers, enemy_projectiles, particles):
+    def draw_game(self, screen, W, H, player, stars, enemies, enemy_projectiles):
         screen.fill((5, 5, 15))
 
         draw_args = (player.pos, player.orientation)
@@ -167,8 +179,19 @@ class Game:
                         if glare > 0:
                             pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
 
-        for p in particles: p.draw(screen, *draw_args)
-        for l in lasers:    l.draw(screen, *draw_args)
+        # Draw particles from pool
+        for p in self.particle_pool.get_active_particles():
+            # Create temporary particle object for drawing
+            temp_particle = type('TempParticle', (), {
+                'x': p['x'], 'y': p['y'], 'z': p['z'],
+                'life': p['life'], 'color': p['color']
+            })()
+            temp_particle.draw = lambda surf, ppos, prot: self._draw_particle(surf, ppos, prot, p)
+            temp_particle.draw(screen, *draw_args)
+        
+        # Draw lasers from pool
+        for l in self.laser_pool.get_active():
+            l.draw(screen, *draw_args)
 
         # Draw projectiles
         for bolt in enemy_projectiles:
@@ -204,6 +227,15 @@ class Game:
 
         # Damage overlay
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
+    
+    def _draw_particle(self, surf, ppos, prot, pdata):
+        """Helper method to draw a particle from pool data."""
+        cx, cy, cz = world_to_camera(pdata['x'], pdata['y'], pdata['z'], *ppos, prot)
+        proj = project_to_screen(cx, cy, cz)
+        if proj:
+            sx, sy, scale = proj
+            size = max(1, int(15 * scale * pdata['life']))
+            pygame.draw.circle(surf, pdata['color'], (sx, sy), size)
 
     def main(self):
 
