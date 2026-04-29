@@ -65,16 +65,12 @@ class Game:
         for e in enemies[:]:
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
 
-            # Laser hits - using spatial partitioning for efficient collision detection
-            nearby_lasers = self.spatial.query_collision((e.x, e.y, e.z), radius=50.0)
-            for l in nearby_lasers:
+            # Laser hits — iterate active lasers directly (lasers aren’t in the spatial partition)
+            for l in self.laser_pool.get_active()[:]:
                 dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
                 if (dx*dx + dy*dy + dz*dz) < ENEMY_HIT_RADIUS_SQ:
                     e.on_hit()
-                    # Release laser back to pool
-                    self.laser_pool._active.remove(l)
-                    self.laser_pool._pool.append(l)
-                    # Spawn particles using pool
+                    l.life = 0  # Pool’s own update() will recycle it next tick
                     for _ in range(PARTICLES_ON_HIT):
                         self.particle_pool.spawn(e.x, e.y, e.z)
                     break
@@ -253,8 +249,8 @@ class Game:
             keys = pygame.key.get_pressed()
 
             # ── UPDATE ────────────────────────────────
-            self.player.update(dt, self.handler, keys, self.lasers, self.particles, self.enemy_projectiles)
-            self.update_entities(dt, self.player, self.enemies, self.lasers, self.enemy_projectiles, self.particles)
+            self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles)
+            self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
             self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
 
             # ── TARGETING ──────────────────────────────────────
@@ -266,7 +262,7 @@ class Game:
                 self.player.cycle_targets(self.enemies)
 
             # ── DRAW ──────────────────────────────────
-            self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.lasers, self.enemy_projectiles, self.particles)
+            self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.enemy_projectiles)
 
             pygame.display.flip()
             self.handler.update()

@@ -6,8 +6,6 @@ from .constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION
 )
-from .laser import Laser
-from .particle import Particle
 
 SHIELD_MAX       = 100
 SHIELD_RECHARGE  = 25.0   # units per second
@@ -154,14 +152,16 @@ class Player:
             forward, right, _ = get_basis_from_quat(self.orientation)
             rfx, rfy, rfz = forward
             rrx, rry, rrz = right
+            LASER_SPEED = 16000
             offset = 40
             for side in (-1, 1):
-                wing_pos = [
-                    self.pos[0] + rrx * offset * side + rfx * 20,
-                    self.pos[1] + rry * offset * side + rfy * 20,
-                    self.pos[2] + rrz * offset * side + rfz * 20,
-                ]
-                lasers.append(Laser(wing_pos, self.orientation))
+                wx = self.pos[0] + rrx * offset * side + rfx * 20 + rfx * 50
+                wy = self.pos[1] + rry * offset * side + rfy * 20 + rfy * 50
+                wz = self.pos[2] + rrz * offset * side + rfz * 20 + rfz * 50
+                lasers.fire(
+                    wx, wy, wz,
+                    rfx * LASER_SPEED, rfy * LASER_SPEED, rfz * LASER_SPEED
+                )
             self.weapons_cooldown = 0.25
             
         # ── CHECK PROJECTILE HITS ─────────────────────
@@ -170,7 +170,7 @@ class Player:
                 self.take_damage(15)
                 enemy_projectiles.remove(bolt)
                 for _ in range(12):
-                    particles.append(Particle(self.pos[0], self.pos[1], self.pos[2]))
+                    particles.spawn(self.pos[0], self.pos[1], self.pos[2])
 
     def take_damage(self, amount):
         self.shield_regen_timer = SHIELD_DELAY
