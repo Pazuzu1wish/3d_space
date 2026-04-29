@@ -5,8 +5,8 @@
 MAX_SUICIDE_DRONES = 0
 MAX_DOGFIGHTERS    = 0
 SPAWNS_PER_SECOND  = 1.2             # Expected number of spawns per second
-SPAWN_DIST_MIN    = 4000
-SPAWN_DIST_MAX    = 5000
+SPAWN_DIST_MIN    = 7000
+SPAWN_DIST_MAX    = 10000
 SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
 SPAWN_YAW_SPREAD  = 3.55            # radians either side of yaw-forward (≈ ±31°)
 
@@ -18,7 +18,7 @@ HIT_FLASH_DURATION = 0.25          # seconds screen flashes red on hit
 MAX_THRUST = 500
 MAX_RETRO_THRUST = 250
 DRAG = 0.01
-MAX_SPEED = 1500.0
+MAX_SPEED = 2000.0
 
 # ──────────────────────────────────────────────
 # UI CONSTANTS
