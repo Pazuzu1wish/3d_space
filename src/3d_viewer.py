@@ -18,6 +18,8 @@ class Viewer:
         pygame.display.set_caption("3D Entity Viewer - Ship Modeler")
         self.clock = pygame.time.Clock()
 
+        self.running = True
+
         # Instantiate the controller handler
         self.handler = DS4Input
 
@@ -67,7 +69,7 @@ class Viewer:
     def handle_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False
+                self.running = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -191,13 +193,11 @@ class Viewer:
             self.screen.blit(surface, (15, 15 + (i * 22)))
 
     def run(self):
-        running = True
-        while running:
+        while self.running:
             dt = self.clock.tick(60) / 1000.0
 
             # --- EVENTS ---
-            if not self.handle_input():
-                break
+            self.handle_input()
 
             # --- LOGIC ---
             self.update_trails(dt)
