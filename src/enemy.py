@@ -689,6 +689,7 @@ class Corvette(Enemy):
         self.verts = [
             (0, -20, 250),  # 0: Nose Bot
             (0, 20, 250),  # 1: Nose Top
+
             (-60, -30, 100),  # 2: Mid Hull Bot L
             (60, -30, 100),  # 3: Mid Hull Bot R
             (-60, 30, 100),  # 4: Mid Hull Top L
@@ -704,7 +705,9 @@ class Corvette(Enemy):
             (0, 1, 4),  # 0 OK
             (0, 4, 2),  # 1 OK
             (0, 3, 1),  # 2 OK
-            (0, 3, 5),  # 3 OK
+            (0, 3, 5),
+            (0, 2, 3),  # Nose bottom cap  — closes the bottom between nose and mid-hull
+            (1, 3, 5),  # Nose top-right   — closes top-right wedge (mirror of what (0,1,4) does on left
             (1, 5, 4),  # 4 OK
             (2, 8, 6),  # 5 OK
             (2, 4, 8),  # 6 OK
@@ -719,6 +722,7 @@ class Corvette(Enemy):
             (5, 9, 10),  # 15 OK
             (8, 10, 11),  # 16 OK
             (9, 11, 10),  # 17 OK
+
         ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
