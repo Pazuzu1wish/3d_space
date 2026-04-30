@@ -10,7 +10,6 @@ from src.math_engine import (
 )
 from src.constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
 
-
 # ──────────────────────────────────────────────
 #  BASE ENEMY
 # ──────────────────────────────────────────────
@@ -168,7 +167,7 @@ class Enemy:
             vx2, vy2, vz2 = v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]
 
             fnz = ux * vy2 - uy * vx2
-            #if fnz >= 0: continue # backface culling uncomment to turn on
+            if fnz >= 0: continue # backface culling
 
             p1, p2, p3 = projected[i1], projected[i2], projected[i3]
             if not (p1 and p2 and p3): continue

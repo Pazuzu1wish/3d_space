@@ -1,26 +1,26 @@
 import pygame
 import math
-from .math_engine import (
+from src.math_engine import (
     world_to_camera, project_to_screen
 )
-from .cockpit import draw_cockpit_hud
-from .controller import DS4Input
-from .star import Star
-from .particle import Particle
-from .player import Player
-from .laser import Laser
-from .constants import (
+from src.cockpit import draw_cockpit_hud
+from src.controller import DS4Input
+from src.star import Star
+from src.particle import Particle
+from src.player import Player
+from src.laser import Laser
+from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     ENEMY_HIT_RADIUS_SQ, ENEMY_CULL_DISTANCE, HOMING_TURN_RATE,
     PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER
 )
-from .utils import draw_damage_overlay
-from .director import WaveDirector
-from .encounters import ENCOUNTER_SCRIPT
-from .object_pool import ParticlePool, LaserPool
-from .spatial_partition import SpatialPartition
+from src.utils import draw_damage_overlay
+from src.director import WaveDirector
+from src.encounters import ENCOUNTER_SCRIPT
+from src.object_pool import ParticlePool, LaserPool
+from src.spatial_partition import SpatialPartition
 
 # ──────────────────────────────────────────────
 # MAIN LOOP

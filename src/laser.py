@@ -1,4 +1,4 @@
-from .math_engine import *
+from src.math_engine import *
 import pygame
 
 class Laser:

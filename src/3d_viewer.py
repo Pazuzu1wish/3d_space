@@ -1,5 +1,3 @@
-import pygame
-import random
 import sys
 from math_engine import *
 from enemy import *
@@ -22,6 +20,7 @@ class Viewer:
 
         # Instantiate the controller handler
         self.handler = DS4Input
+        self.handler.init()
 
         # Instantiate the ship to view
         self.ship = Sniper(0, 0, 0)
@@ -39,17 +38,6 @@ class Viewer:
         self.particles = []
 
         _FONT_CACHE = {}
-
-    # def custom_font(self, size):
-    #     if size not in self._FONT_CACHE:
-    #         try:
-    #             self._FONT_CACHE[size] = pygame.font.Font('/home/tony/PycharmProjects/3d_space/assets/fonts/interdictionexpand.ttf', size)
-    #             print('font found')
-    #         except Exception:
-    #             self._FONT_CACHE[size] = pygame.font.SysFont(None, size)
-    #             print('font not found')
-    #     return self._FONT_CACHE[size]
-
 
     def update_trails(self, dt):
         # 1. Spawn new particles at engine offsets

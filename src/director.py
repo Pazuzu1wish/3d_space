@@ -1,12 +1,12 @@
 import math
 import random
 
-from .enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
-from .utils import (
+from src.enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
+from src.utils import (
     spawn_drone, spawn_dogfighter, spawn_sniper,
     spawn_corvette, spawn_minelayer, spawn_stealth_interceptor,
 )
-from .constants import (
+from src.constants import (
     SPAWNS_PER_SECOND, MAX_SUICIDE_DRONES, MAX_DOGFIGHTERS,
 )
 

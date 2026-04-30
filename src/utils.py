@@ -1,9 +1,9 @@
 import math
 import random
 import pygame
-from .math_engine import get_forward_from_quat
-from .enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
-from .constants import (
+from src.math_engine import get_forward_from_quat
+from src.enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
+from src.constants import (
     SPAWN_YAW_SPREAD,
     SPAWN_DIST_MIN,
     SPAWN_DIST_MAX,
