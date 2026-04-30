@@ -102,24 +102,28 @@ class Game:
 
         # ── REBUILD SPATIAL PARTITION (enemies have moved) ─────────
         # Re-register all remaining enemies at their current positions
+        # Use each enemy's individual hit_radius for proper spatial partitioning
         self.spatial.clear()
         self._registered_enemies.clear()
         for e in enemies:
-            self.spatial.register_entity(e, (e.x, e.y, e.z), radius=50.0)
+            self.spatial.register_entity(e, (e.x, e.y, e.z), radius=e.hit_radius)
             self._registered_enemies.add(id(e))
 
         # ── LASER HITS (spatial query) ─────────────────────────────
-        # Iterate active lasers and query nearby enemies using spatial partition
+        # Use the dynamic is_hit() method for flexible collision detection
         for l in self.laser_pool.get_active()[:]:
-            # Query enemies near the laser position (~collision radius)
-            nearby_enemies = self.spatial.query_collision((l.x, l.y, l.z), 100.0)
-            
+
+            # CHANGE 1: Increase search radius to 800.0!
+            # Since the Carrier is 800 units long, its center could be up to 800
+            # units away from the laser hitting its nose. We must search a wider net.
+            nearby_enemies = self.spatial.query_collision((l.x, l.y, l.z), 800.0)
+
             for e in nearby_enemies:
-                if e not in enemies:  # Skip if enemy was already removed
+                if e not in enemies:
                     continue
                     
-                dx, dy, dz = l.x - e.x, l.y - e.y, l.z - e.z
-                if (dx*dx + dy*dy + dz*dz) < ENEMY_HIT_RADIUS_SQ:
+                # CHANGE 2: Use the dynamic is_hit() method instead of the hardcoded distance
+                if e.is_hit(l.x, l.y, l.z):
                     e.on_hit()
                     l.life = 0  # Pool's own update() will recycle it next tick
                     for _ in range(PARTICLES_ON_HIT):

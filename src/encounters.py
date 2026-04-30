@@ -66,7 +66,7 @@ ENCOUNTER_SCRIPT = [
     },
 
     # ── ENCOUNTER 5 ──────────────────────────────────────────────────────────
-    # Boss wave: a Carrier flanked by dogfighters.
+    # Boss wave: a flanked by dogfighters.
     # Filler suppressed — this is the climax.
     {
         'trigger_dist': 10000,

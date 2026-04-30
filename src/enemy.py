@@ -26,6 +26,9 @@ class Enemy:
         self.right = (1, 0, 0)
         self.up = (0, 1, 0)
 
+        # --- ADD THIS: Default hit radius for small enemies ---
+        self.hit_radius = 50.0
+
         # Enhanced visual properties
         self.base_color = (255, 255, 255)
         self.engine_trail = []
@@ -131,6 +134,12 @@ class Enemy:
         dy = self.y - player_pos[1]
         dz = self.z - player_pos[2]
         return math.sqrt(dx * dx + dy * dy + dz * dz)
+
+    # --- ADD THIS: Default spherical hit detection ---
+    def is_hit(self, px, py, pz):
+        """Check if a projectile at (px, py, pz) hits this enemy using spherical collision."""
+        dx, dy, dz = self.x - px, self.y - py, self.z - pz
+        return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
 
     def draw(self, surf, ppos, prot):
         self._draw_engine_trail(surf, ppos, prot)
@@ -653,6 +662,8 @@ class Corvette(Enemy):
         self.max_hp = 30
         self.base_color = (180, 180, 200)
 
+        self.hit_radius = 400
+
         # Huge thruster block for a massive ship
         self.engine_offsets = [
             (-50, -10, -200), (50, -10, -200),
@@ -753,6 +764,8 @@ class Minelayer(Enemy):
         self.hp = 6
         self.max_hp = 6
         self.base_color = (255, 140, 0)
+
+        self.hit_radius = 200
 
         # 4 spaced out thrusters
         self.engine_offsets = [
@@ -954,6 +967,9 @@ class Carrier(Enemy):
         self.max_hp = 50
         self.base_color = (120, 100, 150)
 
+        # --- ADD THIS: Tell the spatial partition this enemy is HUGE ---
+        self.hit_radius = 800.0
+
         # Massive thruster bank (1 Huge center, 4 large satellites)
         self.engine_offsets = [
             (0, -30, -500),  # Center Main Drive
@@ -990,6 +1006,24 @@ class Carrier(Enemy):
             # Thruster plate (Back)
             (5, 3, 7), (6, 8, 4), (5, 7, 8), (5, 8, 6)
         ]
+
+    # --- ADD THIS: Perfect Box Collision for the giant wedge ---
+    def is_hit(self, px, py, pz):
+        """Check if a projectile at (px, py, pz) hits the Carrier using a perfect 3D bounding box."""
+        # Distance vector from center of Carrier to the projectile
+        dx, dy, dz = px - self.x, py - self.y, pz - self.z
+
+        # Project the projectile into the Carrier's LOCAL rotation space
+        local_x = dx * self.right[0]   + dy * self.right[1]   + dz * self.right[2]
+        local_y = dx * self.up[0]      + dy * self.up[1]      + dz * self.up[2]
+        local_z = dx * self.forward[0] + dy * self.forward[1] + dz * self.forward[2]
+
+        # Check if the local coordinates fall inside a box matching self.verts
+        hit_x = -400 <= local_x <= 400   # Wingtips
+        hit_y = -120 <= local_y <= 180   # Belly to Tower
+        hit_z = -500 <= local_z <= 800   # Engine to Nose
+
+        return hit_x and hit_y and hit_z
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.spawn_timer -= dt
