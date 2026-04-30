@@ -27,7 +27,8 @@ class Viewer:
         self.handler.init()
 
         # Instantiate the ship to view
-        self.ship = Carrier(0, 0, 0)
+
+        self.ship = Dogfighter(0, 0, 0)
         #self.ship.engine_offsets = [(0, 0, -70)] # Uncomment to change class default
 
         # Viewer Camera & State
