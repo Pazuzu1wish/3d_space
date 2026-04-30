@@ -131,20 +131,57 @@ class Dogfighter(Enemy):
         self.phase = random.uniform(0, math.pi * 2)
         self._flicker = 0
 
-        # Swept-forward fighter wing shape
+        # 3D MODEL GEOMETRY
+        # ----------------------------------------------------
         self.verts = [
+            # CENTERLINE (x=0)
             (0, 0, 70),  # 0: Nose
-            (-20, -5, -10),  # 1: Left Body
-            (20, -5, -10),  # 2: Right Body
-            (0, 15, -20),  # 3: Top Cockpit
-            (-50, 0, 30),  # 4: Left Wingtip (swept forward)
-            (50, 0, 30),  # 5: Right Wingtip (swept forward)
-            (0, -10, -40)  # 6: Tail Block
+            (0, 15, -10),  # 1: Cockpit Roof
+            (0, -12, 10),  # 2: Belly Bottom
+            (0, -10, -40),  # 3: Engine Backplate Bottom Center
+            (0, 10, -40),  # 4: Engine Backplate Top Center
+
+            # LEFT SIDE (x < 0)
+            (-20, 0, -10),  # 5: Left Body Flare
+            (-15, 0, -40),  # 6: Left Engine Exhaust (Rear)
+            (-50, 2, 30),  # 7: Left Wingtip TOP
+            (-50, -2, 30),  # 8: Left Wingtip BOTTOM
+
+            # RIGHT SIDE (x > 0)
+            (20, 0, -10),  # 9: Right Body Flare
+            (15, 0, -40),  # 10: Right Engine Exhaust (Rear)
+            (50, 2, 30),  # 11: Right Wingtip TOP
+            (50, -2, 30),  # 12: Right Wingtip BOTTOM
         ]
+
         self.faces = [
-            (0, 3, 1), (0, 2, 3), (0, 1, 6), (0, 6, 2),  # Main body
-            (1, 3, 4), (1, 4, 6),  # Left Wing
-            (3, 2, 5), (2, 6, 5)  # Right Wing
+            # --- NOSE CONE ---
+            (0, 5, 1),  # Top Left Front
+            (0, 1, 9),  # Top Right Front
+            (0, 2, 5),  # Bottom Left Front
+            (0, 9, 2),  # Bottom Right Front
+
+            # --- MAIN FUSELAGE ---
+            (1, 5, 6), (1, 6, 4),  # Top Left Body
+            (1, 4, 10), (1, 10, 9),  # Top Right Body
+            (2, 3, 6), (2, 6, 5),  # Bottom Left Body
+            (2, 9, 10), (2, 10, 3),  # Bottom Right Body
+
+            # --- ENGINE BACKPLATE (Closes the hole!) ---
+            (4, 3, 6),  # Left half of rear wall
+            (4, 10, 3),  # Right half of rear wall
+
+            # --- THICK LEFT WING (Swept Forward) ---
+            (5, 7, 6),  # Wing Top
+            (5, 6, 8),  # Wing Bottom
+            (5, 8, 7),  # Wing Leading Edge (Front flat side)
+            (6, 7, 8),  # Wing Trailing Edge (Rear flat side)
+
+            # --- THICK RIGHT WING (Swept Forward) ---
+            (9, 10, 11),  # Wing Top
+            (9, 12, 10),  # Wing Bottom
+            (9, 11, 12),  # Wing Leading Edge (Front flat side)
+            (10, 12, 11)  # Wing Trailing Edge (Rear flat side)
         ]
 
 
