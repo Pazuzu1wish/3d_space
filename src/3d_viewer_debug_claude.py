@@ -234,7 +234,7 @@ class DebugViewer:
         if ship_factory is not None:
             self.ship = ship_factory()
         elif _HAS_PROJECT:
-            self.ship = enemy.Corvette(0, 0, 0)
+            self.ship = enemy.Dogfighter(0, 0, 0)
         else:
             self.ship = _FallbackShip()
 

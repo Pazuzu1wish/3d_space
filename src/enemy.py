@@ -382,11 +382,12 @@ class Dogfighter(Enemy):
         self.t = 0
         self.base_color = (30, 200, 255)
 
-        # Twin Blue Thrusters
-        self.engine_offsets = [(-15, 0, -40), (15, 0, -40)]
+        # Twin Blue Thrusters – repositioned to tail top
+        self.engine_offsets = [(22, 10, -60), (-22, 10, -60)]
         self.engine_color = (100, 200, 255)
         self.engine_size = 4.5
         self.trail_life = 0.6
+        self.hit_radius = 65
 
         self.mg_timer = 0.0
         self.bolt_timer = random.uniform(2.0, 5.0)
@@ -396,26 +397,54 @@ class Dogfighter(Enemy):
         self.phase = random.uniform(0, math.pi * 2)
         self._flicker = 0
 
-        # Swept-forward fighter wing shape
+        # New vertices based on the provided table (roughly 1.5x old scale)
         self.verts = [
-            (0, 0, 70),  # 0: Nose
-            (-20, -5, -10),  # 1: Left Body
-            (20, -5, -10),  # 2: Right Body
-            (0, 15, -20),  # 3: Top Cockpit
-            (-50, 0, 30),  # 4: Left Wingtip (swept forward)
-            (50, 0, 30),  # 5: Right Wingtip (swept forward)
-            (0, -10, -40)  # 6: Tail Block
+            (0, 8, 105),     # 0: Nose top
+            (0, -8, 105),    # 1: Nose bot
+            (30, 12, 30),    # 2: Mid body top right
+            (-30, 12, 30),   # 3: Mid body top left
+            (30, -12, 30),   # 4: Mid body bot right
+            (-30, -12, 30),  # 5: Mid body bot left
+            (120, -8, -30),  # 6: Wing tip right
+            (-120, -8, -30), # 7: Wing tip left
+            (22, 10, -60),   # 8: Tail body top right
+            (-22, 10, -60),  # 9: Tail body top left
+            (22, -10, -60),  # 10: Tail body bot right
+            (-22, -10, -60), # 11: Tail body bot left
+            (0, 18, 60),     # 12: Cockpit ridge
+            (65, -6, -55),   # 13: Wing inner trail right
+            (-65, -6, -55),  # 14: Wing inner trail left
         ]
+
+        # Faces (triangles) forming the new mesh
         self.faces = [
-            (0, 3, 1),  # 0 OK
-            (0, 2, 3),  # 1 OK
-            (0, 1, 6),  # 2 OK
-            (0, 6, 2),  # 3 OK
-            (1, 3, 4),  # 4 FLIP?
-            (1, 6, 4),  # 5 OK
-            (3, 2, 5),  # 6 FLIP?
-            (2, 5, 6),  # 7 OK
+            (0, 2, 12),  # 0 OK
+            (0, 12, 3),  # 1 OK
+            (12, 2, 3),  # 2 OK
+            (2, 9, 3),  # 3 OK
+            (2, 8, 9),  # 4 OK
+            (1, 5, 4),  # 5 OK
+            (4, 5, 11),  # 6 OK
+            (4, 11, 10),  # 7 OK
+            (0, 1, 2),  # 8 OK
+            (1, 4, 2),  # 9 OK
+            (0, 3, 1),  # 10 OK
+            (1, 3, 5),  # 11 OK
+            (2, 4, 10),  # 12 OK
+            (2, 10, 8),  # 13 OK
+            (3, 11, 5),  # 14 OK
+            (3, 9, 11),  # 15 OK
+            (4, 13, 6),  # 16 OK
+            (4, 10, 13),  # 17 OK
+            (6, 10, 13),  # 18 OK
+            (5, 7, 14),  # 19 OK
+            (5, 14, 11),  # 20 OK
+            (7, 14, 11),  # 21 OK
+            (8, 11, 9),  # 22 OK
+            (8, 10, 11),  # 23 OK
         ]
+
+
 
 
     def _player_forward(self, orientation):
