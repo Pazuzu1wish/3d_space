@@ -1,7 +1,7 @@
 import pygame
 import math
 from .math_engine import (
-    world_to_camera, project_to_screen, quat_identity
+    world_to_camera, project_to_screen
 )
 from .cockpit import draw_cockpit_hud
 from .controller import DS4Input
