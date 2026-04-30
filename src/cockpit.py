@@ -1,7 +1,7 @@
-
+from pathlib import Path
 import pygame
 import math
-from .math_engine import (
+from src.math_engine import (
     get_basis_from_quat,
     world_to_camera,
     project_to_screen,
@@ -10,7 +10,7 @@ from .math_engine import (
 )
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
+from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
 
 # ──────────────────────────────────────────────
 #  COCKPIT HUD
@@ -25,13 +25,18 @@ from .constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURAT
 # Font and Cache
 # -----------------------------------------------
 
-_FONT_CACHE = {}
+# Get the project root directory (assuming this code is in a file inside your project)
+# This resolves to the directory containing this script, then goes up to project root
+PROJECT_ROOT = Path(__file__).parent.parent  # Adjust number of .parent calls based on your file structure
+ASSETS_PATH = PROJECT_ROOT / 'assets' / 'fonts'
 
+_FONT_CACHE = {}
 
 def custom_font(size):
     if size not in _FONT_CACHE:
         try:
-            _FONT_CACHE[size] = pygame.font.Font('./assets/fonts/interdictionexpand.ttf', size)
+            font_path = ASSETS_PATH / 'interdictionexpand.ttf'
+            _FONT_CACHE[size] = pygame.font.Font(str(font_path), size)
         except Exception:
             _FONT_CACHE[size] = pygame.font.SysFont(None, size)
     return _FONT_CACHE[size]

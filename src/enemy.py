@@ -2,13 +2,13 @@ import math
 import random
 import pygame
 
-from .math_engine import (
+from src.math_engine import (
     world_to_camera,
     project_to_screen,
     basis_from_forward,
     get_forward_from_quat,
 )
-from .constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
+from src.constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
 
 
 # ──────────────────────────────────────────────

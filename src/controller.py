@@ -2,7 +2,7 @@ import pygame
 import argparse
 import sys
 
-from .constants import DEADZONE_DEFAULT, CONTROLLER_LOG_THRESHOLD, TRIGGER_LOG_THRESHOLD
+from src.constants import DEADZONE_DEFAULT, CONTROLLER_LOG_THRESHOLD, TRIGGER_LOG_THRESHOLD
 
 
 # ──────────────────────────────────────────────

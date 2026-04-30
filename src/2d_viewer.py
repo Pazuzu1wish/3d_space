@@ -220,7 +220,7 @@ class EntityViewer:
         self.show_trails  = True
         self.running      = True
 
-        os.makedirs("screenshots", exist_ok=True)
+        os.makedirs("../screenshots", exist_ok=True)
 
     # ── grid ──────────────────────────────────────────────────────────────────
     def _draw_grid(self):
