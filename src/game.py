@@ -56,13 +56,6 @@ class Game:
         # Track which enemies are registered in spatial partition
         self._registered_enemies = set()
 
-    def _sync_enemy_registration(self, enemies):
-        """Register any new enemies with spatial partition."""
-        for e in enemies:
-            if id(e) not in self._registered_enemies:
-                self.spatial.register_entity(e, (e.x, e.y, e.z), radius=50.0)
-                self._registered_enemies.add(id(e))
-
     def update_entities(self, dt, player, enemies, enemy_projectiles):
         # ── UPDATE LASERS (using pool) ─────────────────────────
         self.laser_pool.update(dt)
@@ -73,7 +66,6 @@ class Game:
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
-
 
             # Drone destroyed
             if e.hp <= 0:
@@ -107,6 +99,14 @@ class Game:
                 self.spatial.unregister_entity(e)
                 self._registered_enemies.discard(id(e))
                 enemies.remove(e)
+
+        # ── REBUILD SPATIAL PARTITION (enemies have moved) ─────────
+        # Re-register all remaining enemies at their current positions
+        self.spatial.clear()
+        self._registered_enemies.clear()
+        for e in enemies:
+            self.spatial.register_entity(e, (e.x, e.y, e.z), radius=50.0)
+            self._registered_enemies.add(id(e))
 
         # ── LASER HITS (spatial query) ─────────────────────────────
         # Iterate active lasers and query nearby enemies using spatial partition
@@ -265,7 +265,6 @@ class Game:
 
             # ── UPDATE ────────────────────────────────
             self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles)
-            self._sync_enemy_registration(self.enemies)
             self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
             self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
 

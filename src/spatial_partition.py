@@ -320,15 +320,9 @@ class SpatialPartition:
         Initialize spatial partitioning system.
         
         Args:
-            world_size: Size of the game world (for octree bounds)
+            world_size: Size of the game world (legacy parameter, kept for API compatibility)
             cell_size: Cell size for spatial hash queries
         """
-        half_size = world_size / 2
-        self.bounds = BoundingBox(
-            -half_size, -half_size, -half_size,
-            half_size, half_size, half_size
-        )
-        self.octree = OctreeNode(self.bounds, max_depth=6)
         self.spatial_hash = SpatialHash(cell_size)
         
         # Track entity positions for removal
@@ -337,7 +331,6 @@ class SpatialPartition:
     def register_entity(self, entity: object, pos: Tuple[float, float, float],
                         radius: float = 0.0) -> None:
         """Register an entity in the spatial partition."""
-        self.octree.insert(entity, pos, radius)
         self.spatial_hash.insert(entity, pos)
         self.entity_positions[id(entity)] = pos
     
@@ -348,8 +341,7 @@ class SpatialPartition:
             pos = self.entity_positions[entity_id]
             self.spatial_hash.remove(entity, pos)
             del self.entity_positions[entity_id]
-        self.octree.remove(entity)
-    
+
     def update_entity(self, entity: object, old_pos: Tuple[float, float, float],
                       new_pos: Tuple[float, float, float]) -> None:
         """Update an entity's position in the spatial partition."""
@@ -363,12 +355,11 @@ class SpatialPartition:
     
     def query_collision(self, pos: Tuple[float, float, float],
                         radius: float) -> List[object]:
-        """Query entities for collision detection using octree (more accurate)."""
-        return self.octree.query_radius(pos, radius)
-    
+        """Query entities for collision detection using spatial hash (faster for moving entities)."""
+        return self.spatial_hash.query_radius(pos, radius)
+
     def clear(self) -> None:
         """Clear all entities from the spatial partition."""
-        self.octree.clear()
         self.spatial_hash.clear()
         self.entity_positions.clear()
     
@@ -380,7 +371,6 @@ class SpatialPartition:
         """Get statistics about the spatial partition."""
         return {
             'entity_count': len(self.entity_positions),
-            'octree_count': self.octree.get_entity_count(),
             'hash_cells': len(self.spatial_hash.grid),
             'hash_count': self.spatial_hash.get_entity_count()
         }
