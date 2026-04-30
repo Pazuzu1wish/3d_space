@@ -22,12 +22,13 @@ class Viewer:
 
         self.culling = True
 
-        # Instantiate the controller handler
-        self.handler = DS4Input
+        # Instantiate and initialize the controller handler
+        self.handler = DS4Input()
+        self.handler.init()
 
         # Instantiate the ship to view
         self.ship = Carrier(0, 0, 0)
-        self.ship.engine_offsets = [(0, 0, -70)]
+        #self.ship.engine_offsets = [(0, 0, -70)] # Uncomment to change class default
 
         # Viewer Camera & State
         self.camera_z = 250.0  # Distance from object (Zoom)
@@ -74,9 +75,11 @@ class Viewer:
             if event.type == pygame.QUIT:
                 self.running = False
 
-            elif event.type == pygame.KEYDOWN:  # Add this block for keyboard input
-                if event.key == pygame.K_c:
+            # Feed all events to the controller handler
+            self.handler.process_event(event)
 
+            if event.type == pygame.KEYDOWN:  # Add this block for keyboard input
+                if event.key == pygame.K_c:
                     self.culling = not self.culling  # Toggle the culling state
                     print(f"Culling toggled to: {self.culling}")  # Optional: print status
 
@@ -100,6 +103,27 @@ class Viewer:
 
                 self.obj_quat = rotate_yaw(self.obj_quat, dx * 0.01)
                 self.obj_quat = rotate_pitch(self.obj_quat, dy * 0.01)
+
+        # --- CONTROLLER INPUT ---
+        # Left stick for rotation (X = yaw, Y = pitch)
+        lx, ly = self.handler.stick_left()
+        if abs(lx) > 0.01:  # Only rotate if stick moved beyond deadzone
+            self.obj_quat = rotate_yaw(self.obj_quat, lx * 0.05)
+        if abs(ly) > 0.01:
+            self.obj_quat = rotate_pitch(self.obj_quat, ly * 0.05)
+
+        # Right stick Y-axis for zoom (positive = up = zoom out, negative = down = zoom in)
+        rx, ry = self.handler.stick_right()
+        if abs(ry) > 0.01:  # Only zoom if stick moved beyond deadzone
+            zoom_delta = -ry * 100 * (self.clock.get_time() / 1000.0)  # Scale by delta time
+            self.camera_z = max(50, self.camera_z + zoom_delta)
+
+        if self.handler.just_pressed('R3'):
+            self.culling = not self.culling
+
+
+        # Clear per-frame controller state
+        self.handler.update()
 
         return True
 
@@ -220,7 +244,7 @@ class Viewer:
                 pygame.draw.circle(self.screen, color, (sx, sy), size)
 
     def draw_hud(self):
-        font = custom_font(18)
+        font = custom_font(14)
 
         texts = [
             "3D SHIP VIEWER",
@@ -229,7 +253,11 @@ class Viewer:
             "Left Click + Drag: Rotate",
             "Mouse Wheel: Zoom",
             f"Zoom Dist: {self.camera_z:.1f}",
-            f"Culling: {self.culling}"
+            f"Culling (Press c to toggle): {self.culling}",
+            "------------------",
+            f"Controller: {'✓ Connected' if self.handler.connected else '✗ Disconnected'}",
+            "L-Stick: Rotate",
+            "R-Stick Y: Zoom"
         ]
         for i, text in enumerate(texts):
             surface = font.render(text, True, HUD_AMBER)
