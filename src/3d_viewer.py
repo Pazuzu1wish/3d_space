@@ -26,10 +26,14 @@ class Viewer:
         self.handler = DS4Input()
         self.handler.init()
 
+        self.font = custom_font(14)
+
         # Instantiate the ship to view
 
         self.ship = Dogfighter(0, 0, 0)
         #self.ship.engine_offsets = [(0, 0, -70)] # Uncomment to change class default
+
+        verts, faces = self.ship.get_mesh()
 
         # Viewer Camera & State
         self.camera_z = 250.0  # Distance from object (Zoom)
@@ -245,7 +249,7 @@ class Viewer:
                 pygame.draw.circle(self.screen, color, (sx, sy), size)
 
     def draw_hud(self):
-        font = custom_font(14)
+
 
         texts = [
             "3D SHIP VIEWER",
@@ -261,7 +265,7 @@ class Viewer:
             "R-Stick Y: Zoom"
         ]
         for i, text in enumerate(texts):
-            surface = font.render(text, True, HUD_AMBER)
+            surface = self.font.render(text, True, HUD_AMBER)
             self.screen.blit(surface, (15, 15 + (i * 22)))
 
     def run(self):
