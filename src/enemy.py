@@ -38,6 +38,9 @@ class Enemy:
         self.engine_size = 4.0
         self.trail_life = 0.5
 
+    def get_mesh(self):
+        return self.verts, self.faces
+
     def _camera_z(self, player_pos, player_orientation):
         px, py, pz = player_pos
         _, _, cz = world_to_camera(
@@ -1071,3 +1074,4 @@ class Carrier(Enemy):
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
+
