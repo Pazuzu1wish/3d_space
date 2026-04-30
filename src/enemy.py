@@ -695,13 +695,24 @@ class Corvette(Enemy):
             (0, 30, -150)  # 11: Tower slope base
         ]
         self.faces = [
-            # Front wedge
-            (0, 1, 4), (0, 2, 4), (0, 3, 1), (0, 5, 3), (1, 5, 4),
-            # Mid hull to Back Hull
-            (2, 6, 8), (2, 8, 4), (3, 5, 9), (3, 9, 7),
-            (4, 8, 9), (4, 9, 5), (2, 7, 6), (2, 3, 7),
-            # Command Tower
-            (4, 5, 10), (4, 10, 8), (5, 9, 10), (8, 10, 11), (9, 11, 10)
+            (0, 1, 4),  # 0 OK
+            (0, 4, 2),  # 1 OK
+            (0, 3, 1),  # 2 OK
+            (0, 3, 5),  # 3 OK
+            (1, 5, 4),  # 4 OK
+            (2, 8, 6),  # 5 OK
+            (2, 4, 8),  # 6 OK
+            (3, 9, 5),  # 7 OK
+            (3, 7, 9),  # 8 OK
+            (4, 9, 8),  # 9 OK
+            (4, 5, 9),  # 10 OK
+            (2, 6, 7),  # 11 OK
+            (2, 7, 3),  # 12 OK
+            (4, 5, 10),  # 13 OK
+            (4, 10, 8),  # 14 OK
+            (5, 9, 10),  # 15 OK
+            (8, 10, 11),  # 16 OK
+            (9, 11, 10),  # 17 OK
         ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
