@@ -407,10 +407,16 @@ class Dogfighter(Enemy):
             (0, -10, -40)  # 6: Tail Block
         ]
         self.faces = [
-            (0, 3, 1), (0, 2, 3), (0, 1, 6), (0, 6, 2),  # Main body
-            (1, 3, 4), (1, 4, 6),  # Left Wing
-            (3, 2, 5), (2, 6, 5)  # Right Wing
+            (0, 3, 1),  # 0 OK
+            (0, 2, 3),  # 1 OK
+            (0, 1, 6),  # 2 OK
+            (0, 6, 2),  # 3 OK
+            (1, 3, 4),  # 4 FLIP?
+            (1, 6, 4),  # 5 OK
+            (3, 2, 5),  # 6 FLIP?
+            (2, 5, 6),  # 7 OK
         ]
+
 
     def _player_forward(self, orientation):
         return get_forward_from_quat(orientation)
@@ -887,9 +893,12 @@ class StealthInterceptor(Enemy):
             (0, -5, -20)  # 4: Bottom ridge
         ]
         self.faces = [
-            (0, 1, 3), (0, 3, 2),  # Top
-            (0, 4, 1), (0, 2, 4),  # Bottom
-            (1, 2, 3), (1, 4, 2)  # Back
+            (0, 3, 1),  # 0 OK
+            (0, 2, 3),  # 1 OK
+            (0, 1, 4),  # 2 OK
+            (0, 4, 2),  # 3 OK
+            (1, 3, 2),  # 4 OK
+            (1, 2, 4),  # 5 OK
         ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
@@ -1010,16 +1019,22 @@ class Carrier(Enemy):
             (0, -120, -100)  # 9: Deep Belly
         ]
         self.faces = [
-            # Top Deck
-            (0, 3, 5), (0, 5, 1), (0, 1, 6), (0, 6, 4),
-            # Command Tower
-            (1, 5, 2), (1, 2, 6), (5, 6, 2),
-            # Belly
-            (0, 7, 3), (0, 9, 7), (0, 8, 9), (0, 4, 8),
-            # Thruster plate (Back)
-            (5, 3, 7), (6, 8, 4), (5, 7, 8), (5, 8, 6)
+            (0, 5, 3),  # 0 OK
+            (0, 1, 5),  # 1 OK
+            (0, 6, 1),  # 2 OK
+            (0, 4, 6),  # 3 OK
+            (1, 2, 5),  # 4 OK
+            (1, 6, 2),  # 5 OK
+            (5, 2, 6),  # 6 OK
+            (0, 3, 7),  # 7 OK
+            (0, 7, 9),  # 8 OK
+            (0, 9, 8),  # 9 OK
+            (0, 8, 4),  # 10 OK
+            (5, 7, 3),  # 11 OK
+            (6, 4, 8),  # 12 OK
+            (5, 8, 7),  # 13 OK
+            (5, 6, 8),  # 14 OK
         ]
-
     # --- ADD THIS: Perfect Box Collision for the giant wedge ---
     def is_hit(self, px, py, pz):
         """Check if a projectile at (px, py, pz) hits the Carrier using a perfect 3D bounding box."""

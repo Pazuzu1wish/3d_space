@@ -38,6 +38,8 @@ import math
 import random
 import pygame
 
+import enemy
+
 # ── try to import project modules; fall back to stubs ────────────────────────
 try:
     from math_engine import (
@@ -232,7 +234,7 @@ class DebugViewer:
         if ship_factory is not None:
             self.ship = ship_factory()
         elif _HAS_PROJECT:
-            self.ship = Corvette(0, 0, 0)
+            self.ship = enemy.Carrier(0, 0, 0)
         else:
             self.ship = _FallbackShip()
 
