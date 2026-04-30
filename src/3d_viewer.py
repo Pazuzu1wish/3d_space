@@ -7,7 +7,7 @@ from constants import HUD_RED
 
 
 # ==========================================
-# 4. 3D VIEWER APP
+# 3D VIEWER APP
 # ==========================================
 
 class Viewer:
@@ -20,7 +20,6 @@ class Viewer:
 
         # Instantiate the controller handler
         self.handler = DS4Input
-        self.handler.init()
 
         # Instantiate the ship to view
         self.ship = Sniper(0, 0, 0)
@@ -129,7 +128,13 @@ class Viewer:
                 nz = dx1 * dy2 - dy1 * dx2
 
                 # If pointing away from camera, don't draw (Backface cull)
-                if nz > 0:
+                # Vector from face to camera (camera is at 0,0,0 in view space)
+                vx, vy, vz = -v0[0], -v0[1], -v0[2]
+
+                # Dot product
+                dot = nx * vx + ny * vy + nz * vz
+
+                if dot <= 0:
                     continue
 
                 # Calculate simple lighting (Light coming from top-left)
