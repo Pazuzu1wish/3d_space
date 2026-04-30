@@ -302,8 +302,8 @@ class Viewer:
                 nz = dx1 * dy2 - dy1 * dx2
 
                 # If pointing away from camera, don't draw (Backface cull)
-                if nz > 0:
-                    continue
+                # if nz > 0:
+                #     continue
 
                 # Calculate simple lighting (Light coming from top-left)
                 mag = math.sqrt(nx * nx + ny * ny + nz * nz) or 1

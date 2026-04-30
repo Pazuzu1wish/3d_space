@@ -7,6 +7,7 @@ ENCOUNTER_SCRIPT = [
         'origin': (0, 0, 8000),
         'formation': 'wedge',
         'enemies': [
+            ('carrier', (100 , 0, 0)),
             ('drone',   (-200,   0,    0)),
             ('drone',   ( 200,   0,    0)),
             ('drone',   (   0, 100, -200)),
