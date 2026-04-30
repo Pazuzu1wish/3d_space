@@ -8,6 +8,9 @@ import random
 
 T = TypeVar('T')
 
+# Particle colors palette (matches original Particle class)
+_PARTICLE_COLORS = [(255, 100, 50), (255, 200, 50), (100, 100, 100)]
+
 
 class ObjectPool(Generic[T]):
     """Generic object pool for managing reusable entities."""
@@ -132,7 +135,7 @@ class ParticlePool:
         particle['vy'] = random.uniform(*velocity_range)
         particle['vz'] = random.uniform(*velocity_range)
         particle['life'] = life
-        particle['color'] = random.choice(colors) if colors else (255, 100, 50)
+        particle['color'] = random.choice(colors) if colors else random.choice(_PARTICLE_COLORS)
         particle['active'] = True
         
         self._active.append(particle)
