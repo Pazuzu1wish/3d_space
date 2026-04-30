@@ -3,7 +3,7 @@ from math_engine import *
 from enemy import *
 from controller import DS4Input
 from cockpit import custom_font
-from constants import HUD_RED
+from constants import HUD_AMBER
 
 
 # ==========================================
@@ -20,11 +20,14 @@ class Viewer:
 
         self.running = True
 
+        self.culling = True
+
         # Instantiate the controller handler
         self.handler = DS4Input
 
         # Instantiate the ship to view
-        self.ship = Sniper(0, 0, 0)
+        self.ship = Carrier(0, 0, 0)
+        self.ship.engine_offsets = [(0, 0, -70)]
 
         # Viewer Camera & State
         self.camera_z = 250.0  # Distance from object (Zoom)
@@ -71,6 +74,12 @@ class Viewer:
             if event.type == pygame.QUIT:
                 self.running = False
 
+            elif event.type == pygame.KEYDOWN:  # Add this block for keyboard input
+                if event.key == pygame.K_c:
+
+                    self.culling = not self.culling  # Toggle the culling state
+                    print(f"Culling toggled to: {self.culling}")  # Optional: print status
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.is_dragging = True
@@ -116,10 +125,13 @@ class Viewer:
             ny = dz1 * dx2 - dx1 * dz2
             nz = dx1 * dy2 - dy1 * dx2
 
-            # proper culling (fixed version)
-            vx, vy, vz = -v0[0], -v0[1], -v0[2]
-            if nx * vx + ny * vy + nz * vz <= 0:
-                continue
+            # proper culling
+            vx = -(v0[0] + v1[0] + v2[0]) / 3
+            vy = -(v0[1] + v1[1] + v2[1]) / 3
+            vz = -(v0[2] + v1[2] + v2[2]) / 3
+            if self.culling:
+                if nx * vx + ny * vy + nz * vz <= 0:
+                    continue
 
             # lighting
             mag = math.sqrt(nx * nx + ny * ny + nz * nz) or 1
@@ -166,6 +178,30 @@ class Viewer:
 
         return items
 
+    def build_engine_glow_queue(self):
+        cx, cy = self.W // 2, self.H // 2
+        items = []
+
+        for offset in self.ship.engine_offsets:
+            # Rotate engine position into view space
+            rx, ry, rz = quat_rotate_vec(self.obj_quat, offset)
+            rz += self.camera_z
+
+            proj = project_to_screen(rx, ry, rz, self.fov, cx, cy)
+            if not proj:
+                continue
+
+            sx, sy, scale = proj
+
+            size = max(2, int(scale * self.ship.engine_size * 2))
+
+            # You can tune this later
+            color = (255, 255, 255)
+
+            items.append(("glow", rz, sx, sy, size, color))
+
+        return items
+
     def draw_queue(self, queue):
         for item in queue:
             if item[0] == "face":
@@ -177,6 +213,12 @@ class Viewer:
                 _, _, sx, sy, size, color = item
                 pygame.draw.circle(self.screen, color, (sx, sy), size)
 
+            elif item[0] == "glow":
+                _, _, sx, sy, size, color = item
+
+                # simple glow (you can upgrade this later)
+                pygame.draw.circle(self.screen, color, (sx, sy), size)
+
     def draw_hud(self):
         font = custom_font(18)
 
@@ -186,10 +228,11 @@ class Viewer:
             "------------------",
             "Left Click + Drag: Rotate",
             "Mouse Wheel: Zoom",
-            f"Zoom Dist: {self.camera_z:.1f}"
+            f"Zoom Dist: {self.camera_z:.1f}",
+            f"Culling: {self.culling}"
         ]
         for i, text in enumerate(texts):
-            surface = font.render(text, True, HUD_RED)
+            surface = font.render(text, True, HUD_AMBER)
             self.screen.blit(surface, (15, 15 + (i * 22)))
 
     def run(self):
@@ -206,7 +249,8 @@ class Viewer:
             self.screen.fill((0, 0, 0))  # Deep space black
             face_queue = self.build_render_queue()
             particle_queue = self.build_particle_queue()
-            render_queue = face_queue + particle_queue
+            glow_queue = self.build_engine_glow_queue()
+            render_queue = face_queue + particle_queue + glow_queue
             render_queue.sort(key=lambda x: x[1], reverse=True)
             self.draw_queue(render_queue)
             self.draw_hud()
