@@ -4,7 +4,7 @@ from enemy import *
 from controller import DS4Input
 from cockpit import custom_font
 from constants import HUD_AMBER
-
+from utils import fix_winding
 
 # ==========================================
 # 3D VIEWER APP
@@ -30,10 +30,12 @@ class Viewer:
 
         # Instantiate the ship to view
 
-        self.ship = Dogfighter(0, 0, 0)
+        self.ship = Corvette(0, 0, 0)
+        verts, faces = self.ship.get_mesh()
+        #fix_winding(verts, faces) # doesnt seem to work as is
         #self.ship.engine_offsets = [(0, 0, -70)] # Uncomment to change class default
 
-        verts, faces = self.ship.get_mesh()
+
 
         # Viewer Camera & State
         self.camera_z = 250.0  # Distance from object (Zoom)

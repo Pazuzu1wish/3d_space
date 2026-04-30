@@ -154,3 +154,33 @@ def draw_damage_overlay(screen, W, H, intensity):
     overlay = pygame.Surface((W, H), pygame.SRCALPHA)
     pygame.draw.rect(overlay, (220, 20, 20, alpha), (0, 0, W, H))
     screen.blit(overlay, (0, 0))
+
+# ──────────────────────────────────────────────
+# Fix winding helper
+# ──────────────────────────────────────────────
+
+def fix_winding(verts, faces):
+    fixed = []
+    for face in faces:
+        v0, v1, v2 = [verts[i] for i in face]
+
+        dx1, dy1, dz1 = v1[0]-v0[0], v1[1]-v0[1], v1[2]-v0[2]
+        dx2, dy2, dz2 = v2[0]-v0[0], v2[1]-v0[1], v2[2]-v0[2]
+
+        nx = dy1 * dz2 - dz1 * dy2
+        ny = dz1 * dx2 - dx1 * dz2
+        nz = dx1 * dy2 - dy1 * dx2
+
+        # Assume outward normals should point away from origin
+        cx = (v0[0] + v1[0] + v2[0]) / 3
+        cy = (v0[1] + v1[1] + v2[1]) / 3
+        cz = (v0[2] + v1[2] + v2[2]) / 3
+
+        dot = nx * cx + ny * cy + nz * cz
+
+        if dot < 0:
+            fixed.append((face[0], face[2], face[1]))  # flip
+        else:
+            fixed.append(face)
+
+    return fixed
