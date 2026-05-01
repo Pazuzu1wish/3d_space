@@ -54,7 +54,7 @@ except ImportError:
     _HAS_PROJECT = False
 
 # ── colours ───────────────────────────────────────────────────────────────────
-BG          = (0,   0,  0)
+BG          = (10, 10,  10)
 GRID_MAJOR  = (25,  30,  45)
 GRID_MINOR  = (15,  18,  28)
 AXIS_X      = (180, 40,  40)
@@ -235,7 +235,7 @@ class DebugViewer:
         if ship_factory is not None:
             self.ship = ship_factory()
         elif _HAS_PROJECT:
-            self.ship = enemy.StealthInterceptor(0, 0, 0)
+            self.ship = enemy.Dogfighter(0, 0, 0)
         else:
             self.ship = _FallbackShip()
 
