@@ -18,7 +18,7 @@ HIT_FLASH_DURATION = 0.25          # seconds screen flashes red on hit
 MAX_THRUST = 500
 MAX_RETRO_THRUST = 250
 DRAG = 0.01
-MAX_SPEED = 2000.0
+MAX_SPEED = 2500.0
 DODGE_COOLDOWN = 1.20
 DODGE_IMPULSE = 1400
 DODGE_THRESHOLD = 0.20
@@ -57,6 +57,7 @@ SNIPER_GLARE_MULTIPLIER = 35        # multiplier for sniper glare size
 MG_COOLDOWN = 0.15                  # machine gun cooldown in seconds
 WEAPON_SPREAD = 0.15                # weapon spread in radians
 TRAIL_LIFE_DIVISOR = 0.1            # divisor for trail life ratio calculation
+TARGETING_FOV = 100.0               # field of view for target lock in degrees
 
 # ──────────────────────────────────────────────
 # UI CONSTANTS

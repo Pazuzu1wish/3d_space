@@ -4,7 +4,8 @@ from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll
 from src.constants import (
     PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
-    DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION
+    DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
+    TARGETING_FOV
 )
 
 SHIELD_MAX       = 100
@@ -100,9 +101,9 @@ class Player:
                 self.dodge_flash = DODGE_FLASH_DURATION
 
         # ── ROTATION ──────────────────────────────
-        PITCH_RATE = 3.0
-        YAW_RATE   = 2.5
-        ROLL_RATE  = 3.0
+        PITCH_RATE = 4.0
+        YAW_RATE   = 3.5
+        ROLL_RATE  = 4.0
 
         dodge_mode = handler.held('Circle')
 
@@ -162,7 +163,7 @@ class Player:
                     wx, wy, wz,
                     rfx * LASER_SPEED, rfy * LASER_SPEED, rfz * LASER_SPEED
                 )
-            self.weapons_cooldown = 0.25
+            self.weapons_cooldown = 0.20
             
         # ── CHECK PROJECTILE HITS ─────────────────────
         for bolt in enemy_projectiles[:]:
@@ -185,27 +186,81 @@ class Player:
     # ── TARGETING METHODS ────────────────────────────────────────────
 
     def target_closest(self, enemies):
-        """Lock onto the nearest living, non-stealthed enemy."""
+        """Lock onto the nearest living, non-stealthed enemy within field of view."""
         visible = [e for e in enemies if not getattr(e, 'stealthed', False)]
         if not visible:
             self.active_target = None
             return
-        self.active_target = min(
-            visible,
-            key=lambda e: math.dist(self.pos, (e.x, e.y, e.z))
-        )
+
+        # Get forward direction and FOV threshold
+        fx, fy, fz = get_forward_from_quat(self.orientation)
+        fov_threshold = math.cos(math.radians(TARGETING_FOV / 2.0))
+
+        # Filter to only enemies within FOV
+        in_fov = []
+        for e in visible:
+            ex, ey, ez = e.x, e.y, e.z
+            # Direction from player to enemy
+            dx = ex - self.pos[0]
+            dy = ey - self.pos[1]
+            dz = ez - self.pos[2]
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+
+            if dist > 0:
+                # Normalize direction vector
+                dx, dy, dz = dx/dist, dy/dist, dz/dist
+                # Dot product with forward direction
+                dot = fx*dx + fy*dy + fz*dz
+                if dot >= fov_threshold:
+                    in_fov.append(e)
+
+        # Lock onto the nearest enemy in FOV
+        if in_fov:
+            self.active_target = min(
+                in_fov,
+                key=lambda e: math.dist(self.pos, (e.x, e.y, e.z))
+            )
+        else:
+            self.active_target = None
 
     def cycle_targets(self, enemies):
-        """Advance to the next non-stealthed enemy in the list (wraps around)."""
+        """Advance to the next non-stealthed enemy in FOV (wraps around)."""
         visible = [e for e in enemies if not getattr(e, 'stealthed', False)]
         if not visible:
             self.active_target = None
             return
-        if self.active_target not in visible:
-            self.active_target = visible[0]
+
+        # Get forward direction and FOV threshold
+        fx, fy, fz = get_forward_from_quat(self.orientation)
+        fov_threshold = math.cos(math.radians(TARGETING_FOV / 2.0))
+
+        # Filter to only enemies within FOV
+        in_fov = []
+        for e in visible:
+            ex, ey, ez = e.x, e.y, e.z
+            # Direction from player to enemy
+            dx = ex - self.pos[0]
+            dy = ey - self.pos[1]
+            dz = ez - self.pos[2]
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+
+            if dist > 0:
+                # Normalize direction vector
+                dx, dy, dz = dx/dist, dy/dist, dz/dist
+                # Dot product with forward direction
+                dot = fx*dx + fy*dy + fz*dz
+                if dot >= fov_threshold:
+                    in_fov.append(e)
+
+        # Cycle through enemies in FOV
+        if not in_fov:
+            self.active_target = None
             return
-        idx = visible.index(self.active_target)
-        self.active_target = visible[(idx + 1) % len(visible)]
+        if self.active_target not in in_fov:
+            self.active_target = in_fov[0]
+            return
+        idx = in_fov.index(self.active_target)
+        self.active_target = in_fov[(idx + 1) % len(in_fov)]
 
     def clear_dead_target(self, enemies):
         """Nullify the active target if it has been destroyed."""
