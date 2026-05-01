@@ -364,6 +364,14 @@ class Dogfighter(Enemy):
         self.mode = 'positioning'
         self.mode_timer = random.uniform(2.0, 4.0)
         self.phase = random.uniform(0, math.pi * 2)
+        
+        # Pattern and randomization settings
+        self.pattern = random.choice(PATTERNS[1:])  # Skip 'direct'
+        self.circle_sign = random.choice([1.0, -1.0])
+        self.ideal_range = random.uniform(800, 1200)
+        self.circle_radius = random.uniform(1200, 1800)
+        self.pattern_scale = 2.5  # Dogfighters need larger sweeps than drones
+        
         self._flicker = 0
 
         # Colors
@@ -429,8 +437,20 @@ class Dogfighter(Enemy):
         self.mode_timer -= dt
 
         px, py, pz = player_pos
+        dist_to_player = self.dist_to_player(player_pos)
 
-        if self.mode_timer <= 0:
+        # --- COLLISION AVOIDANCE (LATERAL PEEL-OFF) ---
+        if dist_to_player < 800:
+            # Force a positioning break with a lateral peel-off
+            self.mode = 'positioning'
+            self.mode_timer = random.uniform(1.5, 3.0)
+            
+            # Target a point laterally offset to peel away
+            target_x = self.x + self.right[0] * 1000 * self.circle_sign
+            target_y = self.y + self.right[1] * 1000 * self.circle_sign
+            target_z = self.z + self.right[2] * 1000 * self.circle_sign
+        
+        elif self.mode_timer <= 0:
             if self.mode == 'positioning':
                 self.mode = 'attack_run'
                 self.mode_timer = random.uniform(2.0, 4.0)
@@ -438,22 +458,31 @@ class Dogfighter(Enemy):
                 self.mode = 'positioning'
                 self.mode_timer = random.uniform(3.0, 5.0)
                 self.phase = random.uniform(0, math.pi * 2)
+                # Pick a new pattern for the next orbit
+                self.pattern = random.choice(PATTERNS[1:])
 
-        if self.mode == 'positioning':
-            pfw = self._player_forward(player_orientation)
-            behind_x = px - pfw[0] * self.IDEAL_RANGE
-            behind_y = py - pfw[1] * self.IDEAL_RANGE
-            behind_z = pz - pfw[2] * self.IDEAL_RANGE
+        # Determine target point based on mode (if not already peeling off)
+        if dist_to_player >= 800:
+            if self.mode == 'positioning':
+                pfw = self._player_forward(player_orientation)
+                behind_x = px - pfw[0] * self.ideal_range
+                behind_y = py - pfw[1] * self.ideal_range
+                behind_z = pz - pfw[2] * self.ideal_range
 
-            offset_x = math.sin(self.t * 0.8 + self.phase) * self.CIRCLE_RADIUS
-            offset_y = math.cos(self.t * 0.6 + self.phase) * self.CIRCLE_RADIUS * 0.4
-            offset_z = math.sin(self.t * 0.5 + self.phase) * self.CIRCLE_RADIUS * 0.3
-
-            target_x = behind_x + offset_x
-            target_y = behind_y + offset_y
-            target_z = behind_z + offset_z
-        else:
-            target_x, target_y, target_z = px, py, pz
+                # Use selected pattern with amplitude scaling and circle sign
+                offset = self.pattern(self.t, self.phase, self.SPEED)
+                target_x = behind_x + offset[0] * self.pattern_scale * self.circle_sign
+                target_y = behind_y + offset[1] * self.pattern_scale
+                target_z = behind_z + offset[2] * self.pattern_scale
+            else:
+                # ATTACK RUN: Aim with a human-like lead
+                if player is not None:
+                    p_vx, p_vy, p_vz = player.vel
+                    target_x = px + p_vx * 0.2
+                    target_y = py + p_vy * 0.2
+                    target_z = pz + p_vz * 0.2
+                else:
+                    target_x, target_y, target_z = px, py, pz
 
         dx = target_x - self.x
         dy = target_y - self.y
@@ -475,8 +504,9 @@ class Dogfighter(Enemy):
 
         self._update_orientation()
 
+        # Re-check distance for firing logic
+        dist_to_player = self.dist_to_player(player_pos)
         to_px, to_py, to_pz = px - self.x, py - self.y, pz - self.z
-        dist_to_player = math.sqrt(to_px ** 2 + to_py ** 2 + to_pz ** 2) or 1.0
 
         if self.mode == 'attack_run' and dist_to_player < self.FIRE_RANGE:
             to_player_norm = (to_px / dist_to_player, to_py / dist_to_player, to_pz / dist_to_player)
@@ -622,6 +652,7 @@ class Sniper(Enemy):
             {'v': ['v13', 'v14', 'v16'], 'color': C_FOREST},# 29 tail cap
         ]
 
+    
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.timer -= dt
         px, py, pz = player_pos
@@ -985,7 +1016,6 @@ class Minelayer(Enemy):
 
 class StealthInterceptor(Enemy):
     SPEED = 2500
-    DECLOAK_RANGE = 1800
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
@@ -1000,9 +1030,12 @@ class StealthInterceptor(Enemy):
         self.trail_life = 0.3
 
         self.stealthed = True
-        self.state = 'flanking'
-        self.shotgun_timer = 0.5
+        self.state = 'traveling'
         self._flicker = 0
+        
+        self.flank_offset = None
+        self.reached_flank = False
+        self.hit_radius = 200.0
 
         # Colors
         C_VOID = (15, 15, 20)
@@ -1026,48 +1059,77 @@ class StealthInterceptor(Enemy):
             {'v': ['v1', 'v2', 'v4'], 'color': C_VOID},
         ]
 
+    def _pick_flank_offset(self, p_fwd):
+        dist = random.uniform(2500, 3500)
+        for _ in range(10):
+            phi = random.uniform(0, 2 * math.pi)
+            costheta = random.uniform(-1, 1)
+            theta = math.acos(costheta)
+            rx = math.sin(theta) * math.cos(phi)
+            ry = math.sin(theta) * math.sin(phi)
+            rz = math.cos(theta)
+            
+            dot = rx * p_fwd[0] + ry * p_fwd[1] + rz * p_fwd[2]
+            if dot < 0.2: # Bias away from frontal approach
+                self.flank_offset = (rx * dist, ry * dist, rz * dist)
+                break
+        else:
+            self.flank_offset = (-p_fwd[0] * dist, -p_fwd[1] * dist, -p_fwd[2] * dist)
+        self.reached_flank = False
+
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
         nx, ny, nz = dx / dist, dy / dist, dz / dist
+        p_fwd = get_forward_from_quat(player_orientation)
 
-        if self.state == 'flanking':
+        if self.flank_offset is None:
+            self._pick_flank_offset(p_fwd)
+
+        if self.state == 'traveling':
             self.stealthed = True
             self.base_color = (20, 20, 30)
-
-            pfw = get_forward_from_quat(player_orientation)
-            target_x = px + pfw[2] * 1000
-            target_y = py + 500
-            target_z = pz - pfw[0] * 1000
-
-            if dist < self.DECLOAK_RANGE:
-                self.state = 'attacking'
-                self.stealthed = False
-                self.base_color = (100, 100, 255)
-                self.shotgun_timer = 0.5
+            self.hit_radius = 200.0
+            
+            if not self.reached_flank:
+                tx, ty, tz = px + self.flank_offset[0], py + self.flank_offset[1], pz + self.flank_offset[2]
+                tdx, tdy, tdz = tx - self.x, ty - self.y, tz - self.z
+                tdist = math.sqrt(tdx*tdx + tdy*tdy + tdz*tdz)
+                if tdist < 200:
+                    self.reached_flank = True
+                target_x, target_y, target_z = tx, ty, tz
+            else:
+                target_x, target_y, target_z = px, py, pz
+                if dist < 1200:
+                    self.state = 'attacking'
+                    self.stealthed = False
+                    self.base_color = (100, 100, 255)
+                    self.hit_radius = 100.0
 
         elif self.state == 'attacking':
             target_x, target_y, target_z = px, py, pz
-            self.shotgun_timer -= dt
-
-            if self.shotgun_timer <= 0:
-                if global_projectiles is not None:
-                    for _ in range(7):
-                        spread = WEAPON_SPREAD
-                        ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread,
-                                                                                               spread), nz + random.uniform(
-                            -spread, spread)
-                        global_projectiles.append(StealthShotgun(
-                            self.x, self.y, self.z,
-                            ax * 3000, ay * 3000, az * 3000
-                        ))
-                self.state = 'fleeing'
+            if global_projectiles is not None:
+                for _ in range(7):
+                    spread = WEAPON_SPREAD
+                    ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
+                    global_projectiles.append(StealthShotgun(
+                        self.x, self.y, self.z,
+                        ax * 3000, ay * 3000, az * 3000
+                    ))
+            self.state = 'fleeing'
+            self.stealthed = True
+            self.base_color = (20, 20, 30)
+            self.hit_radius = 200.0
 
         elif self.state == 'fleeing':
-            target_x, target_y, target_z = px - nx * 4000, py - ny * 4000, pz - nz * 4000
-            if dist > 3500:
-                self.state = 'flanking'
+            self.stealthed = True
+            self.base_color = (20, 20, 30)
+            self.hit_radius = 200.0
+            target_x, target_y, target_z = self.x - nx * 1000, self.y - ny * 1000, self.z - nz * 1000
+            if dist > 4000:
+                self._pick_flank_offset(p_fwd)
+                self.state = 'traveling'
 
         tdx, tdy, tdz = target_x - self.x, target_y - self.y, target_z - self.z
         tdist = math.sqrt(tdx * tdx + tdy * tdy + tdz * tdz) or 1
@@ -1084,7 +1146,6 @@ class StealthInterceptor(Enemy):
         self.z += self.vz * dt
         self._update_orientation()
 
-        # Engine trails only drawn when uncloaked
         if not self.stealthed:
             self.engine_size = 6.0
             self._spawn_engine_trail()
@@ -1097,6 +1158,7 @@ class StealthInterceptor(Enemy):
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
+
 
 
 # =============================================================
