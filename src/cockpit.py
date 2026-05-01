@@ -1,7 +1,7 @@
 from pathlib import Path
 import pygame
 import math
-from math_engine import (
+from src.math_engine import (
     get_basis_from_quat,
     world_to_camera,
     project_to_screen,
@@ -10,7 +10,7 @@ from math_engine import (
 )
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-from constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
+from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
 
 # ──────────────────────────────────────────────
 #  COCKPIT HUD

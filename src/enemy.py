@@ -381,7 +381,7 @@ class Dogfighter(Enemy):
         self.hp = 5
         self.max_hp = 5
         self.t = 0
-        self.base_color = (30, 200, 255)
+        self.base_color = (50, 0, 255)
 
         # Twin Blue Thrusters – repositioned to tail top
         self.engine_offsets = [(-32, -10, -45), (32, -10, -45)]
