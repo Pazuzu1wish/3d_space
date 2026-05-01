@@ -702,78 +702,58 @@ class Corvette(Enemy):
         self.t = random.uniform(0, 100)
 
         self.verts = [
-    # --- Forward pod ---
-    (0,   20,  250),   # 0  pod nose top       (set back, high — top of windshield)
-    (0,  -25,  270),   # 1  pod chin bot        (juts forward and low — bottom of windshield)
-    (-40,  20,  180),  # 2  pod top-left rear
-    ( 40,  20,  180),  # 3  pod top-right rear
-    (-40, -15,  180),  # 4  pod bot-left rear
-    ( 40, -15,  180),  # 5  pod bot-right rear
+            # --- Forward pod ---
+            (0, 20, 250),  # 0  nose top      (windshield top edge, set back)
+            (0, -25, 270),  # 1  nose chin     (windshield bot edge, juts forward+down)
+            (-40, 20, 180),  # 2  pod top-left
+            (40, 20, 180),  # 3  pod top-right
+            (-40, -15, 180),  # 4  pod bot-left
+            (40, -15, 180),  # 5  pod bot-right
 
-    # --- Central spine ---
-    (-15,   8,   80),  # 6  spine front top-left
-    ( 15,   8,   80),  # 7  spine front top-right
-    (-15,  -8,   80),  # 8  spine front bot-left
-    ( 15,  -8,   80),  # 9  spine front bot-right
-    (-15,   8, -200),  # 10 spine rear top-left
-    ( 15,   8, -200),  # 11 spine rear top-right
-    (-15,  -8, -200),  # 12 spine rear bot-left
-    ( 15,  -8, -200),  # 13 spine rear bot-right
+            # --- Central spine ---
+            (-15, 8, 80),  # 6  spine front top-left
+            (15, 8, 80),  # 7  spine front top-right
+            (-15, -8, 80),  # 8  spine front bot-left
+            (15, -8, 80),  # 9  spine front bot-right
+            (-15, 8, -200),  # 10 spine rear top-left
+            (15, 8, -200),  # 11 spine rear top-right
+            (-15, -8, -200),  # 12 spine rear bot-left
+            (15, -8, -200),  # 13 spine rear bot-right
 
-    # --- Nacelle tips (rear) ---
-    (-90,   0, -180),  # 14 nacelle-left outer tip
-    (-50,   0, -180),  # 15 nacelle-left inner tip
-    ( 50,   0, -180),  # 16 nacelle-right inner tip
-    ( 90,   0, -180),  # 17 nacelle-right outer tip
-]
+            # --- Left nacelle (sits below spine, offset -x) ---
+            (-40, -5, 80),  # 14 nacelle-L front top-inner
+            (-90, -5, 80),  # 15 nacelle-L front top-outer
+            (-40, -20, 80),  # 16 nacelle-L front bot-inner
+            (-90, -20, 80),  # 17 nacelle-L front bot-outer
+            (-40, -5, -180),  # 18 nacelle-L rear top-inner
+            (-90, -5, -180),  # 19 nacelle-L rear top-outer
+            (-40, -20, -180),  # 20 nacelle-L rear bot-inner
+            (-90, -20, -180),  # 21 nacelle-L rear bot-outer
 
-        self.faces = [
-            (0, 1, 5),  # 0 OK
-            (0, 4, 1),  # 1 OK
-            (0, 3, 2),  # 2 OK
-            (0, 3, 2),  # 3 OK
-            (0, 2, 4),  # 4 OK
-            (0, 5, 3),  # 5 OK
-            (2, 5, 3),  # 6 OK
-            (2, 4, 5),  # 7 OK
-            (2, 6, 7),  # 8 OK
-            (2, 7, 3),  # 9 OK
-            (4, 8, 9),  # 10 OK
-            (4, 9, 5),  # 11 OK
-            (6, 7, 11),  # 12 OK
-            (6, 11, 10),  # 13 OK
-            (8, 13, 9),  # 14 OK
-            (8, 12, 13),  # 15 OK
-            (6, 10, 12),  # 16 OK
-            (6, 12, 8),  # 17 OK
-            (7, 9, 13),  # 18 OK
-            (7, 13, 11),  # 19 OK
-            (10, 11, 13),  # 20 OK
-            (10, 13, 12),  # 21 OK
-            (6, 15, 8),  # 22 OK
-            (8, 15, 12),  # 23 OK
-            (12, 14, 15),  # 24 OK
-            (8, 14, 12),  # 25 OK
-            (7, 9, 16),  # 26 OK
-            (9, 13, 16),  # 27 OK
-            (13, 16, 17),  # 28 OK
-            (9, 13, 17),  # 29 OK
+            # --- Right nacelle (mirror of left) ---
+            (40, -5, 80),  # 22 nacelle-R front top-inner
+            (90, -5, 80),  # 23 nacelle-R front top-outer
+            (40, -20, 80),  # 24 nacelle-R front bot-inner
+            (90, -20, 80),  # 25 nacelle-R front bot-outer
+            (40, -5, -180),  # 26 nacelle-R rear top-inner
+            (90, -5, -180),  # 27 nacelle-R rear top-outer
+            (40, -20, -180),  # 28 nacelle-R rear bot-inner
+            (90, -20, -180),  # 29 nacelle-R rear bot-outer
         ]
 
-        # ── faces (copy into your enemy class) ──
         self.faces = [
             (0, 1, 5),  # 0 OK
             (0, 4, 1),  # 1 OK
             (0, 3, 2),  # 2 OK
-            (0, 3, 2),  # 3 OK
-            (0, 2, 4),  # 4 OK
-            (0, 5, 3),  # 5 OK
+            (0, 2, 4),  # 3 OK
+            (0, 5, 3),  # 4 OK
+            (1, 5, 4),  # 5 OK
             (2, 5, 3),  # 6 OK
             (2, 4, 5),  # 7 OK
-            (2, 6, 7),  # 8 OK
-            (2, 7, 3),  # 9 OK
-            (4, 8, 9),  # 10 OK
-            (4, 9, 5),  # 11 OK
+            (2, 7, 6),  # 8 OK
+            (2, 3, 7),  # 9 OK
+            (4, 9, 8),  # 10 OK
+            (4, 5, 9),  # 11 OK
             (6, 7, 11),  # 12 OK
             (6, 11, 10),  # 13 OK
             (8, 13, 9),  # 14 OK
@@ -784,14 +764,30 @@ class Corvette(Enemy):
             (7, 13, 11),  # 19 OK
             (10, 11, 13),  # 20 OK
             (10, 13, 12),  # 21 OK
-            (6, 15, 8),  # 22 OK
-            (8, 15, 12),  # 23 OK
-            (12, 14, 15),  # 24 OK
-            (8, 14, 12),  # 25 OK
-            (7, 9, 16),  # 26 OK
-            (9, 13, 16),  # 27 OK
-            (13, 16, 17),  # 28 OK
-            (9, 13, 17),  # 29 OK
+            (14, 15, 17),  # 22 OK
+            (14, 17, 16),  # 23 OK
+            (18, 20, 21),  # 24 OK
+            (18, 21, 19),  # 25 OK
+            (15, 19, 21),  # 26 OK
+            (15, 21, 17),  # 27 OK
+            (14, 20, 16),  # 28 OK
+            (14, 18, 20),  # 29 OK
+            (14, 19, 15),  # 30 OK
+            (14, 18, 19),  # 31 OK
+            (16, 17, 21),  # 32 OK
+            (16, 21, 20),  # 33 OK
+            (22, 25, 23),  # 34 OK
+            (22, 24, 25),  # 35 OK
+            (26, 29, 28),  # 36 OK
+            (26, 27, 29),  # 37 OK
+            (23, 25, 29),  # 38 OK
+            (23, 29, 27),  # 39 OK
+            (22, 28, 26),  # 40 OK
+            (22, 24, 28),  # 41 OK
+            (22, 23, 27),  # 42 OK
+            (22, 27, 26),  # 43 OK
+            (24, 29, 25),  # 44 OK
+            (24, 28, 29),  # 45 OK
         ]
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.t += dt
