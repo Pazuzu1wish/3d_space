@@ -7,12 +7,9 @@ ENCOUNTER_SCRIPT = [
         'origin': (0, 0, 8000),
         'formation': 'wedge',
         'enemies': [
-            ('carrier', (100 , 0, 0)),
-            ('drone',   (-200,   0,    0)),
-            ('drone',   ( 200,   0,    0)),
-            ('drone',   (   0, 100, -200)),
-            ('fighter', (   0,   0, -400)),
-        ],
+            ('fighter', (100 , 0, 0)),
+            ('fighter',   (-200,   0,    0))
+            ],
         'filler': False,
     },
 
@@ -56,7 +53,6 @@ ENCOUNTER_SCRIPT = [
         'formation': 'ambush',
         'enemies': [
             ('corvette', (   0,    0,  -600)),
-            ('stealth',  (-500,  200,   400)),
             ('stealth',  ( 500,  200,   400)),
             ('stealth',  (   0, -300,   500)),
             ('drone',    (-200, -100,   200)),

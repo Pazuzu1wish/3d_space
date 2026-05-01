@@ -387,7 +387,7 @@ class Dogfighter(Enemy):
         self.engine_color = (100, 200, 255)
         self.engine_size = 4.5
         self.trail_life = 0.6
-        self.hit_radius = 65
+        self.hit_radius = 70
 
         self.mg_timer = 0.0
         self.bolt_timer = random.uniform(2.0, 5.0)
@@ -590,6 +590,8 @@ class Sniper(Enemy):
         self.engine_color = (100, 255, 50)
         self.engine_size = 6.0
         self.trail_life = 0.8
+
+        self.hit_radius = 80
 
         self.state = 'aiming'
         self.timer = random.uniform(2.0, 4.0)
