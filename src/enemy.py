@@ -384,7 +384,7 @@ class Dogfighter(Enemy):
         self.base_color = (30, 200, 255)
 
         # Twin Blue Thrusters – repositioned to tail top
-        self.engine_offsets = [(22, 10, -60), (-22, 10, -60)]
+        self.engine_offsets = [(-32, -10, -45), (32, -10, -45)]
         self.engine_color = (100, 200, 255)
         self.engine_size = 4.5
         self.trail_life = 0.6
@@ -398,54 +398,50 @@ class Dogfighter(Enemy):
         self.phase = random.uniform(0, math.pi * 2)
         self._flicker = 0
 
-
-        # New vertices based on the provided table (roughly 1.5x old scale)
         self.verts = [
-            (0, -8, 105),     # 0: Nose top
-            (0, -8, 105),    # 1: Nose bot
-            (30, 12, 30),    # 2: Mid body top right
-            (-30, 12, 30),   # 3: Mid body top left
-            (30, -12, 30),   # 4: Mid body bot right
-            (-30, -12, 30),  # 5: Mid body bot left
-            (120, -8, -30),  # 6: Wing tip right
-            (-120, -8, -30), # 7: Wing tip left
-            (22, 10, -60),   # 8: Tail body top right
-            (-22, 10, -60),  # 9: Tail body top left
-            (22, -10, -60),  # 10: Tail body bot right
-            (-22, -10, -60), # 11: Tail body bot left
-            (0, 18, 60),     # 12: Cockpit ridge
-            (65, -6, -55),   # 13: Wing inner trail right
-            (-65, -6, -55),  # 14: Wing inner trail left
+            (0, 8, 105),  # 0: nose top
+            (0, -8, 105),  # 1: nose bot
+            (-30, 12, 30),  # 2: mid top L
+            (30, 12, 30),  # 3: mid top R
+            (-30, -12, 30),  # 4: mid bot L
+            (30, -12, 30),  # 5: mid bot R
+            (-120, -8, -30),  # 6: tip L
+            (120, -8, -30),  # 7: tip R
+            (-22, 10, -60),  # 8: tail top L
+            (22, 10, -60),  # 9: tail top R
+            (-22, -10, -60),  # 10: tail bot L
+            (22, -10, -60),  # 11: tail bot R
+            (0, 18, 60),  # 12: cockpit ridge
+            (-65, -6, -55),  # 13: inner trail L
+            (65, -6, -55),  # 14: inner trail R
         ]
-
-        # Faces (triangles) forming the new mesh
         self.faces = [
-            (0, 2, 12),  # 0 OK
-            (0, 12, 3),  # 1 OK
-            (2, 8, 12),  # 2 OK
-            (12, 9, 3),  # 3 OK
-            (12, 2, 3),  # 4 OK
-            (2, 9, 3),  # 5 OK
-            (2, 8, 9),  # 6 OK
-            (1, 5, 4),  # 7 OK
-            (4, 5, 11),  # 8 OK
-            (4, 11, 10),  # 9 OK
-            (0, 1, 2),  # 10 EDGE
-            (1, 4, 2),  # 11 OK
-            (0, 3, 1),  # 12 EDGE
-            (1, 3, 5),  # 13 OK
-            (2, 4, 10),  # 14 OK
-            (2, 10, 8),  # 15 OK
-            (3, 11, 5),  # 16 OK
-            (3, 9, 11),  # 17 OK
-            (4, 13, 6),  # 18 OK
-            (4, 10, 13),  # 19 OK
-            (6, 10, 13),  # 20 OK
-            (5, 7, 14),  # 21 OK
-            (5, 14, 11),  # 22 OK
-            (7, 14, 11),  # 23 OK
-            (8, 11, 9),  # 24 OK
-            (8, 10, 11),  # 25 OK
+            (0, 12, 2),  # 0  nose→ridge→mid-top-L
+            (0, 3, 12),  # 1  nose→mid-top-R→ridge
+            (1, 0, 4),  # 2  belly: nose-bot→nose-top→mid-bot-L
+            (1, 5, 0),  # 3  belly: nose-bot→mid-bot-R→nose-top
+            (1, 4, 5),  # 4  belly cap
+            (12, 8, 2),  # 5  ridge→tail-top-L→mid-top-L
+            (12, 9, 8),  # 6  ridge→tail-top-R→tail-top-L
+            (12, 3, 9),  # 7  ridge→mid-top-R→tail-top-R
+            (2, 8, 13),  # 8  mid-top-L→tail-top-L→inner-trail-L
+            (3, 14, 9),  # 9  mid-top-R→inner-trail-R→tail-top-R
+            (4, 13, 10),  # 10 mid-bot-L→inner-trail-L→tail-bot-L
+            (5, 11, 14),  # 11 mid-bot-R→tail-bot-R→inner-trail-R
+            (4, 10, 5),  # 12 belly: mid-bot-L→tail-bot-L→mid-bot-R
+            (5, 10, 11),  # 13 belly: mid-bot-R→tail-bot-L→tail-bot-R
+            (2, 13, 6),  # 14 wing upper L
+            (3, 7, 14),  # 15 wing upper R
+            (4, 6, 13),  # 16 wing lower L
+            (5, 14, 7),  # 17 wing lower R
+            (0, 2, 6),  # 18 leading edge upper L
+            (0, 7, 3),  # 19 leading edge upper R
+            (0, 6, 4),  # 20 leading edge lower L
+            (0, 5, 7),  # 21 leading edge lower R
+            (8, 11, 10),  # 22 tail cap
+            (8, 9, 11),  # 23 tail cap
+            (13, 8, 10),  # 24 inner-trail-L→tail
+            (14, 11, 9),  # 25 inner-trail-R→tail
         ]
 
 
