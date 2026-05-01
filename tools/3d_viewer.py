@@ -1,9 +1,16 @@
 import sys
-from math_engine import *
-from enemy import *
-from controller import DS4Input
-from cockpit import custom_font
-from constants import HUD_AMBER
+import os
+
+# Add parent directory to path so src module can be found
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.math_engine import *
+from src.enemy import *
+from src.controller import DS4Input
+from src.cockpit import custom_font
+from src.constants import HUD_AMBER
+
+
 
 # ==========================================
 # 3D VIEWER APP

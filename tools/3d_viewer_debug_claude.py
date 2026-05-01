@@ -32,20 +32,27 @@ Debug colour key (winding mode)
     RED     face normal points inward  (winding is wrong — fix_winding candidate)
     BLUE    face is perpendicular to centroid vector (edge case)
 """
+import sys
+import os
+
+# Add parent directory to path so src module can be found
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 import math
 import pygame
-from cockpit import custom_font
-import enemy
+from src.cockpit import custom_font
+import src.enemy as enemy
+
 
 # ── try to import project modules; fall back to stubs ────────────────────────
 try:
-    from math_engine import (
+    from src.math_engine import (
         quat_identity, quat_rotate_vec, quat_conjugate,
         rotate_yaw, rotate_pitch,
         project_to_screen,
     )
-    from enemy import Corvette
+    from src.enemy import Corvette
     _HAS_PROJECT = True
 except ImportError:
     _HAS_PROJECT = False
