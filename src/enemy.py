@@ -548,7 +548,7 @@ class Sniper(Enemy):
         self.timer = random.uniform(2.0, 4.0)
         self._flicker = 0
 
-        # Asymmetrical, needle-like railgun ship
+        # Symmetrical, needle-like railgun ship
         self.verts = [
             (0, 0, 150),  # 0: nose tip
             (-8, 0, 40),  # 1: barrel L
@@ -701,45 +701,89 @@ class Corvette(Enemy):
         self._flicker = 0
         self.t = random.uniform(0, 100)
 
-        # Massive, blocky gunboat geometry
         self.verts = [
-            (0, -20, 250),  # 0: Nose Bot
-            (0, 20, 250),  # 1: Nose Top
+    # --- Forward pod ---
+    (0,   20,  250),   # 0  pod nose top       (set back, high — top of windshield)
+    (0,  -25,  270),   # 1  pod chin bot        (juts forward and low — bottom of windshield)
+    (-40,  20,  180),  # 2  pod top-left rear
+    ( 40,  20,  180),  # 3  pod top-right rear
+    (-40, -15,  180),  # 4  pod bot-left rear
+    ( 40, -15,  180),  # 5  pod bot-right rear
 
-            (-60, -30, 100),  # 2: Mid Hull Bot L
-            (60, -30, 100),  # 3: Mid Hull Bot R
-            (-60, 30, 100),  # 4: Mid Hull Top L
-            (60, 30, 100),  # 5: Mid Hull Top R
-            (-80, -30, -200),  # 6: Back Hull Bot L
-            (80, -30, -200),  # 7: Back Hull Bot R
-            (-80, 30, -200),  # 8: Back Hull Top L
-            (80, 30, -200),  # 9: Back Hull Top R
-            (0, 80, -80),  # 10: Command Tower Top
-            (0, 30, -150)  # 11: Tower slope base
-        ]
-        self.faces = [
-            (0, 1, 4),  # 0 OK
-            (0, 4, 2),  # 1 OK
-            (0, 3, 1),  # 2 OK
-            (0, 3, 5),
-            (0, 2, 3),  # Nose bottom cap  — closes the bottom between nose and mid-hull
-            (1, 3, 5),  # Nose top-right   — closes top-right wedge (mirror of what (0,1,4) does on left
-            (1, 5, 4),  # 4 OK
-            (2, 8, 6),  # 5 OK
-            (2, 4, 8),  # 6 OK
-            (3, 9, 5),  # 7 OK
-            (3, 7, 9),  # 8 OK
-            (4, 9, 8),  # 9 OK
-            (4, 5, 9),  # 10 OK
-            (2, 6, 7),  # 11 OK
-            (2, 7, 3),  # 12 OK
-            (4, 5, 10),  # 13 OK
-            (4, 10, 8),  # 14 OK
-            (5, 9, 10),  # 15 OK
-            (8, 10, 11),  # 16 OK
-            (9, 11, 10),  # 17 OK
+    # --- Central spine ---
+    (-15,   8,   80),  # 6  spine front top-left
+    ( 15,   8,   80),  # 7  spine front top-right
+    (-15,  -8,   80),  # 8  spine front bot-left
+    ( 15,  -8,   80),  # 9  spine front bot-right
+    (-15,   8, -200),  # 10 spine rear top-left
+    ( 15,   8, -200),  # 11 spine rear top-right
+    (-15,  -8, -200),  # 12 spine rear bot-left
+    ( 15,  -8, -200),  # 13 spine rear bot-right
 
-        ]
+    # --- Nacelle tips (rear) ---
+    (-90,   0, -180),  # 14 nacelle-left outer tip
+    (-50,   0, -180),  # 15 nacelle-left inner tip
+    ( 50,   0, -180),  # 16 nacelle-right inner tip
+    ( 90,   0, -180),  # 17 nacelle-right outer tip
+]
+
+    self.faces = [
+        # Windshield (the raked angled face — color this one)
+        (0, 1, 5),   # windshield right
+        (0, 4, 1),   # windshield left
+
+        # Pod top
+        (0, 3, 2),
+        (0, 2, 3),   # covered by above — remove if double-sided not needed
+
+        # Pod sides
+        (0, 2,  4),  # pod left side top→bot
+        (0, 3,  5),  # pod right side top→bot (reverse winding)
+
+        # Pod rear bulkhead
+        (2, 3, 5),
+        (2, 5, 4),
+
+        # Pod→spine transition (top)
+        (2,  7,  6),
+        (2,  3,  7),
+
+        # Pod→spine transition (bottom)
+        (4,  8,  9),
+        (4,  9,  5),
+
+        # Spine top
+        ( 6,  7, 11),
+        ( 6, 11, 10),
+
+        # Spine bottom
+        ( 8,  9, 13),
+        ( 8, 13, 12),
+
+        # Spine left side
+        ( 6, 10, 12),
+        ( 6, 12,  8),
+
+        # Spine right side
+        ( 7,  9, 13),
+        ( 7, 13, 11),
+
+        # Spine rear cap
+        (10, 11, 13),
+        (10, 13, 12),
+
+        # Left nacelle
+        ( 6,  8, 15),   # inner face (spine left → nacelle inner tip)
+        ( 8, 12, 15),
+        (12, 14, 15),   # nacelle left outer→inner end cap
+        ( 8, 14, 12),   # nacelle left top surface
+
+        # Right nacelle
+        ( 7,  9, 16),
+        ( 9, 13, 16),
+        (13, 16, 17),
+        ( 9, 17, 13),
+    ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.t += dt
