@@ -659,7 +659,7 @@ class Sniper(Enemy):
 
         if dist < self.FLEE_RANGE:
             self.state = 'fleeing'
-            self.base_color = (150, 255, 100)
+            self.base_color = (255, 255, 100)
         elif self.state == 'fleeing' and dist > self.FLEE_RANGE + 1000:
             self.state = 'aiming'
             self.timer = 2.0
@@ -679,8 +679,8 @@ class Sniper(Enemy):
                         'vx': nx * 12000,
                         'vy': ny * 12000,
                         'vz': nz * 12000,
-                        'life': 2.0, 'damage': 40, 'homing': False,
-                        'color': (255, 255, 255), 'size_mult': 4.0
+                        'life': 5.0, 'damage': 70, 'homing': True,
+                        'color': (255, 10, 255), 'size_mult': 6.0
                     })
                 self.state = 'aiming'
                 self.timer = random.uniform(4.0, 6.0)

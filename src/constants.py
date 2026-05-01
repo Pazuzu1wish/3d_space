@@ -55,7 +55,7 @@ SNIPER_CHARGE_JITTER = 7.0          # jitter multiplier for sniper beam
 SNIPER_CHARGE_CORE_THRESHOLD = 0.8  # intensity threshold for white core
 SNIPER_GLARE_MULTIPLIER = 45        # multiplier for sniper glare size
 MG_COOLDOWN = 0.15                  # machine gun cooldown in seconds
-WEAPON_SPREAD = 0.25                # weapon spread in radians
+WEAPON_SPREAD = 0.05                # weapon spread in radians
 TRAIL_LIFE_DIVISOR = 0.1            # divisor for trail life ratio calculation
 TARGETING_FOV = 100.0               # field of view for target lock in degrees
 
