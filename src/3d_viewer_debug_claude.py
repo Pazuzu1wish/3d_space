@@ -261,6 +261,7 @@ class DebugViewer:
         self.show_normals     = False
         self.show_winding     = False
         self.show_face_ids    = False
+        self.show_vertex_ids  = False
         self.debug_mode_idx   = 0          # index into DEBUG_MODES
         self.normal_len       = 30.0       # arrow length in world units
 
@@ -268,6 +269,11 @@ class DebugViewer:
         self.selected_face    = 0          # currently highlighted face index
         self.flip_flash       = 0.0        # timer for flash feedback on flip
         self.flip_flash_col   = COL_OUTWARD
+
+        # input for editing
+        self.input_mode       = None       # 'add_vertex', 'del_vertex', 'add_face'
+        self.input_string     = ""
+        self.input_prompt     = ""
 
         # DS4 (optional)
         try:
@@ -439,6 +445,45 @@ class DebugViewer:
             print(f"    {f},  # {fi} {tag}")
         print("]\n")
 
+    def _confirm_input(self):
+        """Process the input string based on current input mode."""
+        try:
+            if self.input_mode == 'add_vertex':
+                parts = self.input_string.split(',')
+                if len(parts) == 3:
+                    x, y, z = map(float, parts)
+                    self.verts.append((x, y, z))
+                    self.centroid = mesh_centroid(self.verts)
+                    self._precompute_face_data()
+                    print(f"[add vertex] added {len(self.verts)-1}: ({x}, {y}, {z})")
+            elif self.input_mode == 'del_vertex':
+                idx = int(self.input_string)
+                if 0 <= idx < len(self.verts):
+                    del self.verts[idx]
+                    # remove faces that use this vertex
+                    new_faces = []
+                    for face in self.faces:
+                        if idx in face:
+                            continue
+                        new_face = tuple(i if i < idx else i-1 for i in face)
+                        new_faces.append(new_face)
+                    self.faces = new_faces
+                    self.centroid = mesh_centroid(self.verts)
+                    self._precompute_face_data()
+                    self.selected_face = min(self.selected_face, len(self.faces)-1) if self.faces else 0
+                    print(f"[del vertex] deleted {idx}, removed invalid faces")
+            elif self.input_mode == 'add_face':
+                parts = self.input_string.split(',')
+                if len(parts) == 3:
+                    i, j, k = map(int, parts)
+                    if all(0 <= x < len(self.verts) for x in (i, j, k)):
+                        self.faces.append((i, j, k))
+                        self._precompute_face_data()
+                        print(f"[add face] added {len(self.faces)-1}: ({i}, {j}, {k})")
+        except ValueError:
+            pass  # invalid input, ignore
+        self.input_mode = None
+
     def _draw_selected_face(self, rot_verts):
         """Always draw selected face, even if backface-culled."""
         fi   = self.selected_face
@@ -488,6 +533,13 @@ class DebugViewer:
         lbl = self.font_lg.render(str(fi), True, (220, 220, 80))
         self.screen.blit(lbl, (cx - lbl.get_width()//2, cy - lbl.get_height()//2))
 
+    def _draw_vertex_id(self, vi, rot_verts):
+        vx, vy, vz = rot_verts[vi]
+        p = _project(vx, vy, vz, self.fov, self.W//2, self.H//2)
+        if p:
+            lbl = self.font_sm.render(str(vi), True, (100, 200, 255))
+            self.screen.blit(lbl, (p[0] - lbl.get_width()//2, p[1] - lbl.get_height()//2))
+
     # ── HUD ───────────────────────────────────────────────────────────────────
 
     def _draw_hud(self):
@@ -505,6 +557,7 @@ class DebugViewer:
             ("[N]",      f"Normals {'ON' if self.show_normals else 'OFF'}"),
             ("[F]",      f"Winding col {'ON' if self.show_winding else 'OFF'}"),
             ("[I]",      f"Face IDs {'ON' if self.show_face_ids else 'OFF'}"),
+            ("[V]",      f"Vertex IDs {'ON' if self.show_vertex_ids else 'OFF'}"),
             ("[D]",      "Cycle debug"),
             ("[R]",      "Reset"),
             ("",         ""),
@@ -512,6 +565,9 @@ class DebugViewer:
             ("[SPC/RET]", "Flip winding"),
             ("[X]",      "Flip all red"),
             ("[P]",      "Print faces[]"),
+            ("[A]",      "Add vertex"),
+            ("[Del]",    "Del vertex"),
+            ("[Shift+F]", "Add face"),
             ("",         ""),
             ("[Q/ESC]",  "Quit"),
         ]
@@ -561,6 +617,13 @@ class DebugViewer:
             self.screen.blit(self.font_sm.render(txt, True, HUD_DIM), (lx+16, ly))
             ly += 18
 
+        # ── input prompt (center-bottom) ──────────────────────────────────
+        if self.input_mode:
+            prompt_surf = self.font_md.render(self.input_prompt, True, ACCENT)
+            self.screen.blit(prompt_surf, (self.W//2 - prompt_surf.get_width()//2, self.H - 100))
+            input_surf = self.font_md.render(self.input_string + "_", True, HUD_COL)
+            self.screen.blit(input_surf, (self.W//2 - input_surf.get_width()//2, self.H - 80))
+
     # ── grid / axes ───────────────────────────────────────────────────────────
 
     def _draw_grid(self):
@@ -593,46 +656,72 @@ class DebugViewer:
                 self.running = False
 
             elif event.type == pygame.KEYDOWN:
-                k = event.key
-                n_faces = len(self.faces)
-                if k in (pygame.K_q, pygame.K_ESCAPE):
-                    self.running = False
-                elif k == pygame.K_r:
-                    self.obj_quat  = _quat_identity()
-                    self.camera_z  = 350.0
-                elif k == pygame.K_c:
-                    self.culling = not self.culling
-                elif k == pygame.K_w:
-                    self.show_wireframe = not self.show_wireframe
-                elif k == pygame.K_n:
-                    self.show_normals = not self.show_normals
-                elif k == pygame.K_f:
-                    self.show_winding = not self.show_winding
-                elif k == pygame.K_i:
-                    self.show_face_ids = not self.show_face_ids
-                elif k == pygame.K_d:
-                    self.debug_mode_idx = (self.debug_mode_idx + 1) % len(self.DEBUG_MODES)
-                    m = self.DEBUG_MODES[self.debug_mode_idx]
-                    self.show_winding   = m in ('winding', 'all')
-                    self.show_normals   = m in ('normals', 'all')
-                    self.show_wireframe = m in ('all',)
-                    self.show_face_ids  = m in ('all',)
-                # ── face selection ──────────────────────────────────────────
-                elif k == pygame.K_LEFT:
-                    self.selected_face = (self.selected_face - 1) % n_faces
-                elif k == pygame.K_RIGHT:
-                    self.selected_face = (self.selected_face + 1) % n_faces
-                elif k == pygame.K_UP:
-                    self.selected_face = (self.selected_face - 10) % n_faces
-                elif k == pygame.K_DOWN:
-                    self.selected_face = (self.selected_face + 10) % n_faces
-                # ── face editing ────────────────────────────────────────────
-                elif k in (pygame.K_SPACE, pygame.K_RETURN):
-                    self._flip_face(self.selected_face)
-                elif k == pygame.K_x:
-                    self._flip_all_red()
-                elif k == pygame.K_p:
-                    self._print_faces()
+                if self.input_mode:
+                    k = event.key
+                    if k == pygame.K_RETURN:
+                        self._confirm_input()
+                    elif k == pygame.K_ESCAPE:
+                        self.input_mode = None
+                    elif k == pygame.K_BACKSPACE:
+                        self.input_string = self.input_string[:-1]
+                    else:
+                        self.input_string += event.unicode
+                else:
+                    k = event.key
+                    n_faces = len(self.faces)
+                    if k in (pygame.K_q, pygame.K_ESCAPE):
+                        self.running = False
+                    elif k == pygame.K_r:
+                        self.obj_quat  = _quat_identity()
+                        self.camera_z  = 350.0
+                    elif k == pygame.K_c:
+                        self.culling = not self.culling
+                    elif k == pygame.K_w:
+                        self.show_wireframe = not self.show_wireframe
+                    elif k == pygame.K_n:
+                        self.show_normals = not self.show_normals
+                    elif k == pygame.K_f:
+                        self.show_winding = not self.show_winding
+                    elif k == pygame.K_i:
+                        self.show_face_ids = not self.show_face_ids
+                    elif k == pygame.K_v:
+                        self.show_vertex_ids = not self.show_vertex_ids
+                    elif k == pygame.K_d:
+                        self.debug_mode_idx = (self.debug_mode_idx + 1) % len(self.DEBUG_MODES)
+                        m = self.DEBUG_MODES[self.debug_mode_idx]
+                        self.show_winding   = m in ('winding', 'all')
+                        self.show_normals   = m in ('normals', 'all')
+                        self.show_wireframe = m in ('all',)
+                        self.show_face_ids  = m in ('all',)
+                    # ── face selection ──────────────────────────────────────────
+                    elif k == pygame.K_LEFT:
+                        self.selected_face = (self.selected_face - 1) % n_faces
+                    elif k == pygame.K_RIGHT:
+                        self.selected_face = (self.selected_face + 1) % n_faces
+                    elif k == pygame.K_UP:
+                        self.selected_face = (self.selected_face - 10) % n_faces
+                    elif k == pygame.K_DOWN:
+                        self.selected_face = (self.selected_face + 10) % n_faces
+                    # ── face editing ────────────────────────────────────────────
+                    elif k in (pygame.K_SPACE, pygame.K_RETURN):
+                        self._flip_face(self.selected_face)
+                    elif k == pygame.K_x:
+                        self._flip_all_red()
+                    elif k == pygame.K_p:
+                        self._print_faces()
+                    # ── vertex/face editing ───────────────────────────────────────────
+                    elif k == pygame.K_a:
+                        self.input_mode = 'add_vertex'
+                        self.input_string = ""
+                        self.input_prompt = "Add vertex: x,y,z"
+                    elif k == pygame.K_DELETE:
+                        self.input_mode = 'del_vertex'
+                        self.input_string = ""
+                        self.input_prompt = "Delete vertex index:"
+                    elif pygame.key.get_mods() & pygame.KMOD_SHIFT and k == pygame.K_f:
+                        self.input_mode = 'add_face'
+                        self.input_string = ""
+                        self.input_prompt = "Add face: i,j,k"
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
@@ -703,6 +792,10 @@ class DebugViewer:
 
             # selected face always on top — drawn after queue so it's never buried
             self._draw_selected_face(rot_verts)
+
+            if self.show_vertex_ids:
+                for vi in range(len(rot_verts)):
+                    self._draw_vertex_id(vi, rot_verts)
 
             self._draw_hud()
             pygame.display.flip()
