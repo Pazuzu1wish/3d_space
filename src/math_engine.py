@@ -129,33 +129,56 @@ def project_to_screen(x, y, z, fov=400, cx=640, cy=370):
 
 # ── Targeting math ────────────────────────────
 
-def calculate_lead_position(player_pos, player_vel, target_pos, target_vel, proj_speed):
-    """
-    First-order kinematic intercept: returns the 3-D world coordinate
-    the player should aim at so that a projectile (at proj_speed) will
-    meet the target.
+import math
 
-    Accounts for the player's own velocity because bullets inherit it.
-    """
-    rel_x = target_pos[0] - player_pos[0]
-    rel_y = target_pos[1] - player_pos[1]
-    rel_z = target_pos[2] - player_pos[2]
-    dist = math.sqrt(rel_x**2 + rel_y**2 + rel_z**2) or 1.0
+def calculate_lead_position(
+    player_pos, player_vel, target_pos, target_vel, projectile_speed
+):
+    # Convert inputs to vectors (assuming they're tuples/lists)
+    px, py, pz = player_pos
+    vpx, vpy, vpz = player_vel
+    tx, ty, tz = target_pos
+    vtx, vty, vtz = target_vel
 
-    # Time-of-flight approximation (first order)
-    t = dist / proj_speed
+    # Relative position and velocity
+    rx = tx - px
+    ry = ty - py
+    rz = tz - pz
+    rvx = vtx - vpx
+    rvy = vty - vpy
+    rvz = vtz - vpz
 
-    # Relative velocity (target minus player — bullets inherit our momentum)
-    rel_vx = target_vel[0] - player_vel[0]
-    rel_vy = target_vel[1] - player_vel[1]
-    rel_vz = target_vel[2] - player_vel[2]
+    # Dot products and magnitudes squared
+    relative_pos_dot_relative_vel = rx * rvx + ry * rvy + rz * rvz
+    relative_vel_mag_sq = rvx**2 + rvy**2 + rvz**2
+    relative_pos_mag_sq = rx**2 + ry**2 + rz**2
+    projectile_speed_sq = projectile_speed ** 2
 
-    return (
-        target_pos[0] + rel_vx * t,
-        target_pos[1] + rel_vy * t,
-        target_pos[2] + rel_vz * t,
-    )
+    # Coefficients for quadratic equation: A*t^2 + B*t + C = 0
+    A = relative_vel_mag_sq - projectile_speed_sq
+    B = 2 * relative_pos_dot_relative_vel
+    C = relative_pos_mag_sq
 
+    # Discriminant
+    discriminant = B**2 - 4 * A * C
+
+    # No solution (target is too fast or moving away)
+    if discriminant < 0 or A == 0:
+        return target_pos  # Fallback: aim at current position
+
+    # Solve for t (only positive root)
+    t = (-B + math.sqrt(discriminant)) / (2 * A)
+    if t < 0:
+        t = (-B - math.sqrt(discriminant)) / (2 * A)
+    if t < 0:
+        return target_pos  # No valid intercept time
+
+    # Calculate intercept position
+    intercept_x = tx + vtx * t
+    intercept_y = ty + vty * t
+    intercept_z = tz + vtz * t
+
+    return (intercept_x, intercept_y, intercept_z)
 
 def is_in_front_of_camera(world_pos, player_pos, player_orientation):
     """

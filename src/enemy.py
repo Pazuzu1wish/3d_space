@@ -10,6 +10,7 @@ from src.math_engine import (
 )
 from src.constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
 
+
 # ──────────────────────────────────────────────
 #  BASE ENEMY
 # ──────────────────────────────────────────────
@@ -396,6 +397,7 @@ class Dogfighter(Enemy):
         self.mode_timer = random.uniform(2.0, 4.0)
         self.phase = random.uniform(0, math.pi * 2)
         self._flicker = 0
+
 
         # New vertices based on the provided table (roughly 1.5x old scale)
         self.verts = [

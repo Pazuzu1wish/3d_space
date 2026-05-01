@@ -184,3 +184,5 @@ def fix_winding(verts, faces):
             fixed.append(face)
 
     return fixed
+
+
