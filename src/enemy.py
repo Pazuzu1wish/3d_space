@@ -727,64 +727,72 @@ class Corvette(Enemy):
     ( 90,   0, -180),  # 17 nacelle-right outer tip
 ]
 
-    self.faces = [
-        # Windshield (the raked angled face — color this one)
-        (0, 1, 5),   # windshield right
-        (0, 4, 1),   # windshield left
+        self.faces = [
+            (0, 1, 5),  # 0 OK
+            (0, 4, 1),  # 1 OK
+            (0, 3, 2),  # 2 OK
+            (0, 3, 2),  # 3 OK
+            (0, 2, 4),  # 4 OK
+            (0, 5, 3),  # 5 OK
+            (2, 5, 3),  # 6 OK
+            (2, 4, 5),  # 7 OK
+            (2, 6, 7),  # 8 OK
+            (2, 7, 3),  # 9 OK
+            (4, 8, 9),  # 10 OK
+            (4, 9, 5),  # 11 OK
+            (6, 7, 11),  # 12 OK
+            (6, 11, 10),  # 13 OK
+            (8, 13, 9),  # 14 OK
+            (8, 12, 13),  # 15 OK
+            (6, 10, 12),  # 16 OK
+            (6, 12, 8),  # 17 OK
+            (7, 9, 13),  # 18 OK
+            (7, 13, 11),  # 19 OK
+            (10, 11, 13),  # 20 OK
+            (10, 13, 12),  # 21 OK
+            (6, 15, 8),  # 22 OK
+            (8, 15, 12),  # 23 OK
+            (12, 14, 15),  # 24 OK
+            (8, 14, 12),  # 25 OK
+            (7, 9, 16),  # 26 OK
+            (9, 13, 16),  # 27 OK
+            (13, 16, 17),  # 28 OK
+            (9, 13, 17),  # 29 OK
+        ]
 
-        # Pod top
-        (0, 3, 2),
-        (0, 2, 3),   # covered by above — remove if double-sided not needed
-
-        # Pod sides
-        (0, 2,  4),  # pod left side top→bot
-        (0, 3,  5),  # pod right side top→bot (reverse winding)
-
-        # Pod rear bulkhead
-        (2, 3, 5),
-        (2, 5, 4),
-
-        # Pod→spine transition (top)
-        (2,  7,  6),
-        (2,  3,  7),
-
-        # Pod→spine transition (bottom)
-        (4,  8,  9),
-        (4,  9,  5),
-
-        # Spine top
-        ( 6,  7, 11),
-        ( 6, 11, 10),
-
-        # Spine bottom
-        ( 8,  9, 13),
-        ( 8, 13, 12),
-
-        # Spine left side
-        ( 6, 10, 12),
-        ( 6, 12,  8),
-
-        # Spine right side
-        ( 7,  9, 13),
-        ( 7, 13, 11),
-
-        # Spine rear cap
-        (10, 11, 13),
-        (10, 13, 12),
-
-        # Left nacelle
-        ( 6,  8, 15),   # inner face (spine left → nacelle inner tip)
-        ( 8, 12, 15),
-        (12, 14, 15),   # nacelle left outer→inner end cap
-        ( 8, 14, 12),   # nacelle left top surface
-
-        # Right nacelle
-        ( 7,  9, 16),
-        ( 9, 13, 16),
-        (13, 16, 17),
-        ( 9, 17, 13),
-    ]
-
+        # ── faces (copy into your enemy class) ──
+        self.faces = [
+            (0, 1, 5),  # 0 OK
+            (0, 4, 1),  # 1 OK
+            (0, 3, 2),  # 2 OK
+            (0, 3, 2),  # 3 OK
+            (0, 2, 4),  # 4 OK
+            (0, 5, 3),  # 5 OK
+            (2, 5, 3),  # 6 OK
+            (2, 4, 5),  # 7 OK
+            (2, 6, 7),  # 8 OK
+            (2, 7, 3),  # 9 OK
+            (4, 8, 9),  # 10 OK
+            (4, 9, 5),  # 11 OK
+            (6, 7, 11),  # 12 OK
+            (6, 11, 10),  # 13 OK
+            (8, 13, 9),  # 14 OK
+            (8, 12, 13),  # 15 OK
+            (6, 10, 12),  # 16 OK
+            (6, 12, 8),  # 17 OK
+            (7, 9, 13),  # 18 OK
+            (7, 13, 11),  # 19 OK
+            (10, 11, 13),  # 20 OK
+            (10, 13, 12),  # 21 OK
+            (6, 15, 8),  # 22 OK
+            (8, 15, 12),  # 23 OK
+            (12, 14, 15),  # 24 OK
+            (8, 14, 12),  # 25 OK
+            (7, 9, 16),  # 26 OK
+            (9, 13, 16),  # 27 OK
+            (13, 16, 17),  # 28 OK
+            (9, 13, 17),  # 29 OK
+        ]
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.t += dt
         self.turret_timer -= dt
