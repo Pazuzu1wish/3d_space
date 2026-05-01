@@ -7,8 +7,8 @@ ENCOUNTER_SCRIPT = [
         'origin': (0, 0, 8000),
         'formation': 'wedge',
         'enemies': [
-            ('fighter', (100 , 0, 0)),
-            ('fighter',   (-200,   0,    0))
+            ('sniper', (100 , 0, 0)),
+            ('sniper',   (-200,   0,    0))
             ],
         'filler': False,
     },

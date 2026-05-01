@@ -585,7 +585,7 @@ class Sniper(Enemy):
         self.base_color = (150, 255, 100)
 
         # Single deep green thruster at back of long barrel
-        self.engine_offsets = [(0, 0, -100)]
+        self.engine_offsets = [(0, 0, -90)]
         self.engine_color = (100, 255, 50)
         self.engine_size = 6.0
         self.trail_life = 0.8
@@ -598,17 +598,55 @@ class Sniper(Enemy):
 
         # Asymmetrical, needle-like railgun ship
         self.verts = [
-            (0, 0, 150),  # 0: Extreme Nose tip (barrel)
-            (-10, -10, -60),  # 1: Body Base L
-            (10, -10, -60),  # 2: Body Base R
-            (0, 15, -60),  # 3: Top Battery
-            (25, -5, -40),  # 4: Asymmetric Side Pod R
-            (-5, -5, 50)  # 5: Barrel Support
+            (0, 0, 150),  # 0: nose tip
+            (-8, 0, 40),  # 1: barrel L
+            (8, 0, 40),  # 2: barrel R
+            (0, 8, 40),  # 3: barrel top
+            (0, -8, 40),  # 4: barrel bot
+            (-18, 12, 0),  # 5: shoulder TL
+            (18, 12, 0),  # 6: shoulder TR
+            (-18, -12, 0),  # 7: shoulder BL
+            (18, -12, 0),  # 8: shoulder BR
+            (-22, 16, -60),  # 9: rear TL
+            (22, 16, -60),  # 10: rear TR
+            (-22, -16, -60),  # 11: rear BL
+            (22, -16, -60),  # 12: rear BR
+            (-10, 8, -90),  # 13: tail TL
+            (10, 8, -90),  # 14: tail TR
+            (-10, -8, -90),  # 15: tail BL
+            (10, -8, -90),  # 16: tail BR
         ]
         self.faces = [
-            (0, 3, 1), (0, 2, 3), (0, 1, 2),  # Main needle
-            (2, 4, 3), (1, 3, 4),  # Pod integration
-            (5, 2, 4), (5, 4, 3)  # Barrel support
+            (0, 2, 3),  # 0  needle right
+            (0, 4, 2),  # 1  needle right-bot
+            (0, 3, 1),  # 2  needle left
+            (0, 1, 4),  # 3  needle left-bot
+            (3, 6, 5),  # 4  barrel→shoulder top
+            (3, 5, 1),  # 5  barrel→shoulder top-L
+            (1, 5, 7),  # 6  barrel→shoulder left
+            (1, 7, 4),  # 7  barrel→shoulder left-bot
+            (4, 7, 8),  # 8  barrel→shoulder bot
+            (4, 8, 2),  # 9  barrel→shoulder bot-R
+            (2, 8, 6),  # 10  barrel→shoulder right
+            (2, 6, 3),  # 11  barrel→shoulder right-top
+            (5, 10, 9),  # 12  shoulder→rear top
+            (5, 6, 10),  # 13  shoulder→rear top-R
+            (5, 9, 11),  # 14  shoulder→rear left
+            (5, 11, 7),  # 15  shoulder→rear left-bot
+            (6, 12, 10),  # 16  shoulder→rear right
+            (6, 8, 12),  # 17  shoulder→rear right-bot
+            (7, 11, 12),  # 18  shoulder→rear bot
+            (7, 12, 8),  # 19  shoulder→rear bot-R
+            (9, 14, 13),  # 20  rear→tail top
+            (9, 10, 14),  # 21  rear→tail top-R
+            (9, 13, 15),  # 22  rear→tail left
+            (9, 15, 11),  # 23  rear→tail left-bot
+            (10, 16, 14),  # 24  rear→tail right
+            (10, 12, 16),  # 25  rear→tail right-bot
+            (11, 15, 16),  # 26  rear→tail bot
+            (11, 16, 12),  # 27  rear→tail bot-R
+            (13, 16, 15),  # 28  tail cap
+            (13, 14, 16),  # 29  tail cap
         ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
