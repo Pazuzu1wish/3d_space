@@ -529,8 +529,8 @@ class Dogfighter(Enemy):
         if global_projectiles is None: return
 
         if w_type == 'mg':
-            proj_speed = 5000
-            spread = 0.03
+            proj_speed = 15000
+            spread = 0.13
             ax = aim_dir[0] + random.uniform(-spread, spread)
             ay = aim_dir[1] + random.uniform(-spread, spread)
             az = aim_dir[2] + random.uniform(-spread, spread)
@@ -544,8 +544,8 @@ class Dogfighter(Enemy):
             global_projectiles.append({
                 'x': self.x, 'y': self.y, 'z': self.z,
                 'vx': vx, 'vy': vy, 'vz': vz,
-                'life': 3.0, 'damage': 2, 'homing': False,
-                'color': (255, 200, 50), 'size_mult': 1.0
+                'life': 3.0, 'damage': .25, 'homing': False,
+                'color': (255, 200, 50), 'size_mult': 0.7
             })
 
         elif w_type == 'bolt':
@@ -586,7 +586,7 @@ class Sniper(Enemy):
 
         # Single deep green thruster at back of long barrel
         self.engine_offsets = [(0, 0, -90)]
-        self.engine_color = (100, 255, 50)
+        self.engine_color = (255, 0, 50)
         self.engine_size = 6.0
         self.trail_life = 0.8
 
@@ -659,7 +659,7 @@ class Sniper(Enemy):
 
         if dist < self.FLEE_RANGE:
             self.state = 'fleeing'
-            self.base_color = (255, 255, 100)
+            self.base_color = (255, 255, 255)
         elif self.state == 'fleeing' and dist > self.FLEE_RANGE + 1000:
             self.state = 'aiming'
             self.timer = 2.0

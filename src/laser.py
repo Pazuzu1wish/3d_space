@@ -20,7 +20,7 @@ class Laser:
             self.y = ppos[1] + fy * 50
             self.z = ppos[2] + fz * 50
             
-            speed = 16000
+            speed = 20000
             self.vx, self.vy, self.vz = fx * speed, fy * speed, fz * speed
             self.life = life
         else:
