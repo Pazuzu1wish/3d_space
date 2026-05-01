@@ -9,6 +9,10 @@ from src.math_engine import (
     get_forward_from_quat,
 )
 from src.constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
+from src.projectile import (
+    MachineGunBolt, HomingBolt, SniperBeam,
+    CorvetteTurret, Mine, StealthShotgun
+)
 
 
 # ──────────────────────────────────────────────
@@ -541,12 +545,9 @@ class Dogfighter(Enemy):
             vy = ay * proj_speed + self.vy * 0.3
             vz = az * proj_speed + self.vz * 0.3
 
-            global_projectiles.append({
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'vx': vx, 'vy': vy, 'vz': vz,
-                'life': 3.0, 'damage': .25, 'homing': False,
-                'color': (255, 200, 50), 'size_mult': 0.7
-            })
+            global_projectiles.append(MachineGunBolt(
+                self.x, self.y, self.z, vx, vy, vz
+            ))
 
         elif w_type == 'bolt':
             proj_speed = 2200
@@ -554,12 +555,9 @@ class Dogfighter(Enemy):
             vy = aim_dir[1] * proj_speed + self.vy * 0.5
             vz = aim_dir[2] * proj_speed + self.vz * 0.5
 
-            global_projectiles.append({
-                'x': self.x, 'y': self.y, 'z': self.z,
-                'vx': vx, 'vy': vy, 'vz': vz,
-                'life': 6.0, 'damage': 15, 'homing': True,
-                'color': (200, 50, 255), 'size_mult': 2.5
-            })
+            global_projectiles.append(HomingBolt(
+                self.x, self.y, self.z, vx, vy, vz
+            ))
 
     def on_hit(self):
         self.hp -= 1
@@ -674,14 +672,10 @@ class Sniper(Enemy):
 
             if self.timer <= 0:
                 if global_projectiles is not None:
-                    global_projectiles.append({
-                        'x': self.x, 'y': self.y, 'z': self.z,
-                        'vx': nx * 32000,
-                        'vy': ny * 32000,
-                        'vz': nz * 32000,
-                        'life': 5.0, 'damage': 70, 'homing': True,
-                        'color': (10, 255, 10), 'size_mult': 6.0
-                    })
+                    global_projectiles.append(SniperBeam(
+                        self.x, self.y, self.z,
+                        nx * 32000, ny * 32000, nz * 32000
+                    ))
                 self.state = 'aiming'
                 self.timer = random.uniform(4.0, 6.0)
                 self.base_color = (150, 255, 100)
@@ -825,14 +819,12 @@ class Corvette(Enemy):
                 n = math.sqrt(ax * ax + ay * ay + az * az) or 1
                 ax, ay, az = ax / n, ay / n, az / n
 
-                global_projectiles.append({
-                    'x': self.x, 'y': self.y, 'z': self.z,
-                    'vx': ax * 4000 + self.vx * 0.5,
-                    'vy': ay * 4000 + self.vy * 0.5,
-                    'vz': az * 4000 + self.vz * 0.5,
-                    'life': 4.0, 'damage': 5, 'homing': False,
-                    'color': (50, 255, 50), 'size_mult': 1.5
-                })
+                global_projectiles.append(CorvetteTurret(
+                    self.x, self.y, self.z,
+                    ax * 4000 + self.vx * 0.5,
+                    ay * 4000 + self.vy * 0.5,
+                    az * 4000 + self.vz * 0.5
+                ))
 
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
@@ -914,12 +906,9 @@ class Minelayer(Enemy):
         if self.mine_timer <= 0 and dist < 6000:
             self.mine_timer = 2.0
             if global_projectiles is not None:
-                global_projectiles.append({
-                    'x': self.x, 'y': self.y, 'z': self.z,
-                    'vx': 0, 'vy': 0, 'vz': 0,
-                    'life': 25.0, 'damage': 25, 'homing': False,
-                    'color': (255, 30, 30), 'size_mult': 6.0
-                })
+                global_projectiles.append(Mine(
+                    self.x, self.y, self.z, 0, 0, 0
+                ))
 
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
@@ -1005,12 +994,10 @@ class StealthInterceptor(Enemy):
                         ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread,
                                                                                                spread), nz + random.uniform(
                             -spread, spread)
-                        global_projectiles.append({
-                            'x': self.x, 'y': self.y, 'z': self.z,
-                            'vx': ax * 3000, 'vy': ay * 3000, 'vz': az * 3000,
-                            'life': 1.5, 'damage': 8, 'homing': False,
-                            'color': (100, 100, 255), 'size_mult': 1.2
-                        })
+                        global_projectiles.append(StealthShotgun(
+                            self.x, self.y, self.z,
+                            ax * 3000, ay * 3000, az * 3000
+                        ))
                 self.state = 'fleeing'
 
         elif self.state == 'fleeing':
