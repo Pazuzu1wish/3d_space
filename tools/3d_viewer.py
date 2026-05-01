@@ -4,7 +4,6 @@ from enemy import *
 from controller import DS4Input
 from cockpit import custom_font
 from constants import HUD_AMBER
-from utils import fix_winding
 
 # ==========================================
 # 3D VIEWER APP

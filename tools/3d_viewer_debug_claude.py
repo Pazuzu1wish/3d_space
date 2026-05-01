@@ -33,12 +33,9 @@ Debug colour key (winding mode)
     BLUE    face is perpendicular to centroid vector (edge case)
 """
 
-import sys
 import math
-import random
 import pygame
 from cockpit import custom_font
-
 import enemy
 
 # ── try to import project modules; fall back to stubs ────────────────────────

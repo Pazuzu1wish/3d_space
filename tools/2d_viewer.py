@@ -34,7 +34,6 @@ import pygame
 import math
 import os
 import datetime
-import sys
 
 # ── colours ──────────────────────────────────────────────────────────────────
 BG         = (5, 5, 12)

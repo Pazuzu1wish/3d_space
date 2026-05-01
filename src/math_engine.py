@@ -126,14 +126,11 @@ def project_to_screen(x, y, z, fov=400, cx=640, cy=370):
     sy = int(y * scale + cy)
     return sx, sy, scale
 
-
 # ── Targeting math ────────────────────────────
 
-import math
+def calculate_lead_position(player_pos, player_vel, target_pos, target_vel,
+                            projectile_speed):
 
-def calculate_lead_position(
-    player_pos, player_vel, target_pos, target_vel, projectile_speed
-):
     # Convert inputs to vectors (assuming they're tuples/lists)
     px, py, pz = player_pos
     vpx, vpy, vpz = player_vel
