@@ -15,7 +15,7 @@ class Star:
         self.z = ppos[2] + random.uniform(-spread, spread)
         self.brightness = random.uniform(0.3, 1.0)
 
-    def draw(self, surf, ppos, prot):
+    def submit_to_renderer(self, renderer, ppos):
         spread = 3000
         dx = self.x - ppos[0]
         dy = self.y - ppos[1]
@@ -28,15 +28,11 @@ class Star:
         if dz > spread: self.z -= 2 * spread
         elif dz < -spread: self.z += 2 * spread
 
-        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, prot)
+        cx, cy, cz = renderer.camera.world_to_camera(self.x, self.y, self.z)
 
         if cz > 0:
-            proj = project_to_screen(cx, cy, cz)
-            if proj:
-                sx, sy, scale = proj
-                size = max(1, int(2 * scale))
-                b = min(255, int(255 * self.brightness * min(1.0, 500 / (cz or 1))))
-                pygame.draw.circle(surf, (255, 255, 255), (sx, sy), size)
+            b = min(255, int(255 * self.brightness * min(1.0, 500 / (cz or 1))))
+            renderer.submit_sprite(self.x, self.y, self.z, (b, b, b), 2)
 
 
 

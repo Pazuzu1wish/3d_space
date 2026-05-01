@@ -19,10 +19,5 @@ class Particle:
         self.z += self.vz * dt
         self.life -= dt
 
-    def draw(self, surf, ppos, prot):
-        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, prot)
-        proj = project_to_screen(cx, cy, cz)
-        if proj:
-            sx, sy, scale = proj
-            size = max(1, int(15 * scale * self.life))
-            pygame.draw.circle(surf, self.color, (sx, sy), size)
+    def submit_to_renderer(self, renderer):
+        renderer.submit_sprite(self.x, self.y, self.z, self.color, 15 * self.life)

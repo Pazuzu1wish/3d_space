@@ -3,6 +3,8 @@ import math
 from src.math_engine import (
     world_to_camera, project_to_screen
 )
+from src.camera import Camera
+from src.renderer import RenderPipeline
 from src.cockpit import draw_cockpit_hud
 from src.controller import DS4Input
 from src.star import Star
@@ -47,6 +49,9 @@ class Game:
         # Initialize spatial partitioning for collision detection
         self.spatial = SpatialPartition(world_size=20000.0, cell_size=500.0)
 
+        self.camera = Camera(self.W, self.H)
+        self.renderer = RenderPipeline(self.camera)
+
         self.stars = [Star(self.player.pos) for _ in range(250)]
         self.enemies = []
         self.enemy_projectiles = []
@@ -89,11 +94,7 @@ class Game:
                 continue
 
             # Cull enemies far behind the camera
-            _, _, cz = world_to_camera(
-                e.x, e.y, e.z,
-                player.pos[0], player.pos[1], player.pos[2],
-                player.orientation,
-            )
+            cx, cy, cz = self.camera.world_to_camera(e.x, e.y, e.z)
             if cz < ENEMY_CULL_DISTANCE:
                 # Remove from spatial partition
                 self.spatial.unregister_entity(e)
@@ -140,54 +141,58 @@ class Game:
     def draw_game(self, screen, W, H, player, stars, enemies, enemy_projectiles):
         screen.fill((5, 5, 15))
 
-        draw_args = (player.pos, player.orientation)
-        for star in stars:  star.draw(screen, *draw_args)
+        self.camera.update(player.pos, player.orientation)
+        self.renderer.clear()
+
+        for star in stars:
+            star.submit_to_renderer(self.renderer, player.pos)
+
+        sniper_beams_to_draw = []
 
         # ── DRAW ENEMIES & SNIPER LASERS ────────────────
         for e in enemies:
-            e.draw(screen, *draw_args)
+            if self.camera.sphere_in_frustum(e.x, e.y, e.z, getattr(e, 'hit_radius', 50) * 2):
+                e.submit_to_renderer(self.renderer)
 
-            # If this is a Sniper in the charging state, draw the targeting beam!
-            if getattr(e, 'state', '') == 'charging':
-                # 1. Figure out where the sniper is on the screen
-                cx, cy, cz = world_to_camera(e.x, e.y, e.z, *draw_args[0], draw_args[1])
-
-                if cz > CAMERA_CLIP_NEAR:  # Only draw if the sniper is in front of the camera
-                    proj = project_to_screen(cx, cy, cz)
-                    if proj:
-                        sx, sy, scale = proj
-
-                        # 2. Calculate intensity (Charge timer goes SNIPER_CHARGE_TIME down to 0)
-                        intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', SNIPER_CHARGE_TIME) / SNIPER_CHARGE_TIME))
-
-                        # 3. Add an unstable jitter effect that gets worse as it charges
-                        jitter = math.sin(pygame.time.get_ticks() * 0.05) * (SNIPER_CHARGE_JITTER * intensity)
-                        jx, jy = sx + jitter, sy - jitter
-
-                        # 4. Draw outer red glow (gets thicker)
-                        thickness = max(1, int(8 * intensity))
-                        pygame.draw.line(screen, (255, 0, 0), (jx, jy), (W//2, H//2), thickness)
-
-                        # 5. Draw inner white-hot core right before firing
-                        if intensity > SNIPER_CHARGE_CORE_THRESHOLD:
-                            pygame.draw.line(screen, (255, 255, 255), (jx, jy), (W//2, H//2), max(1, thickness - 3))
-
-                        # 6. Draw a bright glare on the front of the sniper's ship
-                        glare = int(SNIPER_GLARE_MULTIPLIER * intensity * scale)
-                        if glare > 0:
-                            pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
+                # If this is a Sniper in the charging state, remember it to draw the targeting beam on top
+                if getattr(e, 'state', '') == 'charging':
+                    sniper_beams_to_draw.append(e)
 
         # Draw particles from pool
-        for p in self.particle_pool.get_active_particles():
-            self._draw_particle(screen, *draw_args, p)
+        for pdata in self.particle_pool.get_active_particles():
+            if self.camera.sphere_in_frustum(pdata['x'], pdata['y'], pdata['z'], 50):
+                self._submit_particle(pdata)
         
         # Draw lasers from pool
         for l in self.laser_pool.get_active():
-            l.draw(screen, *draw_args)
+            if self.camera.sphere_in_frustum(l.x, l.y, l.z, 200):
+                l.submit_to_renderer(self.renderer)
 
         # Draw projectiles
         for bolt in enemy_projectiles:
-            bolt.draw(screen, draw_args[0], draw_args[1])
+            if self.camera.sphere_in_frustum(bolt.x, bolt.y, bolt.z, 100):
+                bolt.submit_to_renderer(self.renderer)
+
+        # RENDER EVERYTHING
+        self.renderer.render(screen)
+
+        # Draw sniper beams on top
+        for e in sniper_beams_to_draw:
+            cx, cy, cz = self.camera.world_to_camera(e.x, e.y, e.z)
+            if cz > CAMERA_CLIP_NEAR:
+                proj = self.camera.project(cx, cy, cz)
+                if proj:
+                    sx, sy, scale = proj
+                    intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', SNIPER_CHARGE_TIME) / SNIPER_CHARGE_TIME))
+                    jitter = math.sin(pygame.time.get_ticks() * 0.05) * (SNIPER_CHARGE_JITTER * intensity)
+                    jx, jy = sx + jitter, sy - jitter
+                    thickness = max(1, int(8 * intensity))
+                    pygame.draw.line(screen, (255, 0, 0), (jx, jy), (W//2, H//2), thickness)
+                    if intensity > SNIPER_CHARGE_CORE_THRESHOLD:
+                        pygame.draw.line(screen, (255, 255, 255), (jx, jy), (W//2, H//2), max(1, thickness - 3))
+                    glare = int(SNIPER_GLARE_MULTIPLIER * intensity * scale)
+                    if glare > 0:
+                        pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
 
         draw_cockpit_hud(
             screen, W, H, player.throttle, player.current_speed, player.weapons_cooldown <= 0,
@@ -207,14 +212,9 @@ class Game:
         # Damage overlay
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
     
-    def _draw_particle(self, surf, ppos, prot, pdata):
-        """Helper method to draw a particle from pool data."""
-        cx, cy, cz = world_to_camera(pdata['x'], pdata['y'], pdata['z'], *ppos, prot)
-        proj = project_to_screen(cx, cy, cz)
-        if proj:
-            sx, sy, scale = proj
-            size = max(1, int(15 * scale * pdata['life']))
-            pygame.draw.circle(surf, pdata['color'], (sx, sy), size)
+    def _submit_particle(self, pdata):
+        """Helper method to submit a particle from pool data to renderer."""
+        self.renderer.submit_sprite(pdata['x'], pdata['y'], pdata['z'], pdata['color'], 15 * pdata['life'])
 
     def main(self):
 

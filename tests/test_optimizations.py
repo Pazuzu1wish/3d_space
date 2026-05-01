@@ -5,7 +5,7 @@ Run with: python -m pytest src/test_optimizations.py -v
 
 import sys
 import math
-sys.path.insert(0, '/workspace')
+
 
 from src.object_pool import ObjectPool, ParticlePool, LaserPool
 from src.spatial_partition import BoundingBox, OctreeNode, SpatialHash, SpatialPartition

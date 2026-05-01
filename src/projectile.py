@@ -23,17 +23,12 @@ class EnemyProjectile:
         self.z += self.vz * dt
         self.life -= dt
 
-    def draw(self, surf, ppos, prot):
-        cx, cy, cz = world_to_camera(self.x, self.y, self.z, *ppos, prot)
-        proj = project_to_screen(cx, cy, cz)
-        if proj:
-            sx, sy, scale = proj
-            size = max(2, int(scale * 2 * self.size_mult))
-            pygame.draw.circle(surf, self.color, (sx, sy), size)
+    def submit_to_renderer(self, renderer):
+        renderer.submit_sprite(self.x, self.y, self.z, self.color, self.size_mult * 2)
 
-            # If it's a homing bolt, draw an inner white core to make it look intense
-            if self.homing and size > 2:
-                pygame.draw.circle(surf, (255, 255, 255), (sx, sy), int(size / 2))
+        # If it's a homing bolt, draw an inner white core to make it look intense
+        if self.homing and self.size_mult * 2 > 2:
+            renderer.submit_sprite(self.x, self.y, self.z, (255, 255, 255), self.size_mult)
 
 
 class MachineGunBolt(EnemyProjectile):

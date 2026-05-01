@@ -107,34 +107,23 @@ class Enemy:
             p[3] -= dt
         self.engine_trail = [p for p in self.engine_trail if p[3] > 0]
 
-    def _draw_engine_trail(self, surf, ppos, prot):
+    def _submit_engine_trail(self, renderer):
         for x, y, z, life, color, base_size in self.engine_trail:
-            cx, cy, cz = world_to_camera(x, y, z, *ppos, prot)
-            proj = project_to_screen(cx, cy, cz)
-            if proj:
-                sx, sy, scale = proj
-                ratio = max(0.0, life / (self.trail_life or TRAIL_LIFE_DIVISOR))
-                size = max(1, int(scale * base_size * 4 * ratio))
+            ratio = max(0.0, life / (self.trail_life or TRAIL_LIFE_DIVISOR))
+            # Fade color out as it dies
+            r = min(255, max(0, int(color[0] * ratio)))
+            g = min(255, max(0, int(color[1] * ratio)))
+            b = min(255, max(0, int(color[2] * ratio)))
 
-                # Fade color out as it dies
-                r = min(255, max(0, int(color[0] * ratio)))
-                g = min(255, max(0, int(color[1] * ratio)))
-                b = min(255, max(0, int(color[2] * ratio)))
+            renderer.submit_sprite(x, y, z, (r, g, b), base_size * 4 * ratio)
 
-                pygame.draw.circle(surf, (r, g, b), (sx, sy), size)
-
-    def _draw_engine_glow(self, surf, ppos, prot):
+    def _submit_engine_glow(self, renderer):
         for ox, oy, oz in self.engine_offsets:
             ex = self.x + self.right[0] * ox + self.up[0] * oy + self.forward[0] * oz
             ey = self.y + self.right[1] * ox + self.up[1] * oy + self.forward[1] * oz
             ez = self.z + self.right[2] * ox + self.up[2] * oy + self.forward[2] * oz
 
-            cx, cy, cz = world_to_camera(ex, ey, ez, *ppos, prot)
-            proj = project_to_screen(cx, cy, cz)
-            if proj:
-                sx, sy, scale = proj
-                size = max(2, int(scale * self.engine_size * 2))
-                pygame.draw.circle(surf, (255, 255, 255), (sx, sy), size)
+            renderer.submit_sprite(ex, ey, ez, (255, 255, 255), self.engine_size * 2, is_glow=True)
 
     def dist_to_player(self, player_pos):
         dx = self.x - player_pos[0]
@@ -148,9 +137,9 @@ class Enemy:
         dx, dy, dz = self.x - px, self.y - py, self.z - pz
         return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
 
-    def draw(self, surf, ppos, prot):
-        self._draw_engine_trail(surf, ppos, prot)
-        self._draw_engine_glow(surf, ppos, prot)
+    def submit_to_renderer(self, renderer):
+        self._submit_engine_trail(renderer)
+        self._submit_engine_glow(renderer)
 
         world_verts = []
         for vx, vy, vz in self.verts:
@@ -159,45 +148,10 @@ class Enemy:
             wz = self.z + vx * self.right[2] + vy * self.up[2] + vz * self.forward[2]
             world_verts.append((wx, wy, wz))
 
-        projected = []
-        cam_verts = []
-        for wx, wy, wz in world_verts:
-            cx, cy, cz = world_to_camera(wx, wy, wz, *ppos, prot)
-            cam_verts.append((cx, cy, cz))
-            projected.append(project_to_screen(cx, cy, cz))
-
-        faces = []
         for f in self.faces:
             i1, i2, i3 = f
-            v1, v2, v3 = cam_verts[i1], cam_verts[i2], cam_verts[i3]
-
-            ux, uy, uz = v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]
-            vx2, vy2, vz2 = v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]
-
-            fnz = ux * vy2 - uy * vx2
-            if fnz >= 0: continue # backface culling
-
-            p1, p2, p3 = projected[i1], projected[i2], projected[i3]
-            if not (p1 and p2 and p3): continue
-
-            length = math.sqrt(fnz ** 2)
-            if length > 0.0001:
-                normalized_z = fnz / length
-            else:
-                normalized_z = 0
-
-            shade = max(0, min(255, int(255 * max(0.2, -normalized_z))))
-            color = (
-                int(self.base_color[0] * (shade / 255)),
-                int(self.base_color[1] * (shade / 255)),
-                int(self.base_color[2] * (shade / 255))
-            )
-
-            faces.append(((v1[2] + v2[2] + v3[2]) / 3, (p1, p2, p3), color))
-
-        faces.sort(reverse=True)
-        for _, pts, color in faces:
-            pygame.draw.polygon(surf, color, [(p[0], p[1]) for p in pts])
+            v1, v2, v3 = world_verts[i1], world_verts[i2], world_verts[i3]
+            renderer.submit_polygon((v1, v2, v3), self.base_color)
 
 
 # ──────────────────────────────────────────────
