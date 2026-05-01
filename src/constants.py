@@ -8,7 +8,7 @@ SPAWNS_PER_SECOND  = 1.2             # Expected number of spawns per second
 SPAWN_DIST_MIN    = 7000
 SPAWN_DIST_MAX    = 10000
 SPAWN_HEIGHT_RANGE = 2000            # vertical spread around spawn point
-SPAWN_YAW_SPREAD  = 3.55            # radians either side of yaw-forward (≈ ±31°)
+SPAWN_YAW_SPREAD  = 10.55            # radians either side of yaw-forward (≈ ±31°)
 
 PLAYER_COLLISION_RADIUS = 60        # world units — drone kills at this range
 PLAYER_MAX_HP     = 100
@@ -28,11 +28,11 @@ DODGE_THRESHOLD = 0.20
 # ──────────────────────────────────────────────
 
 ENEMY_HIT_RADIUS_SQ = 6400          # squared radius for laser-enemy collision (80^2)
-ENEMY_CULL_DISTANCE = -8000         # enemies behind this are culled
-HOMING_TURN_RATE = 2.0              # homing projectile turn rate per second
-PARTICLES_ON_HIT = 8                # particles spawned when enemy hit
+ENEMY_CULL_DISTANCE = -30000         # enemies behind this are culled
+HOMING_TURN_RATE = 1.4              # homing projectile turn rate per second
+PARTICLES_ON_HIT = 12                # particles spawned when enemy hit
 PARTICLES_ON_DESTROY = 25           # particles spawned when enemy destroyed
-PARTICLES_ON_PLAYER_HIT = 30        # particles spawned when player hit
+PARTICLES_ON_PLAYER_HIT = 10        # particles spawned when player hit
 COLLISION_DAMAGE = 20               # damage taken from enemy collision
 
 # ──────────────────────────────────────────────
@@ -51,11 +51,11 @@ DODGE_FLASH_DURATION = 0.12         # seconds for dodge flash effect
 HIT_FLASH_NORMALIZE = 0.12          # normalize factor for hit flash
 CAMERA_CLIP_NEAR = 0.1              # near clipping plane for camera
 SNIPER_CHARGE_TIME = 1.5            # seconds for sniper charge phase
-SNIPER_CHARGE_JITTER = 5.0          # jitter multiplier for sniper beam
-SNIPER_CHARGE_CORE_THRESHOLD = 0.4  # intensity threshold for white core
-SNIPER_GLARE_MULTIPLIER = 35        # multiplier for sniper glare size
+SNIPER_CHARGE_JITTER = 7.0          # jitter multiplier for sniper beam
+SNIPER_CHARGE_CORE_THRESHOLD = 0.8  # intensity threshold for white core
+SNIPER_GLARE_MULTIPLIER = 45        # multiplier for sniper glare size
 MG_COOLDOWN = 0.15                  # machine gun cooldown in seconds
-WEAPON_SPREAD = 0.15                # weapon spread in radians
+WEAPON_SPREAD = 0.25                # weapon spread in radians
 TRAIL_LIFE_DIVISOR = 0.1            # divisor for trail life ratio calculation
 TARGETING_FOV = 100.0               # field of view for target lock in degrees
 
