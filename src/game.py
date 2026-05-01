@@ -70,7 +70,7 @@ class Game:
 
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
-            e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies)
+            e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies, player)
 
             # Drone destroyed
             if e.hp <= 0:

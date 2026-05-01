@@ -272,7 +272,7 @@ class SuicideDrone(Enemy):
         if pattern_name in PATTERN_MAP:
             self.pattern = PATTERN_MAP[pattern_name]
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
         self._pattern_check_timer += dt
 
@@ -422,7 +422,7 @@ class Dogfighter(Enemy):
     def _player_forward(self, orientation):
         return get_forward_from_quat(orientation)
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
         self.mg_timer -= dt
         self.bolt_timer -= dt
@@ -540,15 +540,16 @@ class Dogfighter(Enemy):
 # ===========================================================
 
 class Sniper(Enemy):
-    SPEED = 1200
+    SPEED = 800          # was 1200, stays far but catchable now
     FIRE_RANGE = 7000
     FLEE_RANGE = 3500
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
 
-        self.hp = 2
-        self.max_hp = 2
+        self.hp = 1
+        self.max_hp = 1
+        self.hit_radius = 120       # was 70
         self.base_color = (150, 255, 100)
 
         # Single deep green thruster at back of long barrel
@@ -621,7 +622,7 @@ class Sniper(Enemy):
             {'v': ['v13', 'v14', 'v16'], 'color': C_FOREST},# 29 tail cap
         ]
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.timer -= dt
         px, py, pz = player_pos
 
@@ -631,10 +632,13 @@ class Sniper(Enemy):
 
         if dist < self.FLEE_RANGE:
             self.state = 'fleeing'
-            self.base_color = (255, 255, 255)
+            self.base_color = (20, 20, 30)      # was (255, 255, 255)
+            self.engine_size = 0.0              # kill trail while cloaked
         elif self.state == 'fleeing' and dist > self.FLEE_RANGE + 1000:
             self.state = 'aiming'
             self.timer = 2.0
+            self.base_color = (150, 255, 100)   # uncloak on re-engage
+            self.engine_size = 6.0
 
         if self.state == 'aiming' and self.timer <= 0:
             self.state = 'charging'
@@ -645,11 +649,33 @@ class Sniper(Enemy):
             self.base_color = (255, flash, flash)
 
             if self.timer <= 0:
+                # --- LIGHT-SPEED RAYCAST HIT CHECK ---
+                from src.constants import PLAYER_COLLISION_RADIUS
+                
+                dx_p, dy_p, dz_p = px - self.x, py - self.y, pz - self.z
+                dist_f = math.sqrt(dx_p*dx_p + dy_p*dy_p + dz_p*dz_p) or 1.0
+                
+                # closest approach of beam line to player center
+                # cross product magnitude gives perpendicular distance
+                cx = (dy_p/dist_f)*self.forward[2] - (dz_p/dist_f)*self.forward[1]
+                cy = (dz_p/dist_f)*self.forward[0] - (dx_p/dist_f)*self.forward[2]
+                cz = (dx_p/dist_f)*self.forward[1] - (dy_p/dist_f)*self.forward[0]
+                perp_dist = math.sqrt(cx*cx + cy*cy + cz*cz) * dist_f
+                
+                dot = (dx_p/dist_f)*self.forward[0] + (dy_p/dist_f)*self.forward[1] + (dz_p/dist_f)*self.forward[2]
+                
+                if player is not None and dot > 0 and perp_dist < PLAYER_COLLISION_RADIUS:
+                    player.take_damage(50)
+                
+                # spawn visual beam regardless of hit
                 if global_projectiles is not None:
                     global_projectiles.append(SniperBeam(
                         self.x, self.y, self.z,
-                        nx * 32000, ny * 32000, nz * 32000
+                        self.forward[0] * 32000,
+                        self.forward[1] * 32000,
+                        self.forward[2] * 32000
                     ))
+                
                 self.state = 'aiming'
                 self.timer = random.uniform(4.0, 6.0)
                 self.base_color = (150, 255, 100)
@@ -810,7 +836,7 @@ class Corvette(Enemy):
             {'v': ['v24', 'v29', 'v25'], 'color': C_STEEL}, # 44 nacelle R bot
             {'v': ['v24', 'v28', 'v29'], 'color': C_STEEL}, # 45 nacelle R bot
         ]
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
         self.turret_timer -= dt
 
@@ -912,7 +938,7 @@ class Minelayer(Enemy):
 
         self.cross_vector = (random.choice([-1, 1]), random.uniform(-0.5, 0.5), 0)
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.mine_timer -= dt
 
         px, py, pz = player_pos
@@ -1000,7 +1026,7 @@ class StealthInterceptor(Enemy):
             {'v': ['v1', 'v2', 'v4'], 'color': C_VOID},
         ]
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
@@ -1155,7 +1181,7 @@ class Carrier(Enemy):
 
         return hit_x and hit_y and hit_z
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.spawn_timer -= dt
 
         px, py, pz = player_pos
