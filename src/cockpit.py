@@ -456,7 +456,7 @@ def draw_crosshair(surface, cx, cy, ready):
     gap = 10
     arm = 18
     thick = 1
-    cy = cy - 9
+
     pygame.draw.line(surface, col, (cx - arm - gap, cy), (cx - gap, cy), thick)
     pygame.draw.line(surface, col, (cx + gap, cy), (cx + arm + gap, cy), thick)
     pygame.draw.line(surface, col, (cx, cy - arm - gap), (cx, cy - gap), thick)
