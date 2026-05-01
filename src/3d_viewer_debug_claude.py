@@ -37,6 +37,7 @@ import sys
 import math
 import random
 import pygame
+from cockpit import custom_font
 
 import enemy
 
@@ -53,7 +54,7 @@ except ImportError:
     _HAS_PROJECT = False
 
 # ── colours ───────────────────────────────────────────────────────────────────
-BG          = (5,   5,  12)
+BG          = (0,   0,  0)
 GRID_MAJOR  = (25,  30,  45)
 GRID_MINOR  = (15,  18,  28)
 AXIS_X      = (180, 40,  40)
@@ -225,16 +226,16 @@ class DebugViewer:
         self.screen = pygame.display.set_mode((self.W, self.H))
         pygame.display.set_caption("3D Mesh Debug Viewer")
         self.clock  = pygame.time.Clock()
-
-        self.font_sm  = pygame.font.SysFont("monospace", 13)
-        self.font_md  = pygame.font.SysFont("monospace", 15, bold=True)
-        self.font_lg  = pygame.font.SysFont("monospace", 11)
+        _FONT_CACHE = {}
+        self.font_sm  = custom_font(12)
+        self.font_md  = custom_font(14)
+        self.font_lg  = custom_font(16)
 
         # ship
         if ship_factory is not None:
             self.ship = ship_factory()
         elif _HAS_PROJECT:
-            self.ship = enemy.Dogfighter(0, 0, 0)
+            self.ship = enemy.StealthInterceptor(0, 0, 0)
         else:
             self.ship = _FallbackShip()
 
