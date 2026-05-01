@@ -141,17 +141,16 @@ class Enemy:
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
 
-        world_verts = []
-        for vx, vy, vz in self.verts:
+        world_verts = {}
+        for v_id, (vx, vy, vz) in self.verts.items():
             wx = self.x + vx * self.right[0] + vy * self.up[0] + vz * self.forward[0]
             wy = self.y + vx * self.right[1] + vy * self.up[1] + vz * self.forward[1]
             wz = self.z + vx * self.right[2] + vy * self.up[2] + vz * self.forward[2]
-            world_verts.append((wx, wy, wz))
+            world_verts[v_id] = (wx, wy, wz)
 
         for f in self.faces:
-            i1, i2, i3 = f
-            v1, v2, v3 = world_verts[i1], world_verts[i2], world_verts[i3]
-            renderer.submit_polygon((v1, v2, v3), self.base_color)
+            pts = tuple(world_verts[vid] for vid in f['v'])
+            renderer.submit_polygon(pts, f.get('color', self.base_color))
 
 
 # ──────────────────────────────────────────────
@@ -246,17 +245,17 @@ class SuicideDrone(Enemy):
         self._flicker = 0
 
         # Jagged, aggressive spike shape
-        self.verts = [
-            (0, 0, 50),  # 0: Nose
-            (-15, -10, -20),  # 1: Bottom left
-            (15, -10, -20),  # 2: Bottom right
-            (0, 20, -20),  # 3: Top fin
-            (0, 0, -30)  # 4: Engine block
-        ]
+        self.verts = {
+                    'v0': (0, 0, 50),  # 0: Nose
+                    'v1': (-15, -10, -20),  # 1: Bottom left
+                    'v2': (15, -10, -20),  # 2: Bottom right
+                    'v3': (0, 20, -20),  # 3: Top fin
+                    'v4': (0, 0, -30),  # 4: Engine block
+                }
         self.faces = [
-            (0, 3, 1), (0, 2, 3), (0, 1, 2),  # Front spikes
-            (1, 3, 4), (3, 2, 4), (2, 1, 4)  # Back tapers
-        ]
+                    {'v': ['v0', 'v3', 'v1']}, {'v': ['v0', 'v2', 'v3']}, {'v': ['v0', 'v1', 'v2']},  # Front spikes
+                    {'v': ['v1', 'v3', 'v4']}, {'v': ['v3', 'v2', 'v4']}, {'v': ['v2', 'v1', 'v4']},  # Back tapers
+                ]
 
     def set_pattern(self, pattern_name):
         if pattern_name in PATTERN_MAP:
@@ -356,51 +355,51 @@ class Dogfighter(Enemy):
         self.phase = random.uniform(0, math.pi * 2)
         self._flicker = 0
 
-        self.verts = [
-            (0, 8, 105),  # 0: nose top
-            (0, -8, 105),  # 1: nose bot
-            (-30, 12, 30),  # 2: mid top L
-            (30, 12, 30),  # 3: mid top R
-            (-30, -12, 30),  # 4: mid bot L
-            (30, -12, 30),  # 5: mid bot R
-            (-120, -8, -30),  # 6: tip L
-            (120, -8, -30),  # 7: tip R
-            (-22, 10, -60),  # 8: tail top L
-            (22, 10, -60),  # 9: tail top R
-            (-22, -10, -60),  # 10: tail bot L
-            (22, -10, -60),  # 11: tail bot R
-            (0, 18, 60),  # 12: cockpit ridge
-            (-65, -6, -55),  # 13: inner trail L
-            (65, -6, -55),  # 14: inner trail R
-        ]
+        self.verts = {
+                    'v0': (0, 8, 105),  # 0: nose top
+                    'v1': (0, -8, 105),  # 1: nose bot
+                    'v2': (-30, 12, 30),  # 2: mid top L
+                    'v3': (30, 12, 30),  # 3: mid top R
+                    'v4': (-30, -12, 30),  # 4: mid bot L
+                    'v5': (30, -12, 30),  # 5: mid bot R
+                    'v6': (-120, -8, -30),  # 6: tip L
+                    'v7': (120, -8, -30),  # 7: tip R
+                    'v8': (-22, 10, -60),  # 8: tail top L
+                    'v9': (22, 10, -60),  # 9: tail top R
+                    'v10': (-22, -10, -60),  # 10: tail bot L
+                    'v11': (22, -10, -60),  # 11: tail bot R
+                    'v12': (0, 18, 60),  # 12: cockpit ridge
+                    'v13': (-65, -6, -55),  # 13: inner trail L
+                    'v14': (65, -6, -55),  # 14: inner trail R
+                }
         self.faces = [
-            (0, 12, 2),  # 0  nose→ridge→mid-top-L
-            (0, 3, 12),  # 1  nose→mid-top-R→ridge
-            (1, 0, 4),  # 2  belly: nose-bot→nose-top→mid-bot-L
-            (1, 5, 0),  # 3  belly: nose-bot→mid-bot-R→nose-top
-            (1, 4, 5),  # 4  belly cap
-            (12, 8, 2),  # 5  ridge→tail-top-L→mid-top-L
-            (12, 9, 8),  # 6  ridge→tail-top-R→tail-top-L
-            (12, 3, 9),  # 7  ridge→mid-top-R→tail-top-R
-            (2, 8, 13),  # 8  mid-top-L→tail-top-L→inner-trail-L
-            (3, 14, 9),  # 9  mid-top-R→inner-trail-R→tail-top-R
-            (4, 13, 10),  # 10 mid-bot-L→inner-trail-L→tail-bot-L
-            (5, 11, 14),  # 11 mid-bot-R→tail-bot-R→inner-trail-R
-            (4, 10, 5),  # 12 belly: mid-bot-L→tail-bot-L→mid-bot-R
-            (5, 10, 11),  # 13 belly: mid-bot-R→tail-bot-L→tail-bot-R
-            (2, 13, 6),  # 14 wing upper L
-            (3, 7, 14),  # 15 wing upper R
-            (4, 6, 13),  # 16 wing lower L
-            (5, 14, 7),  # 17 wing lower R
-            (0, 2, 6),  # 18 leading edge upper L
-            (0, 7, 3),  # 19 leading edge upper R
-            (0, 6, 4),  # 20 leading edge lower L
-            (0, 5, 7),  # 21 leading edge lower R
-            (8, 11, 10),  # 22 tail cap
-            (8, 9, 11),  # 23 tail cap
-            (13, 8, 10),  # 24 inner-trail-L→tail
-            (14, 11, 9),  # 25 inner-trail-R→tail
-        ]
+                    {'v': ['v0', 'v12', 'v2']},  # 0  nose→ridge→mid-top-L
+                    {'v': ['v0', 'v3', 'v12']},  # 1  nose→mid-top-R→ridge
+                    {'v': ['v1', 'v0', 'v4']},  # 2  belly: nose-bot→nose-top→mid-bot-L
+                    {'v': ['v1', 'v5', 'v0']},  # 3  belly: nose-bot→mid-bot-R→nose-top
+                    {'v': ['v1', 'v4', 'v5']},  # 4  belly cap
+                    {'v': ['v12', 'v8', 'v2']},  # 5  ridge→tail-top-L→mid-top-L
+                    {'v': ['v12', 'v9', 'v8']},  # 6  ridge→tail-top-R→tail-top-L
+                    {'v': ['v12', 'v3', 'v9']},  # 7  ridge→mid-top-R→tail-top-R
+                    {'v': ['v2', 'v8', 'v13']},  # 8  mid-top-L→tail-top-L→inner-trail-L
+                    {'v': ['v3', 'v14', 'v9']},  # 9  mid-top-R→inner-trail-R→tail-top-R
+                    {'v': ['v4', 'v13', 'v10']},  # 10 mid-bot-L→inner-trail-L→tail-bot-L
+                    {'v': ['v5', 'v11', 'v14']},  # 11 mid-bot-R→tail-bot-R→inner-trail-R
+                    {'v': ['v4', 'v10', 'v5']},  # 12 belly: mid-bot-L→tail-bot-L→mid-bot-R
+                    {'v': ['v5', 'v10', 'v11']},  # 13 belly: mid-bot-R→tail-bot-L→tail-bot-R
+                    {'v': ['v2', 'v13', 'v6']},  # 14 wing upper L
+                    {'v': ['v3', 'v7', 'v14']},  # 15 wing upper R
+                    {'v': ['v4', 'v6', 'v13']},  # 16 wing lower L
+                    {'v': ['v5', 'v14', 'v7']},  # 17 wing lower R
+                    {'v': ['v0', 'v2', 'v6']},  # 18 leading edge upper L
+                    {'v': ['v0', 'v7', 'v3']},  # 19 leading edge upper R
+                    {'v': ['v0', 'v6', 'v4']},  # 20 leading edge lower L
+                    {'v': ['v0', 'v5', 'v7']},  # 21 leading edge lower R
+                    {'v': ['v8', 'v11', 'v10']},  # 22 tail cap
+                    {'v': ['v8', 'v9', 'v11']},  # 23 tail cap
+                    {'v': ['v13', 'v8', 'v10']},  # 24 inner-trail-L→tail
+                    {'v': ['v14', 'v11', 'v9']},  # 25 inner-trail-R→tail
+                ]
 
 
 
@@ -549,57 +548,57 @@ class Sniper(Enemy):
         self._flicker = 0
 
         # Symmetrical, needle-like railgun ship
-        self.verts = [
-            (0, 0, 150),  # 0: nose tip
-            (-8, 0, 40),  # 1: barrel L
-            (8, 0, 40),  # 2: barrel R
-            (0, 8, 40),  # 3: barrel top
-            (0, -8, 40),  # 4: barrel bot
-            (-18, 12, 0),  # 5: shoulder TL
-            (18, 12, 0),  # 6: shoulder TR
-            (-18, -12, 0),  # 7: shoulder BL
-            (18, -12, 0),  # 8: shoulder BR
-            (-22, 16, -60),  # 9: rear TL
-            (22, 16, -60),  # 10: rear TR
-            (-22, -16, -60),  # 11: rear BL
-            (22, -16, -60),  # 12: rear BR
-            (-10, 8, -90),  # 13: tail TL
-            (10, 8, -90),  # 14: tail TR
-            (-10, -8, -90),  # 15: tail BL
-            (10, -8, -90),  # 16: tail BR
-        ]
+        self.verts = {
+                    'v0': (0, 0, 150),  # 0: nose tip
+                    'v1': (-8, 0, 40),  # 1: barrel L
+                    'v2': (8, 0, 40),  # 2: barrel R
+                    'v3': (0, 8, 40),  # 3: barrel top
+                    'v4': (0, -8, 40),  # 4: barrel bot
+                    'v5': (-18, 12, 0),  # 5: shoulder TL
+                    'v6': (18, 12, 0),  # 6: shoulder TR
+                    'v7': (-18, -12, 0),  # 7: shoulder BL
+                    'v8': (18, -12, 0),  # 8: shoulder BR
+                    'v9': (-22, 16, -60),  # 9: rear TL
+                    'v10': (22, 16, -60),  # 10: rear TR
+                    'v11': (-22, -16, -60),  # 11: rear BL
+                    'v12': (22, -16, -60),  # 12: rear BR
+                    'v13': (-10, 8, -90),  # 13: tail TL
+                    'v14': (10, 8, -90),  # 14: tail TR
+                    'v15': (-10, -8, -90),  # 15: tail BL
+                    'v16': (10, -8, -90),  # 16: tail BR
+                }
         self.faces = [
-            (0, 2, 3),  # 0  needle right
-            (0, 4, 2),  # 1  needle right-bot
-            (0, 3, 1),  # 2  needle left
-            (0, 1, 4),  # 3  needle left-bot
-            (3, 6, 5),  # 4  barrel→shoulder top
-            (3, 5, 1),  # 5  barrel→shoulder top-L
-            (1, 5, 7),  # 6  barrel→shoulder left
-            (1, 7, 4),  # 7  barrel→shoulder left-bot
-            (4, 7, 8),  # 8  barrel→shoulder bot
-            (4, 8, 2),  # 9  barrel→shoulder bot-R
-            (2, 8, 6),  # 10  barrel→shoulder right
-            (2, 6, 3),  # 11  barrel→shoulder right-top
-            (5, 10, 9),  # 12  shoulder→rear top
-            (5, 6, 10),  # 13  shoulder→rear top-R
-            (5, 9, 11),  # 14  shoulder→rear left
-            (5, 11, 7),  # 15  shoulder→rear left-bot
-            (6, 12, 10),  # 16  shoulder→rear right
-            (6, 8, 12),  # 17  shoulder→rear right-bot
-            (7, 11, 12),  # 18  shoulder→rear bot
-            (7, 12, 8),  # 19  shoulder→rear bot-R
-            (9, 14, 13),  # 20  rear→tail top
-            (9, 10, 14),  # 21  rear→tail top-R
-            (9, 13, 15),  # 22  rear→tail left
-            (9, 15, 11),  # 23  rear→tail left-bot
-            (10, 16, 14),  # 24  rear→tail right
-            (10, 12, 16),  # 25  rear→tail right-bot
-            (11, 15, 16),  # 26  rear→tail bot
-            (11, 16, 12),  # 27  rear→tail bot-R
-            (13, 16, 15),  # 28  tail cap
-            (13, 14, 16),  # 29  tail cap
-        ]
+                    {'v': ['v0', 'v2', 'v3']},  # 0  needle right
+                    {'v': ['v0', 'v4', 'v2']},  # 1  needle right-bot
+                    {'v': ['v0', 'v3', 'v1']},  # 2  needle left
+                    {'v': ['v0', 'v1', 'v4']},  # 3  needle left-bot
+                    {'v': ['v3', 'v6', 'v5']},  # 4  barrel→shoulder top
+                    {'v': ['v3', 'v5', 'v1']},  # 5  barrel→shoulder top-L
+                    {'v': ['v1', 'v5', 'v7']},  # 6  barrel→shoulder left
+                    {'v': ['v1', 'v7', 'v4']},  # 7  barrel→shoulder left-bot
+                    {'v': ['v4', 'v7', 'v8']},  # 8  barrel→shoulder bot
+                    {'v': ['v4', 'v8', 'v2']},  # 9  barrel→shoulder bot-R
+                    {'v': ['v2', 'v8', 'v6']},  # 10  barrel→shoulder right
+                    {'v': ['v2', 'v6', 'v3']},  # 11  barrel→shoulder right-top
+                    {'v': ['v5', 'v10', 'v9']},  # 12  shoulder→rear top
+                    {'v': ['v5', 'v6', 'v10']},  # 13  shoulder→rear top-R
+                    {'v': ['v5', 'v9', 'v11']},  # 14  shoulder→rear left
+                    {'v': ['v5', 'v11', 'v7']},  # 15  shoulder→rear left-bot
+                    {'v': ['v6', 'v12', 'v10']},  # 16  shoulder→rear right
+                    {'v': ['v6', 'v8', 'v12']},  # 17  shoulder→rear right-bot
+                    {'v': ['v7', 'v11', 'v12']},  # 18  shoulder→rear bot
+                    {'v': ['v7', 'v12', 'v8']},  # 19  shoulder→rear bot-R
+                    {'v': ['v9', 'v14', 'v13']},  # 20  rear→tail top
+                    {'v': ['v9', 'v10', 'v14']},  # 21  rear→tail top-R
+                    {'v': ['v9', 'v13', 'v15']},  # 22  rear→tail left
+                    {'v': ['v9', 'v15', 'v11']},  # 23  rear→tail left-bot
+                    {'v': ['v10', 'v16', 'v14']},  # 24  rear→tail right
+                    {'v': ['v10', 'v12', 'v16']},  # 25  rear→tail right-bot
+                    {'v': ['v11', 'v15', 'v16']},  # 26  rear→tail bot
+                    {'v': ['v11', 'v16', 'v12']},  # 27  rear→tail bot-R
+                    {'v': ['v13', 'v16', 'v15']},  # 28  tail cap
+                    {'v': ['v13', 'v14', 'v16']},  # 29  tail cap
+                ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.timer -= dt
@@ -701,94 +700,90 @@ class Corvette(Enemy):
         self._flicker = 0
         self.t = random.uniform(0, 100)
 
-        self.verts = [
-            # --- Forward pod ---
-            (0, 20, 250),  # 0  nose top      (windshield top edge, set back)
-            (0, -25, 270),  # 1  nose chin     (windshield bot edge, juts forward+down)
-            (-40, 20, 180),  # 2  pod top-left
-            (40, 20, 180),  # 3  pod top-right
-            (-40, -15, 180),  # 4  pod bot-left
-            (40, -15, 180),  # 5  pod bot-right
-
-            # --- Central spine ---
-            (-15, 8, 80),  # 6  spine front top-left
-            (15, 8, 80),  # 7  spine front top-right
-            (-15, -8, 80),  # 8  spine front bot-left
-            (15, -8, 80),  # 9  spine front bot-right
-            (-15, 8, -200),  # 10 spine rear top-left
-            (15, 8, -200),  # 11 spine rear top-right
-            (-15, -8, -200),  # 12 spine rear bot-left
-            (15, -8, -200),  # 13 spine rear bot-right
-
-            # --- Left nacelle (sits below spine, offset -x) ---
-            (-40, -5, 80),  # 14 nacelle-L front top-inner
-            (-90, -5, 80),  # 15 nacelle-L front top-outer
-            (-40, -20, 80),  # 16 nacelle-L front bot-inner
-            (-90, -20, 80),  # 17 nacelle-L front bot-outer
-            (-40, -5, -180),  # 18 nacelle-L rear top-inner
-            (-90, -5, -180),  # 19 nacelle-L rear top-outer
-            (-40, -20, -180),  # 20 nacelle-L rear bot-inner
-            (-90, -20, -180),  # 21 nacelle-L rear bot-outer
-
-            # --- Right nacelle (mirror of left) ---
-            (40, -5, 80),  # 22 nacelle-R front top-inner
-            (90, -5, 80),  # 23 nacelle-R front top-outer
-            (40, -20, 80),  # 24 nacelle-R front bot-inner
-            (90, -20, 80),  # 25 nacelle-R front bot-outer
-            (40, -5, -180),  # 26 nacelle-R rear top-inner
-            (90, -5, -180),  # 27 nacelle-R rear top-outer
-            (40, -20, -180),  # 28 nacelle-R rear bot-inner
-            (90, -20, -180),  # 29 nacelle-R rear bot-outer
-        ]
-
+        self.verts = {
+                    # --- Forward pod ---
+                    'v0': (0, 20, 250),  # 0  nose top      (windshield top edge, set back)
+                    'v1': (0, -25, 270),  # 1  nose chin     (windshield bot edge, juts forward+down)
+                    'v2': (-40, 20, 180),  # 2  pod top-left
+                    'v3': (40, 20, 180),  # 3  pod top-right
+                    'v4': (-40, -15, 180),  # 4  pod bot-left
+                    'v5': (40, -15, 180),  # 5  pod bot-right
+                    # --- Central spine ---
+                    'v6': (-15, 8, 80),  # 6  spine front top-left
+                    'v7': (15, 8, 80),  # 7  spine front top-right
+                    'v8': (-15, -8, 80),  # 8  spine front bot-left
+                    'v9': (15, -8, 80),  # 9  spine front bot-right
+                    'v10': (-15, 8, -200),  # 10 spine rear top-left
+                    'v11': (15, 8, -200),  # 11 spine rear top-right
+                    'v12': (-15, -8, -200),  # 12 spine rear bot-left
+                    'v13': (15, -8, -200),  # 13 spine rear bot-right
+                    # --- Left nacelle (sits below spine, offset -x) ---
+                    'v14': (-40, -5, 80),  # 14 nacelle-L front top-inner
+                    'v15': (-90, -5, 80),  # 15 nacelle-L front top-outer
+                    'v16': (-40, -20, 80),  # 16 nacelle-L front bot-inner
+                    'v17': (-90, -20, 80),  # 17 nacelle-L front bot-outer
+                    'v18': (-40, -5, -180),  # 18 nacelle-L rear top-inner
+                    'v19': (-90, -5, -180),  # 19 nacelle-L rear top-outer
+                    'v20': (-40, -20, -180),  # 20 nacelle-L rear bot-inner
+                    'v21': (-90, -20, -180),  # 21 nacelle-L rear bot-outer
+                    # --- Right nacelle (mirror of left) ---
+                    'v22': (40, -5, 80),  # 22 nacelle-R front top-inner
+                    'v23': (90, -5, 80),  # 23 nacelle-R front top-outer
+                    'v24': (40, -20, 80),  # 24 nacelle-R front bot-inner
+                    'v25': (90, -20, 80),  # 25 nacelle-R front bot-outer
+                    'v26': (40, -5, -180),  # 26 nacelle-R rear top-inner
+                    'v27': (90, -5, -180),  # 27 nacelle-R rear top-outer
+                    'v28': (40, -20, -180),  # 28 nacelle-R rear bot-inner
+                    'v29': (90, -20, -180),  # 29 nacelle-R rear bot-outer
+                }
         self.faces = [
-            (0, 1, 5),  # 0 OK
-            (0, 4, 1),  # 1 OK
-            (0, 3, 2),  # 2 OK
-            (0, 2, 4),  # 3 OK
-            (0, 5, 3),  # 4 OK
-            (1, 5, 4),  # 5 OK
-            (2, 5, 3),  # 6 OK
-            (2, 4, 5),  # 7 OK
-            (2, 7, 6),  # 8 OK
-            (2, 3, 7),  # 9 OK
-            (4, 9, 8),  # 10 OK
-            (4, 5, 9),  # 11 OK
-            (6, 7, 11),  # 12 OK
-            (6, 11, 10),  # 13 OK
-            (8, 13, 9),  # 14 OK
-            (8, 12, 13),  # 15 OK
-            (6, 10, 12),  # 16 OK
-            (6, 12, 8),  # 17 OK
-            (7, 9, 13),  # 18 OK
-            (7, 13, 11),  # 19 OK
-            (10, 11, 13),  # 20 OK
-            (10, 13, 12),  # 21 OK
-            (14, 15, 17),  # 22 OK
-            (14, 17, 16),  # 23 OK
-            (18, 20, 21),  # 24 OK
-            (18, 21, 19),  # 25 OK
-            (15, 19, 21),  # 26 OK
-            (15, 21, 17),  # 27 OK
-            (14, 20, 16),  # 28 OK
-            (14, 18, 20),  # 29 OK
-            (14, 19, 15),  # 30 OK
-            (14, 18, 19),  # 31 OK
-            (16, 17, 21),  # 32 OK
-            (16, 21, 20),  # 33 OK
-            (22, 25, 23),  # 34 OK
-            (22, 24, 25),  # 35 OK
-            (26, 29, 28),  # 36 OK
-            (26, 27, 29),  # 37 OK
-            (23, 25, 29),  # 38 OK
-            (23, 29, 27),  # 39 OK
-            (22, 28, 26),  # 40 OK
-            (22, 24, 28),  # 41 OK
-            (22, 23, 27),  # 42 OK
-            (22, 27, 26),  # 43 OK
-            (24, 29, 25),  # 44 OK
-            (24, 28, 29),  # 45 OK
-        ]
+                    {'v': ['v0', 'v1', 'v5']},  # 0 OK
+                    {'v': ['v0', 'v4', 'v1']},  # 1 OK
+                    {'v': ['v0', 'v3', 'v2']},  # 2 OK
+                    {'v': ['v0', 'v2', 'v4']},  # 3 OK
+                    {'v': ['v0', 'v5', 'v3']},  # 4 OK
+                    {'v': ['v1', 'v5', 'v4']},  # 5 OK
+                    {'v': ['v2', 'v5', 'v3']},  # 6 OK
+                    {'v': ['v2', 'v4', 'v5']},  # 7 OK
+                    {'v': ['v2', 'v7', 'v6']},  # 8 OK
+                    {'v': ['v2', 'v3', 'v7']},  # 9 OK
+                    {'v': ['v4', 'v9', 'v8']},  # 10 OK
+                    {'v': ['v4', 'v5', 'v9']},  # 11 OK
+                    {'v': ['v6', 'v7', 'v11']},  # 12 OK
+                    {'v': ['v6', 'v11', 'v10']},  # 13 OK
+                    {'v': ['v8', 'v13', 'v9']},  # 14 OK
+                    {'v': ['v8', 'v12', 'v13']},  # 15 OK
+                    {'v': ['v6', 'v10', 'v12']},  # 16 OK
+                    {'v': ['v6', 'v12', 'v8']},  # 17 OK
+                    {'v': ['v7', 'v9', 'v13']},  # 18 OK
+                    {'v': ['v7', 'v13', 'v11']},  # 19 OK
+                    {'v': ['v10', 'v11', 'v13']},  # 20 OK
+                    {'v': ['v10', 'v13', 'v12']},  # 21 OK
+                    {'v': ['v14', 'v15', 'v17']},  # 22 OK
+                    {'v': ['v14', 'v17', 'v16']},  # 23 OK
+                    {'v': ['v18', 'v20', 'v21']},  # 24 OK
+                    {'v': ['v18', 'v21', 'v19']},  # 25 OK
+                    {'v': ['v15', 'v19', 'v21']},  # 26 OK
+                    {'v': ['v15', 'v21', 'v17']},  # 27 OK
+                    {'v': ['v14', 'v20', 'v16']},  # 28 OK
+                    {'v': ['v14', 'v18', 'v20']},  # 29 OK
+                    {'v': ['v14', 'v19', 'v15']},  # 30 OK
+                    {'v': ['v14', 'v18', 'v19']},  # 31 OK
+                    {'v': ['v16', 'v17', 'v21']},  # 32 OK
+                    {'v': ['v16', 'v21', 'v20']},  # 33 OK
+                    {'v': ['v22', 'v25', 'v23']},  # 34 OK
+                    {'v': ['v22', 'v24', 'v25']},  # 35 OK
+                    {'v': ['v26', 'v29', 'v28']},  # 36 OK
+                    {'v': ['v26', 'v27', 'v29']},  # 37 OK
+                    {'v': ['v23', 'v25', 'v29']},  # 38 OK
+                    {'v': ['v23', 'v29', 'v27']},  # 39 OK
+                    {'v': ['v22', 'v28', 'v26']},  # 40 OK
+                    {'v': ['v22', 'v24', 'v28']},  # 41 OK
+                    {'v': ['v22', 'v23', 'v27']},  # 42 OK
+                    {'v': ['v22', 'v27', 'v26']},  # 43 OK
+                    {'v': ['v24', 'v29', 'v25']},  # 44 OK
+                    {'v': ['v24', 'v28', 'v29']},  # 45 OK
+                ]
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         self.t += dt
         self.turret_timer -= dt
@@ -865,19 +860,19 @@ class Minelayer(Enemy):
         self._flicker = 0
 
         # Wide, flat wing shape
-        self.verts = [
-            (0, 0, 40),  # 0: Center Nose
-            (-80, -5, -10),  # 1: Far Left
-            (80, -5, -10),  # 2: Far Right
-            (-30, 15, -20),  # 3: Mid Left Bulk
-            (30, 15, -20),  # 4: Mid Right Bulk
-            (0, -15, -30)  # 5: Underbelly
-        ]
+        self.verts = {
+                    'v0': (0, 0, 40),  # 0: Center Nose
+                    'v1': (-80, -5, -10),  # 1: Far Left
+                    'v2': (80, -5, -10),  # 2: Far Right
+                    'v3': (-30, 15, -20),  # 3: Mid Left Bulk
+                    'v4': (30, 15, -20),  # 4: Mid Right Bulk
+                    'v5': (0, -15, -30),  # 5: Underbelly
+                }
         self.faces = [
-            (0, 3, 1), (0, 2, 4), (0, 4, 3),  # Top layer
-            (0, 1, 5), (0, 5, 2), (1, 3, 5), (2, 5, 4),  # Bottom/Side bulk
-            (3, 4, 5)  # Back seal
-        ]
+                    {'v': ['v0', 'v3', 'v1']}, {'v': ['v0', 'v2', 'v4']}, {'v': ['v0', 'v4', 'v3']},  # Top layer
+                    {'v': ['v0', 'v1', 'v5']}, {'v': ['v0', 'v5', 'v2']}, {'v': ['v1', 'v3', 'v5']}, {'v': ['v2', 'v5', 'v4']},  # Bottom/Side bulk
+                    {'v': ['v3', 'v4', 'v5']},  # Back seal
+                ]
 
         self.cross_vector = (random.choice([-1, 1]), random.uniform(-0.5, 0.5), 0)
 
@@ -948,21 +943,21 @@ class StealthInterceptor(Enemy):
         self._flicker = 0
 
         # Extremely thin, planar dart
-        self.verts = [
-            (0, 0, 60),  # 0: Needle point
-            (-25, 0, -30),  # 1: Left Wing
-            (25, 0, -30),  # 2: Right Wing
-            (0, 5, -20),  # 3: Top ridge
-            (0, -5, -20)  # 4: Bottom ridge
-        ]
+        self.verts = {
+                    'v0': (0, 0, 60),  # 0: Needle point
+                    'v1': (-25, 0, -30),  # 1: Left Wing
+                    'v2': (25, 0, -30),  # 2: Right Wing
+                    'v3': (0, 5, -20),  # 3: Top ridge
+                    'v4': (0, -5, -20),  # 4: Bottom ridge
+                }
         self.faces = [
-            (0, 3, 1),  # 0 OK
-            (0, 2, 3),  # 1 OK
-            (0, 1, 4),  # 2 OK
-            (0, 4, 2),  # 3 OK
-            (1, 3, 2),  # 4 OK
-            (1, 2, 4),  # 5 OK
-        ]
+                    {'v': ['v0', 'v3', 'v1']},  # 0 OK
+                    {'v': ['v0', 'v2', 'v3']},  # 1 OK
+                    {'v': ['v0', 'v1', 'v4']},  # 2 OK
+                    {'v': ['v0', 'v4', 'v2']},  # 3 OK
+                    {'v': ['v1', 'v3', 'v2']},  # 4 OK
+                    {'v': ['v1', 'v2', 'v4']},  # 5 OK
+                ]
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None):
         px, py, pz = player_pos
@@ -1067,35 +1062,35 @@ class Carrier(Enemy):
         self._flicker = 0
 
         # Gigantic Dreadnought/Carrier Wedge shape
-        self.verts = [
-            (0, -20, 800),  # 0: Ultimate Nose
-            (0, 80, -200),  # 1: Command Ridge Top Front
-            (0, 180, -450),  # 2: Command Tower High
-            (-400, -20, -500),  # 3: Far Wingtip L
-            (400, -20, -500),  # 4: Far Wingtip R
-            (-150, 60, -500),  # 5: Back Top L
-            (150, 60, -500),  # 6: Back Top R
-            (-150, -80, -500),  # 7: Back Bot L
-            (150, -80, -500),  # 8: Back Bot R
-            (0, -120, -100)  # 9: Deep Belly
-        ]
+        self.verts = {
+                    'v0': (0, -20, 800),  # 0: Ultimate Nose
+                    'v1': (0, 80, -200),  # 1: Command Ridge Top Front
+                    'v2': (0, 180, -450),  # 2: Command Tower High
+                    'v3': (-400, -20, -500),  # 3: Far Wingtip L
+                    'v4': (400, -20, -500),  # 4: Far Wingtip R
+                    'v5': (-150, 60, -500),  # 5: Back Top L
+                    'v6': (150, 60, -500),  # 6: Back Top R
+                    'v7': (-150, -80, -500),  # 7: Back Bot L
+                    'v8': (150, -80, -500),  # 8: Back Bot R
+                    'v9': (0, -120, -100),  # 9: Deep Belly
+                }
         self.faces = [
-            (0, 5, 3),  # 0 OK
-            (0, 1, 5),  # 1 OK
-            (0, 6, 1),  # 2 OK
-            (0, 4, 6),  # 3 OK
-            (1, 2, 5),  # 4 OK
-            (1, 6, 2),  # 5 OK
-            (5, 2, 6),  # 6 OK
-            (0, 3, 7),  # 7 OK
-            (0, 7, 9),  # 8 OK
-            (0, 9, 8),  # 9 OK
-            (0, 8, 4),  # 10 OK
-            (5, 7, 3),  # 11 OK
-            (6, 4, 8),  # 12 OK
-            (5, 8, 7),  # 13 OK
-            (5, 6, 8),  # 14 OK
-        ]
+                    {'v': ['v0', 'v5', 'v3']},  # 0 OK
+                    {'v': ['v0', 'v1', 'v5']},  # 1 OK
+                    {'v': ['v0', 'v6', 'v1']},  # 2 OK
+                    {'v': ['v0', 'v4', 'v6']},  # 3 OK
+                    {'v': ['v1', 'v2', 'v5']},  # 4 OK
+                    {'v': ['v1', 'v6', 'v2']},  # 5 OK
+                    {'v': ['v5', 'v2', 'v6']},  # 6 OK
+                    {'v': ['v0', 'v3', 'v7']},  # 7 OK
+                    {'v': ['v0', 'v7', 'v9']},  # 8 OK
+                    {'v': ['v0', 'v9', 'v8']},  # 9 OK
+                    {'v': ['v0', 'v8', 'v4']},  # 10 OK
+                    {'v': ['v5', 'v7', 'v3']},  # 11 OK
+                    {'v': ['v6', 'v4', 'v8']},  # 12 OK
+                    {'v': ['v5', 'v8', 'v7']},  # 13 OK
+                    {'v': ['v5', 'v6', 'v8']},  # 14 OK
+                ]
     # --- ADD THIS: Perfect Box Collision for the giant wedge ---
     def is_hit(self, px, py, pz):
         """Check if a projectile at (px, py, pz) hits the Carrier using a perfect 3D bounding box."""

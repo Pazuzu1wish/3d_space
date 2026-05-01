@@ -143,16 +143,16 @@ class Viewer:
     def build_render_queue(self):
         cx, cy = self.W // 2, self.H // 2
 
-        rotated_verts = []
-        for vx, vy, vz in self.ship.verts:
+        rotated_verts = {}
+        for v_id, (vx, vy, vz) in self.ship.verts.items():
             rx, ry, rz = quat_rotate_vec(self.obj_quat, (vx, vy, vz))
             rz += self.camera_z
-            rotated_verts.append((rx, ry, rz))
+            rotated_verts[v_id] = (rx, ry, rz)
 
         faces = []
 
         for face in self.ship.faces:
-            v0, v1, v2 = [rotated_verts[i] for i in face]
+            v0, v1, v2 = [rotated_verts[vid] for vid in face['v']]
 
             # normal
             dx1, dy1, dz1 = v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]
@@ -176,19 +176,20 @@ class Viewer:
 
             # projection
             pts = [
-                project_to_screen(*rotated_verts[i], self.fov, cx, cy)
-                for i in face
+                project_to_screen(*rotated_verts[vid], self.fov, cx, cy)
+                for vid in face['v']
             ]
 
             if None in pts:
                 continue
 
+            base_color = face.get('color', self.ship.base_color)
             color = tuple(
                 min(255, int(c * light_dot))
-                for c in self.ship.base_color
+                for c in base_color
             )
 
-            depth = max(rotated_verts[i][2] for i in face)
+            depth = max(rotated_verts[vid][2] for vid in face['v'])
 
             faces.append(("face", depth, [p[:2] for p in pts], color))
 

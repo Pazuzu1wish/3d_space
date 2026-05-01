@@ -158,11 +158,9 @@ def _scale(v, s):
 def mesh_centroid(verts):
     if not verts:
         return (0.0, 0.0, 0.0)
-    vals = list(verts.values())
-    if not vals: return (0, 0, 0)
-    cx = sum(v[0] for v in vals) / len(vals)
-    cy = sum(v[1] for v in vals) / len(vals)
-    cz = sum(v[2] for v in vals) / len(vals)
+    cx = sum(v[0] for v in verts) / len(verts)
+    cy = sum(v[1] for v in verts) / len(verts)
+    cz = sum(v[2] for v in verts) / len(verts)
     return (cx, cy, cz)
 
 
@@ -170,7 +168,7 @@ def mesh_centroid(verts):
 
 def face_normal_and_center(verts, face):
     """Return (normal, center) for a triangular face."""
-    v0, v1, v2 = [verts[i] for i in face['v']]
+    v0, v1, v2 = [verts[i] for i in face]
     e1 = _sub(v1, v0)
     e2 = _sub(v2, v0)
     n  = _cross(e1, e2)
@@ -197,16 +195,16 @@ def winding_color(normal, center, centroid):
 # ── default fallback mesh (simple pointy ship if no project available) ─────────
 
 class _FallbackShip:
-    verts = {
-        'v0': (0,    0,   80),
-        'v1': (-30, -15, -40),
-        'v2': ( 30, -15, -40),
-        'v3': (  0,  25, -40),
-        'v4': (  0,   0, -55),
-    }
+    verts = [
+        (0,    0,   80),
+        (-30, -15, -40),
+        ( 30, -15, -40),
+        (  0,  25, -40),
+        (  0,   0, -55),
+    ]
     faces = [
-        {'v': ['v0', 'v3', 'v1']}, {'v': ['v0', 'v2', 'v3']}, {'v': ['v0', 'v1', 'v2']},
-        {'v': ['v1', 'v3', 'v4']}, {'v': ['v3', 'v2', 'v4']}, {'v': ['v2', 'v1', 'v4']},
+        (0, 3, 1), (0, 2, 3), (0, 1, 2),
+        (1, 3, 4), (3, 2, 4), (2, 1, 4),
     ]
     base_color = (140, 160, 200)
     engine_offsets = [(0, 0, -55)]
@@ -326,17 +324,17 @@ class DebugViewer:
         Each item: ('face', depth, screen_pts, fill_color, face_idx)
         """
         # rotate all verts
-        rot_verts = {}
-        for vid, (lx, ly, lz) in self.verts.items():
+        rot_verts = []
+        for lx, ly, lz in self.verts:
             rx, ry, rz = _quat_rot_vec(self.obj_quat, (lx, ly, lz))
             rz += self.camera_z
-            rot_verts[vid] = (rx, ry, rz)
+            rot_verts.append((rx, ry, rz))
 
         queue = []
         cx_s, cy_s = self.W//2, self.H//2
 
         for fi, face in enumerate(self.faces):
-            rv = [rot_verts[i] for i in face['v']]
+            rv = [rot_verts[i] for i in face]
             v0, v1, v2 = rv
 
             # face normal in view space
@@ -386,7 +384,7 @@ class DebugViewer:
     def _draw_normal_arrow(self, fi, rot_verts):
         """Project a face's normal as an arrow in screen space."""
         face   = self.faces[fi]
-        rv     = [rot_verts[i] for i in face['v']]
+        rv     = [rot_verts[i] for i in face]
         v0, v1, v2 = rv
 
         # center of face in view space
@@ -416,8 +414,8 @@ class DebugViewer:
 
     def _flip_face(self, fi):
         """Reverse the winding of face fi, update caches, print result."""
-        a, b, c = self.faces[fi]['v']
-        self.faces[fi]['v'] = [a, c, b]
+        a, b, c = self.faces[fi]
+        self.faces[fi] = (a, c, b)
         n, center = face_normal_and_center(self.verts, self.faces[fi])
         col = winding_color(n, center, self.centroid)
         self._face_normals[fi]  = n
@@ -427,7 +425,7 @@ class DebugViewer:
         self.flip_flash_col = col
         tag = ('OUTWARD' if col == COL_OUTWARD else
                'INWARD'  if col == COL_INWARD  else 'EDGE')
-        print(f"[flip] face {fi}: {self.faces[fi]['v']} winding now: {tag}")
+        print(f"[flip] face {fi}: ({a},{b},{c}) -> {self.faces[fi]}  winding now: {tag}")
 
     def _flip_all_red(self):
         """Flip every face whose winding colour is COL_INWARD."""
@@ -450,12 +448,6 @@ class DebugViewer:
                    'FLIP?' if col == COL_INWARD  else 'EDGE')
             print(f"    {f},  # {fi} {tag}")
         print("]\n")
-        print("# ── verts ──")
-        print("self.verts = {")
-        for k, v in self.verts.items():
-            print(f"    '{k}': {v},")
-        print("}")
-
 
     def _confirm_input(self):
         """Process the input string based on current input mode."""
@@ -464,33 +456,32 @@ class DebugViewer:
                 parts = self.input_string.split(',')
                 if len(parts) == 3:
                     x, y, z = map(float, parts)
-                    new_id = f"v{len(self.verts)}"
-                    while new_id in self.verts:
-                        new_id = f"v{int(new_id[1:])+1}"
-                    self.verts[new_id] = (x, y, z)
+                    self.verts.append((x, y, z))
                     self.centroid = mesh_centroid(self.verts)
                     self._precompute_face_data()
                     print(f"[add vertex] added {len(self.verts)-1}: ({x}, {y}, {z})")
             elif self.input_mode == 'del_vertex':
-                idx = self.input_string.strip()
-                if idx in self.verts:
+                idx = int(self.input_string)
+                if 0 <= idx < len(self.verts):
                     del self.verts[idx]
                     # remove faces that use this vertex
                     new_faces = []
                     for face in self.faces:
-                        if idx in face['v']:
+                        if idx in face:
                             continue
-                        new_faces.append(face)
+                        new_face = tuple(i if i < idx else i-1 for i in face)
+                        new_faces.append(new_face)
                     self.faces = new_faces
                     self.centroid = mesh_centroid(self.verts)
                     self._precompute_face_data()
                     self.selected_face = min(self.selected_face, len(self.faces)-1) if self.faces else 0
                     print(f"[del vertex] deleted {idx}, removed invalid faces")
             elif self.input_mode == 'add_face':
-                parts = [p.strip() for p in self.input_string.split(',')]
+                parts = self.input_string.split(',')
                 if len(parts) == 3:
-                    if all(x in self.verts for x in parts):
-                        self.faces.append({'v': parts})
+                    i, j, k = map(int, parts)
+                    if all(0 <= x < len(self.verts) for x in (i, j, k)):
+                        self.faces.append((i, j, k))
                         self._precompute_face_data()
                         print(f"[add face] added {len(self.faces)-1}: ({i}, {j}, {k})")
         except ValueError:
@@ -500,9 +491,8 @@ class DebugViewer:
     def _draw_selected_face(self, rot_verts):
         """Always draw selected face, even if backface-culled."""
         fi   = self.selected_face
-        if not self.faces: return
         face = self.faces[fi]
-        rv   = [rot_verts[i] for i in face['v']]
+        rv   = [rot_verts[i] for i in face]
 
         pts_2d = []
         for vx, vy, vz in rv:
@@ -608,7 +598,7 @@ class DebugViewer:
         panel = [
             ("SELECTED FACE",  ""),
             ("index",          str(fi)),
-            ("tuple",          str(f['v'])),
+            ("tuple",          str(f)),
             ("winding",        tag),
             ("normal",         f"({n[0]:+.2f} {n[1]:+.2f} {n[2]:+.2f})"),
         ]
