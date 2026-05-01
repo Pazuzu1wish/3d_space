@@ -676,11 +676,11 @@ class Sniper(Enemy):
                 if global_projectiles is not None:
                     global_projectiles.append({
                         'x': self.x, 'y': self.y, 'z': self.z,
-                        'vx': nx * 12000,
-                        'vy': ny * 12000,
-                        'vz': nz * 12000,
+                        'vx': nx * 32000,
+                        'vy': ny * 32000,
+                        'vz': nz * 32000,
                         'life': 5.0, 'damage': 70, 'homing': True,
-                        'color': (255, 10, 255), 'size_mult': 6.0
+                        'color': (10, 255, 10), 'size_mult': 6.0
                     })
                 self.state = 'aiming'
                 self.timer = random.uniform(4.0, 6.0)
