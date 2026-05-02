@@ -52,7 +52,7 @@ class Game:
         self.camera = Camera(self.W, self.H)
         self.renderer = RenderPipeline(self.camera)
 
-        self.stars = [Star(self.player.pos) for _ in range(250)]
+        self.stars = [Star(self.player.pos) for _ in range(350)]
         self.enemies = []
         self.enemy_projectiles = []
 

@@ -118,8 +118,10 @@ class RenderPipeline:
                 pygame.draw.polygon(surface, p['color'], p['pts'])
             elif t == 'sprite':
                 if p.get('is_glow'):
-                    # Could draw with a specific blend mode if Pygame supported it well, 
-                    # but standard circle works.
+                    # Draw a soft glow around the center
+                    # We use a slightly larger, darker version of the color to simulate bloom
+                    glow_color = (p['color'][0] // 3, p['color'][1] // 3, p['color'][2] // 3)
+                    pygame.draw.circle(surface, glow_color, p['pos'], p['size'] * 2)
                     pygame.draw.circle(surface, p['color'], p['pos'], p['size'])
                 else:
                     pygame.draw.circle(surface, p['color'], p['pos'], p['size'])
