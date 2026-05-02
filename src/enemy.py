@@ -326,11 +326,13 @@ class SuicideDrone(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 1600.0
+        self.max_speed      = 2500.0
         self.thrust         = 9000.0
         self.lateral_thrust = 0.5
-        self.turn_rate      = 4.5
-        self.drag           = 0.4
+        self.turn_rate      = 2.5
+        self.drag           = 0.2
+
+        self.hit_radius = 200
 
         # Colors
         C_RED = (255, 30, 30)
@@ -423,7 +425,7 @@ class SuicideDrone(Enemy):
 # ──────────────────────────────────────────────
 
 class Dogfighter(Enemy):
-    SPEED = 1400
+    SPEED = 2000
     FIRE_RANGE = 4500
     IDEAL_RANGE = 1000
     CIRCLE_RADIUS = 1500
@@ -458,13 +460,15 @@ class Dogfighter(Enemy):
         self.pattern_scale = 2.5  # Dogfighters need larger sweeps than drones
 
         # ── Newtonian physics ──
-        self.max_speed      = 1600.0
+        self.max_speed      = 2000.0
         self.thrust         = 5000.0
         self.lateral_thrust = 0.35
-        self.turn_rate      = 3.0
-        self.drag           = 0.3
+        self.turn_rate      = 2.0
+        self.drag           = 0.01
         
         self._flicker = 0
+
+        self.hit_radius = 200
 
         # Colors
         C_BLUE = (50, 80, 255)
