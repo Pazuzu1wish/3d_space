@@ -43,6 +43,13 @@ class Enemy:
         self.engine_size = 4.0
         self.trail_life = 0.5
 
+        # ── Newtonian physics (override per subclass) ──────────────
+        self.max_speed      = 1500.0   # terminal velocity cap (u/s)
+        self.thrust         = 5000.0   # main engine force (u/s²)
+        self.lateral_thrust = 0.35     # fraction of thrust for lateral/retro burns
+        self.turn_rate      = 3.0      # max heading rotation (rad/s)
+        self.drag           = 0.3      # linear drag coefficient
+
     def get_mesh(self):
         return self.verts, self.faces
 
@@ -85,6 +92,80 @@ class Enemy:
 
         self.up = (ux, uy, uz)
         self.right = (rx, ry, rz)
+
+    # ── NEWTONIAN PHYSICS ──────────────────────────────────────────
+
+    def _apply_newtonian(self, desired_heading, dt, lateral_force=None):
+        """Rotate nose toward desired_heading at turn_rate, fire main thrust,
+        apply optional world-space lateral_force, drag, speed cap, integrate."""
+        hx, hy, hz = desired_heading
+        fx, fy, fz = self.forward
+
+        # 1. Rotate forward toward desired heading (limited by turn_rate)
+        dot = max(-1.0, min(1.0, hx*fx + hy*fy + hz*fz))
+        angle = math.acos(dot)
+        max_turn = self.turn_rate * dt
+        if angle > 1e-4:
+            t = min(1.0, max_turn / angle)
+            nx = fx + (hx - fx) * t
+            ny = fy + (hy - fy) * t
+            nz = fz + (hz - fz) * t
+            n = math.sqrt(nx*nx + ny*ny + nz*nz) or 1.0
+            fx, fy, fz = nx/n, ny/n, nz/n
+        self.forward = (fx, fy, fz)
+
+        # 2. Rebuild right / up from new forward
+        temp_up = (0, 1, 0) if abs(fy) < 0.99 else (1, 0, 0)
+        rx = fy * temp_up[2] - fz * temp_up[1]
+        ry = fz * temp_up[0] - fx * temp_up[2]
+        rz = fx * temp_up[1] - fy * temp_up[0]
+        rlen = math.sqrt(rx*rx + ry*ry + rz*rz) or 1.0
+        self.right = (rx/rlen, ry/rlen, rz/rlen)
+        self.up = (
+            self.right[1]*fz - self.right[2]*fy,
+            self.right[2]*fx - self.right[0]*fz,
+            self.right[0]*fy - self.right[1]*fx,
+        )
+
+        # 3. Main thrust along current (rotated) forward
+        accel = self.thrust * dt
+        self.vx += fx * accel
+        self.vy += fy * accel
+        self.vz += fz * accel
+
+        # 4. Optional world-space lateral force (e.g. pattern impulses, circling)
+        if lateral_force is not None:
+            self.vx += lateral_force[0] * dt
+            self.vy += lateral_force[1] * dt
+            self.vz += lateral_force[2] * dt
+
+        # 5. Drag
+        d = max(0.0, 1.0 - self.drag * dt)
+        self.vx *= d
+        self.vy *= d
+        self.vz *= d
+
+        # 6. Speed cap
+        spd_sq = self.vx**2 + self.vy**2 + self.vz**2
+        if spd_sq > self.max_speed**2:
+            s = self.max_speed / math.sqrt(spd_sq)
+            self.vx *= s
+            self.vy *= s
+            self.vz *= s
+
+        # 7. Integrate position
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+        self.z += self.vz * dt
+
+    def _approaching_too_fast(self, target_pos, brake_threshold=600.0):
+        """True when close to target and still closing fast — signal to flip and brake."""
+        dx = target_pos[0] - self.x
+        dy = target_pos[1] - self.y
+        dz = target_pos[2] - self.z
+        dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 1.0
+        approach_rate = (self.vx*dx + self.vy*dy + self.vz*dz) / dist
+        return dist < brake_threshold and approach_rate > 60.0
 
     def _update_orientation(self):
         spd = math.sqrt(self.vx ** 2 + self.vy ** 2 + self.vz ** 2)
@@ -244,6 +325,13 @@ class SuicideDrone(Enemy):
         self._pattern_check_timer = 0.0
         self._flicker = 0
 
+        # ── Newtonian physics ──
+        self.max_speed      = 1600.0
+        self.thrust         = 9000.0
+        self.lateral_thrust = 0.5
+        self.turn_rate      = 4.5
+        self.drag           = 0.4
+
         # Colors
         C_RED = (255, 30, 30)
         C_ORANGE = (255, 140, 0)
@@ -301,25 +389,22 @@ class SuicideDrone(Enemy):
         else:
             active_pattern = self._pattern_cache or _pattern_weave
 
-        offset = active_pattern(self.t, self.pattern_phase, self.SPEED)
-        target_v = (
-            nx * self.SPEED + offset[0],
-            ny * self.SPEED + offset[1],
-            nz * self.SPEED + offset[2],
+        # Pattern offset becomes a lateral force impulse
+        offset = active_pattern(self.t, self.pattern_phase, 1.0)
+        lat_force = (
+            offset[0] * self.thrust * 0.55,
+            offset[1] * self.thrust * 0.55,
+            offset[2] * self.thrust * 0.55,
         )
 
-        self._apply_banking(target_v, dt)
+        # Brake when closing on player too fast, else head straight at them
+        if self._approaching_too_fast(player_pos, brake_threshold=380.0):
+            spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
+            desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
+        else:
+            desired_heading = (nx, ny, nz)
 
-        blend = min(1, dt * 6)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
-
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
-
-        self._update_orientation()
+        self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
 
@@ -371,6 +456,13 @@ class Dogfighter(Enemy):
         self.ideal_range = random.uniform(800, 1200)
         self.circle_radius = random.uniform(1200, 1800)
         self.pattern_scale = 2.5  # Dogfighters need larger sweeps than drones
+
+        # ── Newtonian physics ──
+        self.max_speed      = 1600.0
+        self.thrust         = 5000.0
+        self.lateral_thrust = 0.35
+        self.turn_rate      = 3.0
+        self.drag           = 0.3
         
         self._flicker = 0
 
@@ -488,21 +580,24 @@ class Dogfighter(Enemy):
         dy = target_y - self.y
         dz = target_z - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        desired_heading = (dx/dist, dy/dist, dz/dist)
 
-        nx, ny, nz = dx / dist, dy / dist, dz / dist
-        target_v = (nx * self.SPEED, ny * self.SPEED, nz * self.SPEED)
+        # Brake when closing on target point too fast
+        if self._approaching_too_fast((target_x, target_y, target_z), brake_threshold=500.0):
+            spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
+            desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
 
-        self._apply_banking(target_v, dt)
-        blend = min(1.0, dt * 4.0)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
+        # During positioning orbit, add a persistent lateral force to curve the path
+        if self.mode == 'positioning':
+            lat_force = (
+                self.right[0] * self.circle_sign * self.thrust * 0.45,
+                self.right[1] * self.circle_sign * self.thrust * 0.45,
+                self.right[2] * self.circle_sign * self.thrust * 0.45,
+            )
+        else:
+            lat_force = None
 
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
-
-        self._update_orientation()
+        self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
 
         # Re-check distance for firing logic
         dist_to_player = self.dist_to_player(player_pos)
@@ -593,6 +688,13 @@ class Sniper(Enemy):
         self.state = 'aiming'
         self.timer = random.uniform(2.0, 4.0)
         self._flicker = 0
+
+        # ── Newtonian physics ──
+        self.max_speed      = 900.0
+        self.thrust         = 3000.0
+        self.lateral_thrust = 0.2
+        self.turn_rate      = 2.0
+        self.drag           = 0.25
 
         # Colors
         C_FOREST = (34, 139, 34)
@@ -712,34 +814,25 @@ class Sniper(Enemy):
                 self.base_color = (150, 255, 100)
 
         if self.state == 'fleeing':
-            target_v = (-nx * self.SPEED, -ny * self.SPEED, -nz * self.SPEED)
+            # Rotate away from player and thrust
+            desired_heading = (-nx, -ny, -nz)
+            self._apply_newtonian(desired_heading, dt)
         elif self.state == 'aiming':
-            target_v = (self.right[0] * 300, self.right[1] * 300, self.right[2] * 300)
+            # Face player (for accurate raycast), drift laterally
+            desired_heading = (nx, ny, nz)
+            lat_force = (
+                self.right[0] * self.thrust * 0.18,
+                self.right[1] * self.thrust * 0.18,
+                self.right[2] * self.thrust * 0.18,
+            )
+            self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
         elif self.state == 'charging':
-            target_v = (0, 0, 0)
-
-        self.forward = (nx, ny, nz)
-        temp_up = (0, 1, 0) if abs(ny) < 0.99 else (1, 0, 0)
-        rx = ny * temp_up[2] - nz * temp_up[1]
-        ry = nz * temp_up[0] - nx * temp_up[2]
-        rz = nx * temp_up[1] - ny * temp_up[0]
-        rlen = math.sqrt(rx * rx + ry * ry + rz * rz) or 1
-        self.right = (rx / rlen, ry / rlen, rz / rlen)
-
-        self.up = (
-            self.right[1] * nz - self.right[2] * ny,
-            self.right[2] * nx - self.right[0] * nz,
-            self.right[0] * ny - self.right[1] * nx
-        )
-
-        blend = min(1.0, dt * 3.0)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
-
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
+            # Hold position: face player for raycast but no thrust (drag bleeds speed)
+            desired_heading = (nx, ny, nz)
+            saved = self.thrust
+            self.thrust = 0.0
+            self._apply_newtonian(desired_heading, dt)
+            self.thrust = saved
 
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
@@ -779,6 +872,13 @@ class Corvette(Enemy):
         self.spawn_timer = random.uniform(5.0, 10.0)
         self._flicker = 0
         self.t = random.uniform(0, 100)
+
+        # ── Newtonian physics ──
+        self.max_speed      = 600.0
+        self.thrust         = 2000.0
+        self.lateral_thrust = 0.2
+        self.turn_rate      = 1.2
+        self.drag           = 0.15
 
         # Colors
         C_STEEL = (70, 75, 85)
@@ -879,18 +979,7 @@ class Corvette(Enemy):
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
-        target_v = (nx * self.SPEED, ny * self.SPEED, nz * self.SPEED)
-
-        self._apply_banking(target_v, dt)
-        blend = min(1.0, dt * 1.5)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
-
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
-        self._update_orientation()
+        self._apply_newtonian((nx, ny, nz), dt)
 
         # Weaponry
         if dist < self.FIRE_RANGE and self.turret_timer <= 0:
@@ -958,6 +1047,13 @@ class Minelayer(Enemy):
         self.bombing_timer = 0.0
         self.heavy_mg_timer = 0.0
         self._flicker = 0
+
+        # ── Newtonian physics ──
+        self.max_speed      = 1500.0
+        self.thrust         = 4000.0
+        self.lateral_thrust = 0.3
+        self.turn_rate      = 2.5
+        self.drag           = 0.35
 
         # Colors
         C_YELLOW = (255, 210, 0)
@@ -1074,18 +1170,14 @@ class Minelayer(Enemy):
 
         tdx, tdy, tdz = target_x - self.x, target_y - self.y, target_z - self.z
         tdist = math.sqrt(tdx * tdx + tdy * tdy + tdz * tdz) or 1
-        target_v = ((tdx / tdist) * self.SPEED, (tdy / tdist) * self.SPEED, (tdz / tdist) * self.SPEED)
+        desired_heading = (tdx/tdist, tdy/tdist, tdz/tdist)
 
-        self._apply_banking(target_v, dt)
-        blend = min(1.0, dt * 3.0)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
+        # Brake if closing too fast on target
+        if self._approaching_too_fast((target_x, target_y, target_z), brake_threshold=450.0):
+            spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
+            desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
 
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
-        self._update_orientation()
+        self._apply_newtonian(desired_heading, dt)
 
         if not self.stealthed:
             self.engine_size = 6.0
@@ -1130,6 +1222,13 @@ class StealthInterceptor(Enemy):
         self.flank_offset = None
         self.reached_flank = False
         self.hit_radius = 200.0
+
+        # ── Newtonian physics ──
+        self.max_speed      = 2800.0
+        self.thrust         = 12000.0
+        self.lateral_thrust = 0.15
+        self.turn_rate      = 5.0
+        self.drag           = 0.5
 
         # Colors
         C_VOID = (15, 15, 20)
@@ -1227,18 +1326,14 @@ class StealthInterceptor(Enemy):
 
         tdx, tdy, tdz = target_x - self.x, target_y - self.y, target_z - self.z
         tdist = math.sqrt(tdx * tdx + tdy * tdy + tdz * tdz) or 1
-        target_v = ((tdx / tdist) * self.SPEED, (tdy / tdist) * self.SPEED, (tdz / tdist) * self.SPEED)
+        desired_heading = (tdx/tdist, tdy/tdist, tdz/tdist)
 
-        self._apply_banking(target_v, dt)
-        blend = min(1.0, dt * 5.0)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
+        # Brake when closing on target to prevent overshoot
+        if self._approaching_too_fast((target_x, target_y, target_z), brake_threshold=600.0):
+            spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
+            desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
 
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
-        self._update_orientation()
+        self._apply_newtonian(desired_heading, dt)
 
         if not self.stealthed:
             self.engine_size = 6.0
@@ -1286,6 +1381,13 @@ class Carrier(Enemy):
         self.mg_timer = 0.1
         self.state = 'idle' # For sniper charge visual
         self._flicker = 0
+
+        # ── Newtonian physics ──
+        self.max_speed      = 250.0
+        self.thrust         = 800.0
+        self.lateral_thrust = 0.1
+        self.turn_rate      = 0.6
+        self.drag           = 0.08
 
         # Colors
         C_ROYAL = (90, 45, 130)
@@ -1343,24 +1445,16 @@ class Carrier(Enemy):
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
-        # Movement: Stay at a distance
+        # Movement: orbit at range using Newtonian thrust
         if dist < 7000:
-            target_v = (-nx * self.SPEED, -ny * self.SPEED, -nz * self.SPEED)
+            desired_heading = (-nx, -ny, -nz)  # back away
         elif dist > 9000:
-            target_v = (nx * self.SPEED, ny * self.SPEED, nz * self.SPEED)
+            desired_heading = (nx, ny, nz)     # close in
         else:
-            target_v = (0, 0, 0)
+            # Hold at distance — thrust laterally to avoid hovering dead still
+            desired_heading = (self.right[0], self.right[1], self.right[2])
 
-        self._apply_banking(target_v, dt)
-        blend = min(1.0, dt * 0.5)
-        self.vx += (target_v[0] - self.vx) * blend
-        self.vy += (target_v[1] - self.vy) * blend
-        self.vz += (target_v[2] - self.vz) * blend
-
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
-        self._update_orientation()
+        self._apply_newtonian(desired_heading, dt)
 
         # --- ARSENAL ---
         
