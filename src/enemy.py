@@ -746,6 +746,7 @@ class Sniper(Enemy):
 
     def on_hit(self):
         self.hp -= 1
+        self._flicker = 1
 
 
 # =============================================================
@@ -775,6 +776,7 @@ class Corvette(Enemy):
         self.trail_life = 1.0
 
         self.turret_timer = 0.0
+        self.spawn_timer = random.uniform(5.0, 10.0)
         self._flicker = 0
         self.t = random.uniform(0, 100)
 
@@ -870,6 +872,7 @@ class Corvette(Enemy):
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
         self.turret_timer -= dt
+        self.spawn_timer -= dt
 
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
@@ -889,13 +892,12 @@ class Corvette(Enemy):
         self.z += self.vz * dt
         self._update_orientation()
 
+        # Weaponry
         if dist < self.FIRE_RANGE and self.turret_timer <= 0:
             self.turret_timer = 0.3
             if global_projectiles is not None:
                 spread = 0.05
-                ax = nx + random.uniform(-spread, spread)
-                ay = ny + random.uniform(-spread, spread)
-                az = nz + random.uniform(-spread, spread)
+                ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
                 n = math.sqrt(ax * ax + ay * ay + az * az) or 1
                 ax, ay, az = ax / n, ay / n, az / n
 
@@ -905,6 +907,15 @@ class Corvette(Enemy):
                     ay * 4000 + self.vy * 0.5,
                     az * 4000 + self.vz * 0.5
                 ))
+
+        # Drone Spawning
+        if self.spawn_timer <= 0 and dist < 12000:
+            self.spawn_timer = 8.0
+            if global_enemies is not None:
+                drone = SuicideDrone(self.x, self.y - 40, self.z)
+                drone.vx, drone.vy, drone.vz = self.vx, self.vy - 300, self.vz
+                drone.set_pattern(random.choice(['weave', 'wobble', 'spiral', 'zigzag', 'corkscrew']))
+                global_enemies.append(drone)
 
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
@@ -924,11 +935,14 @@ class Minelayer(Enemy):
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
-        self.hp = 6
-        self.max_hp = 6
-        self.base_color = (255, 140, 0)
+        self.hp = 12
+        self.max_hp = 12
+        self.visible_color = (255, 140, 0)
+        self.stealth_color = (20, 20, 30)
+        self.base_color = self.stealth_color
 
-        self.hit_radius = 200
+        self.hit_radius = 200.0
+        self.stealthed = True
 
         # 4 spaced out thrusters
         self.engine_offsets = [
@@ -939,7 +953,10 @@ class Minelayer(Enemy):
         self.engine_size = 5.0
         self.trail_life = 0.5
 
-        self.mine_timer = 3.0
+        self.state = 'traveling'
+        self.flank_offset = None
+        self.bombing_timer = 0.0
+        self.heavy_mg_timer = 0.0
         self._flicker = 0
 
         # Colors
@@ -959,31 +976,108 @@ class Minelayer(Enemy):
         self.faces = [
             {'v': ['v0', 'v3', 'v1'], 'color': C_YELLOW},
             {'v': ['v0', 'v2', 'v4'], 'color': C_YELLOW},
-            {'v': ['v0', 'v4', 'v3'], 'color': C_BLACK},   # Top center spine
+            {'v': ['v0', 'v4', 'v3'], 'color': C_BLACK},
             {'v': ['v0', 'v1', 'v5'], 'color': C_RUST},
             {'v': ['v0', 'v5', 'v2'], 'color': C_RUST},
             {'v': ['v1', 'v3', 'v5'], 'color': C_BLACK},
             {'v': ['v2', 'v5', 'v4'], 'color': C_BLACK},
-            {'v': ['v3', 'v4', 'v5'], 'color': C_BLACK},   # Back seal
+            {'v': ['v3', 'v4', 'v5'], 'color': C_BLACK},
         ]
 
-        self.cross_vector = (random.choice([-1, 1]), random.uniform(-0.5, 0.5), 0)
+    def _pick_flank_offset(self, p_fwd):
+        dist = random.uniform(3500, 5000)
+        phi = random.uniform(0, 2 * math.pi)
+        costheta = random.uniform(-0.5, 0.5)
+        theta = math.acos(costheta)
+        rx = math.sin(theta) * math.cos(phi)
+        ry = math.sin(theta) * math.sin(phi)
+        rz = math.cos(theta)
+        
+        # bias away from player forward
+        dot = rx * p_fwd[0] + ry * p_fwd[1] + rz * p_fwd[2]
+        if dot > 0:
+            rx, ry, rz = -rx, -ry, -rz
+            
+        self.flank_offset = (rx * dist, ry * dist, rz * dist)
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
-        self.mine_timer -= dt
-
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        nx, ny, nz = dx / dist, dy / dist, dz / dist
+        p_fwd = get_forward_from_quat(player_orientation)
 
-        target_v = (
-            self.cross_vector[0] * self.SPEED,
-            self.cross_vector[1] * self.SPEED,
-            (dz / dist) * self.SPEED * 0.5
-        )
+        # State transition: Defensive check
+        if dist < 3000:
+            self.state = 'defensive'
+        elif self.state == 'defensive' and dist > 4500:
+            self.state = 'traveling'
+            self.flank_offset = None
+
+        if self.state == 'traveling':
+            self.stealthed = True
+            self.base_color = self.stealth_color
+            self.hit_radius = 200.0
+            
+            if self.flank_offset is None:
+                self._pick_flank_offset(p_fwd)
+                
+            tx, ty, tz = px + self.flank_offset[0], py + self.flank_offset[1], pz + self.flank_offset[2]
+            tdx, tdy, tdz = tx - self.x, ty - self.y, tz - self.z
+            tdist = math.sqrt(tdx*tdx + tdy*tdy + tdz*tdz)
+            
+            if tdist < 500:
+                self.state = 'bombing'
+                self.bombing_timer = 4.0
+                
+            target_x, target_y, target_z = tx, ty, tz
+
+        elif self.state == 'bombing':
+            self.stealthed = False
+            self.base_color = self.visible_color
+            self.hit_radius = 100.0
+            
+            # Fly across
+            target_x, target_y, target_z = px - p_fwd[0] * 3000, py - p_fwd[1] * 3000, pz - p_fwd[2] * 3000
+            
+            self.bombing_timer -= dt
+            if int(self.bombing_timer * 8) % 8 == 0 and random.random() < 0.3:
+                if global_projectiles is not None:
+                    global_projectiles.append(Mine(self.x, self.y, self.z, 0, 0, 0))
+            
+            if self.bombing_timer <= 0:
+                self.state = 'traveling'
+                self.flank_offset = None
+
+        elif self.state == 'defensive':
+            self.stealthed = False
+            self.base_color = self.visible_color
+            self.hit_radius = 100.0
+            
+            # Close in somewhat aggressively if still far, then back away
+            if dist > 2000:
+                target_x, target_y, target_z = px, py, pz
+            else:
+                target_x, target_y, target_z = self.x - nx * 1000, self.y - ny * 1000, self.z - nz * 1000
+            
+            self.heavy_mg_timer -= dt
+            if self.heavy_mg_timer <= 0:
+                self.heavy_mg_timer = 0.15 # Faster refire
+                if global_projectiles is not None:
+                    proj_speed = 12000
+                    spread = 0.08
+                    ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
+                    bolt = MachineGunBolt(self.x, self.y, self.z, ax * proj_speed, ay * proj_speed, az * proj_speed)
+                    bolt.damage = 4.0  # Even heavier damage
+                    bolt.color = (255, 100, 0)
+                    global_projectiles.append(bolt)
+
+        tdx, tdy, tdz = target_x - self.x, target_y - self.y, target_z - self.z
+        tdist = math.sqrt(tdx * tdx + tdy * tdy + tdz * tdz) or 1
+        target_v = ((tdx / tdist) * self.SPEED, (tdy / tdist) * self.SPEED, (tdz / tdist) * self.SPEED)
 
         self._apply_banking(target_v, dt)
-        blend = min(1.0, dt * 2.0)
+        blend = min(1.0, dt * 3.0)
         self.vx += (target_v[0] - self.vx) * blend
         self.vy += (target_v[1] - self.vy) * blend
         self.vz += (target_v[2] - self.vz) * blend
@@ -993,21 +1087,21 @@ class Minelayer(Enemy):
         self.z += self.vz * dt
         self._update_orientation()
 
-        if self.mine_timer <= 0 and dist < 6000:
-            self.mine_timer = 2.0
-            if global_projectiles is not None:
-                global_projectiles.append(Mine(
-                    self.x, self.y, self.z, 0, 0, 0
-                ))
+        if not self.stealthed:
+            self.engine_size = 6.0
+            self._spawn_engine_trail()
+        else:
+            self.engine_size = 0.0
 
-        self._spawn_engine_trail()
         self._update_engine_trail(dt)
         if self._flicker > 0: self._flicker -= dt * 8
 
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
-        self.cross_vector = (random.choice([-1, 1]), random.uniform(-1, 1), 0)
+        if self.state == 'traveling' and random.random() < 0.3:
+            self.flank_offset = None
+
 
 
 # =============================================================
@@ -1170,14 +1264,13 @@ class Carrier(Enemy):
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
-        self.hp = 50
-        self.max_hp = 50
+        self.hp = 100
+        self.max_hp = 100
         self.base_color = (120, 100, 150)
 
-        # --- ADD THIS: Tell the spatial partition this enemy is HUGE ---
         self.hit_radius = 800.0
 
-        # Massive thruster bank (1 Huge center, 4 large satellites)
+        # Massive thruster bank
         self.engine_offsets = [
             (0, -30, -500),  # Center Main Drive
             (-120, 0, -500), (120, 0, -500),  # Outer Drives
@@ -1187,7 +1280,11 @@ class Carrier(Enemy):
         self.engine_size = 25.0
         self.trail_life = 1.2
 
-        self.spawn_timer = 4.0
+        self.spawn_timer = 5.0
+        self.sniper_timer = random.uniform(6.0, 12.0)
+        self.bolt_timer = 4.0
+        self.mg_timer = 0.1
+        self.state = 'idle' # For sniper charge visual
         self._flicker = 0
 
         # Colors
@@ -1195,7 +1292,6 @@ class Carrier(Enemy):
         C_GOLD = (210, 165, 45)
         C_WHITE = (235, 235, 240)
 
-        # Gigantic Dreadnought/Carrier Wedge shape
         self.verts = {
             'v0': (0, -20, 800),     # 0: Ultimate Nose
             'v1': (0, 80, -200),     # 1: Command Ridge Top Front
@@ -1225,32 +1321,29 @@ class Carrier(Enemy):
             {'v': ['v5', 'v8', 'v7'], 'color': C_ROYAL},
             {'v': ['v5', 'v6', 'v8'], 'color': C_ROYAL},
         ]
-    # --- ADD THIS: Perfect Box Collision for the giant wedge ---
-    def is_hit(self, px, py, pz):
-        """Check if a projectile at (px, py, pz) hits the Carrier using a perfect 3D bounding box."""
-        # Distance vector from center of Carrier to the projectile
-        dx, dy, dz = px - self.x, py - self.y, pz - self.z
 
-        # Project the projectile into the Carrier's LOCAL rotation space
+    def is_hit(self, px, py, pz):
+        dx, dy, dz = px - self.x, py - self.y, pz - self.z
         local_x = dx * self.right[0]   + dy * self.right[1]   + dz * self.right[2]
         local_y = dx * self.up[0]      + dy * self.up[1]      + dz * self.up[2]
         local_z = dx * self.forward[0] + dy * self.forward[1] + dz * self.forward[2]
-
-        # Check if the local coordinates fall inside a box matching self.verts
-        hit_x = -400 <= local_x <= 400   # Wingtips
-        hit_y = -120 <= local_y <= 180   # Belly to Tower
-        hit_z = -500 <= local_z <= 800   # Engine to Nose
-
+        hit_x = -400 <= local_x <= 400
+        hit_y = -120 <= local_y <= 180
+        hit_z = -500 <= local_z <= 800
         return hit_x and hit_y and hit_z
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.spawn_timer -= dt
+        self.sniper_timer -= dt
+        self.bolt_timer -= dt
+        self.mg_timer -= dt
 
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
+        # Movement: Stay at a distance
         if dist < 7000:
             target_v = (-nx * self.SPEED, -ny * self.SPEED, -nz * self.SPEED)
         elif dist > 9000:
@@ -1269,19 +1362,64 @@ class Carrier(Enemy):
         self.z += self.vz * dt
         self._update_orientation()
 
-        if self.spawn_timer <= 0 and dist < 12000:
-            self.spawn_timer = 5.0
+        # --- ARSENAL ---
+        
+        # 1. Sniper Raycast
+        if self.state == 'charging':
+            if self.sniper_timer <= 0:
+                # Fire Raycast
+                from src.constants import PLAYER_COLLISION_RADIUS
+                dx_p, dy_p, dz_p = px - self.x, py - self.y, pz - self.z
+                dist_f = math.sqrt(dx_p*dx_p + dy_p*dy_p + dz_p*dz_p) or 1.0
+                # closest approach
+                cx = (dy_p/dist_f)*self.forward[2] - (dz_p/dist_f)*self.forward[1]
+                cy = (dz_p/dist_f)*self.forward[0] - (dx_p/dist_f)*self.forward[2]
+                cz = (dx_p/dist_f)*self.forward[1] - (dy_p/dist_f)*self.forward[0]
+                perp_dist = math.sqrt(cx*cx + cy*cy + cz*cz) * dist_f
+                dot = (dx_p/dist_f)*self.forward[0] + (dy_p/dist_f)*self.forward[1] + (dz_p/dist_f)*self.forward[2]
+                
+                if player is not None and dot > 0 and perp_dist < PLAYER_COLLISION_RADIUS:
+                    player.take_damage(40)
+                
+                if global_projectiles is not None:
+                    global_projectiles.append(SniperBeam(self.x, self.y, self.z, self.forward[0]*32000, self.forward[1]*32000, self.forward[2]*32000))
+                
+                self.state = 'idle'
+                self.sniper_timer = random.uniform(8.0, 12.0)
+        elif self.sniper_timer <= 0 and dist < 12000:
+            self.state = 'charging'
+            self.sniper_timer = 1.5 # Charge duration
 
+        # 2. Homing Bolts
+        if self.bolt_timer <= 0 and dist < 8000:
+            self.bolt_timer = 4.0
+            if global_projectiles is not None:
+                for _ in range(3):
+                    spread = 0.3
+                    bx, by, bz = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
+                    global_projectiles.append(HomingBolt(self.x, self.y, self.z, bx * 2000, by * 2000, bz * 2000))
+
+        # 3. Point Defense MG
+        if self.mg_timer <= 0 and dist < 4000:
+            self.mg_timer = 0.1
+            if global_projectiles is not None:
+                spread = 0.1
+                mx, my, mz = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
+                global_projectiles.append(MachineGunBolt(self.x, self.y, self.z, mx * 8000, my * 8000, mz * 8000))
+
+        # --- SPAWNING ---
+        if self.spawn_timer <= 0 and dist < 15000:
+            self.spawn_timer = 6.0
             if global_enemies is not None:
-                drone = SuicideDrone(
-                    self.x - self.up[0] * 150,  # Drop out of bottom belly
-                    self.y - self.up[1] * 150,
-                    self.z - self.up[2] * 150
-                )
-                drone.vx = self.vx
-                drone.vy = self.vy - 500
-                drone.vz = self.vz
-                global_enemies.append(drone)
+                # 70% Drone, 30% Dogfighter
+                if random.random() < 0.7:
+                    new_e = SuicideDrone(self.x - self.up[0]*150, self.y - self.up[1]*150, self.z - self.up[2]*150)
+                    new_e.vx, new_e.vy, new_e.vz = self.vx, self.vy - 500, self.vz
+                    new_e.set_pattern(random.choice(['spiral', 'corkscrew', 'zigzag']))
+                else:
+                    new_e = Dogfighter(self.x + self.right[0]*150, self.y + self.right[1]*150, self.z + self.right[2]*150)
+                    new_e.vx, new_e.vy, new_e.vz = self.vx + 200, self.vy, self.vz
+                global_enemies.append(new_e)
 
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
@@ -1290,4 +1428,5 @@ class Carrier(Enemy):
     def on_hit(self):
         self.hp -= 1
         self._flicker = 1
+
 

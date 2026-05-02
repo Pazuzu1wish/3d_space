@@ -173,11 +173,9 @@ class Player:
             
         # ── CHECK PROJECTILE HITS ─────────────────────
         for bolt in enemy_projectiles[:]:
-            if math.dist((bolt.x, bolt.y, bolt.z), self.pos) < PLAYER_COLLISION_RADIUS:
-                self.take_damage(bolt.damage)
-                enemy_projectiles.remove(bolt)
-                for _ in range(12):
-                    particles.spawn(self.pos[0], self.pos[1], self.pos[2])
+            if bolt.check_player_collision(self, particles):
+                if bolt in enemy_projectiles:
+                    enemy_projectiles.remove(bolt)
 
     def take_damage(self, amount):
         self.shield_regen_timer = SHIELD_DELAY
