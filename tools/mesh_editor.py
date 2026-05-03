@@ -28,10 +28,14 @@ class MeshEditor:
         
         # Camera state
         self.cam_pos = [0.0, 0.0, -200.0]
+        # Store absolute yaw and pitch to maintain an upright camera
+        self.cam_yaw = 0.0
+        self.cam_pitch = 0.0
         self.cam_quat = quat_identity()
         self.cam_speed = 500.0
         
         # Editor State
+        self.edit_mode = "CREATE" # Can be "CREATE" or "SELECT"
         self.grid_size = 1000
         self.snap = 10
         self.cursor_pos = [0.0, 0.0, 0.0]
@@ -48,14 +52,8 @@ class MeshEditor:
         
         self.current_color = (255, 255, 255)
         self.colors = [
-            (255, 255, 255),
-            (255, 0, 0),
-            (0, 255, 0),
-            (0, 0, 255),
-            (255, 255, 0),
-            (0, 255, 255),
-            (255, 0, 255),
-            (100, 100, 100)
+            (255, 255, 255), (255, 0, 0), (0, 255, 0), (0, 0, 255),
+            (255, 255, 0), (0, 255, 255), (255, 0, 255), (100, 100, 100)
         ]
         self.color_idx = 0
         
@@ -77,7 +75,12 @@ class MeshEditor:
                 
                 if self.mouse_captured:
                     if event.key == pygame.K_SPACE:
-                        self._add_vertex_at_cursor()
+                        if self.edit_mode == "CREATE":
+                            self._add_vertex_at_cursor()
+                        else:
+                            self._select_nearest_vertex()
+                    elif event.key == pygame.K_TAB:
+                        self.edit_mode = "SELECT" if self.edit_mode == "CREATE" else "CREATE"
                     elif event.key == pygame.K_f:
                         self._create_face()
                     elif event.key == pygame.K_c:
@@ -100,20 +103,37 @@ class MeshEditor:
         # Mouse look
         if self.mouse_captured:
             mx, my = pygame.mouse.get_rel()
-            yaw_delta = -mx * 0.002
-            pitch_delta = -my * 0.002
-            self.cam_quat = rotate_yaw(self.cam_quat, yaw_delta)
-            self.cam_quat = rotate_pitch(self.cam_quat, pitch_delta)
+            self.cam_yaw += -mx * 0.002
+            self.cam_pitch += -my * 0.002
         
         # Controller look
         rx, ry = self.handler.stick_right()
         if abs(rx) > 0.1 or abs(ry) > 0.1:
-            self.cam_quat = rotate_yaw(self.cam_quat, -rx * dt * 2.0)
-            self.cam_quat = rotate_pitch(self.cam_quat, ry * dt * 2.0)
+            self.cam_yaw += -rx * dt * 2.0
+            self.cam_pitch += ry * dt * 2.0
+            
+        # --- CAMERA FIX: Prevent Roll ---
+        # 1. Clamp Pitch to prevent looking so far up/down that the camera flips upside down
+        limit = math.pi / 2.0 - 0.01 
+        self.cam_pitch = max(-limit, min(limit, self.cam_pitch))
+        
+        # 2. Rebuild the quaternion strictly from Yaw -> Pitch. 
+        # This keeps the 'up' vector locked strictly to the world's up axis.
+        q = quat_identity()
+        q = rotate_yaw(q, self.cam_yaw)
+        self.cam_quat = rotate_pitch(q, self.cam_pitch)
             
         # Controller actions
         if self.handler.just_pressed('X'):
-            self._add_vertex_at_cursor()
+            if self.edit_mode == "CREATE":
+                self._add_vertex_at_cursor()
+            else:
+                self._select_nearest_vertex()
+                
+        # Toggle mode via controller (Assuming L3 is mapped)
+        if hasattr(self.handler, 'just_pressed') and self.handler.just_pressed('L3'):
+            self.edit_mode = "SELECT" if self.edit_mode == "CREATE" else "CREATE"
+            
         if self.handler.just_pressed('Square'):
             self._create_face()
         if self.handler.just_pressed('Triangle'):
@@ -171,7 +191,7 @@ class MeshEditor:
         self.cam_pos[2] += (move_x * right[2] + move_y * up[2] + move_z * fwd[2]) * speed * dt
 
     def _add_vertex_at_cursor(self):
-        # Check if vertex already exists at cursor
+        # Check if vertex already exists exactly at cursor
         for vid, pos in self.verts.items():
             if pos == tuple(self.cursor_pos):
                 if vid not in self.selected_verts:
@@ -183,6 +203,28 @@ class MeshEditor:
         self.selected_verts.append(vid)
         self.next_v_id += 1
         
+    def _select_nearest_vertex(self):
+        # Finds vertex closest to cursor within radius and toggles selection
+        closest_vid = None
+        min_dist = float('inf')
+        
+        for vid, pos in self.verts.items():
+            dx = pos[0] - self.cursor_pos[0]
+            dy = pos[1] - self.cursor_pos[1]
+            dz = pos[2] - self.cursor_pos[2]
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+            
+            if dist < min_dist:
+                min_dist = dist
+                closest_vid = vid
+                
+        # Threshold for grabbing (e.g. 5 times the snap increment)
+        if closest_vid and min_dist <= self.snap * 5:
+            if closest_vid in self.selected_verts:
+                self.selected_verts.remove(closest_vid)
+            else:
+                self.selected_verts.append(closest_vid)
+
     def _delete_last_vertex(self):
         if self.next_v_id > 0:
             vid = f"v{self.next_v_id - 1}"
@@ -241,10 +283,22 @@ class MeshEditor:
                 
     def draw_cursor(self):
         cx, cy, cz = self.cursor_pos
-        s = 5
-        self.renderer.submit_line((cx-s, cy, cz), (cx+s, cy, cz), (255,0,0), 2)
-        self.renderer.submit_line((cx, cy-s, cz), (cx, cy+s, cz), (0,255,0), 2)
-        self.renderer.submit_line((cx, cy, cz-s), (cx, cy, cz+s), (0,0,255), 2)
+        
+        if self.edit_mode == "CREATE":
+            s = 5
+            # Small XYZ crosshair
+            self.renderer.submit_line((cx-s, cy, cz), (cx+s, cy, cz), (255,0,0), 2)
+            self.renderer.submit_line((cx, cy-s, cz), (cx, cy+s, cz), (0,255,0), 2)
+            self.renderer.submit_line((cx, cy, cz-s), (cx, cy, cz+s), (0,0,255), 2)
+        else:
+            s = self.snap * 2
+            # Large Yellow bounding box style cursor for SELECT Mode
+            col = (255, 255, 0)
+            self.renderer.submit_line((cx-s, cy-s, cz), (cx+s, cy-s, cz), col, 2)
+            self.renderer.submit_line((cx-s, cy+s, cz), (cx+s, cy+s, cz), col, 2)
+            self.renderer.submit_line((cx, cy-s, cz), (cx, cy+s, cz), col, 2)
+            self.renderer.submit_line((cx-s, cy, cz), (cx+s, cy, cz), col, 2)
+            self.renderer.submit_line((cx, cy, cz-s), (cx, cy, cz+s), col, 2)
         
     def draw_mesh(self):
         # Draw Faces
@@ -290,6 +344,7 @@ class MeshEditor:
         y = 10
         texts = [
             f"FPS: {int(self.clock.get_fps())}",
+            f"Mode: {self.edit_mode} (Press TAB to toggle)",
             f"Camera: {int(self.cam_pos[0])}, {int(self.cam_pos[1])}, {int(self.cam_pos[2])}",
             f"Cursor: {self.cursor_pos}",
             f"Verts: {len(self.verts)} | Faces: {len(self.faces)}",
@@ -300,6 +355,7 @@ class MeshEditor:
             "",
             "Controls:",
             "ESC: Toggle Mouse Capture",
+            "TAB / (L3): Toggle Create/Select Mode",
             "WASD/QE: Move Camera (Shift to boost)",
             "Mouse / R-Stick: Look",
             "Arrows/PgUp/PgDn / DPad/L1/R1: Move Cursor",
@@ -312,7 +368,9 @@ class MeshEditor:
         ]
         
         for t in texts:
-            img = self.font.render(t, True, (200, 200, 200))
+            # Highlight Mode Text
+            color = (255, 255, 0) if "Mode:" in t else (200, 200, 200)
+            img = self.font.render(t, True, color)
             self.screen.blit(img, (10, y))
             y += 20
             
