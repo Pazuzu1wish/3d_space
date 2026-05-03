@@ -844,9 +844,11 @@ class MeshEditor:
         if not self.show_vert_ids:
             return
         for vid, pos in self.verts.items():
-            sx, sy = self.camera.project(pos)
-            if sx is None:
+            cam_pos = self.camera.world_to_camera(*pos)
+            proj = self.camera.project(*cam_pos)
+            if proj is None:
                 continue
+            sx, sy, _ = proj
             col = (255, 200, 50) if vid == self.snap_target_vid else \
                   (255, 130, 130) if vid in self.selected_verts else \
                   (140, 140, 140)
@@ -861,9 +863,11 @@ class MeshEditor:
             cx = sum(p[0] for p in pts) / len(pts)
             cy = sum(p[1] for p in pts) / len(pts)
             cz = sum(p[2] for p in pts) / len(pts)
-            sx, sy = self.camera.project((cx, cy, cz))
-            if sx is None:
+            cam_pos = self.camera.world_to_camera(cx, cy, cz)
+            proj = self.camera.project(*cam_pos)
+            if proj is None:
                 continue
+            sx, sy, _ = proj
             lbl = self.font_s.render(f"f{f['id']}", True, (180, 180, 80))
             self.screen.blit(lbl, (int(sx) + 4, int(sy) + 4))
 
