@@ -1,9 +1,9 @@
 import random
-from src.math_engine import *
-import pygame
+
 # ─────────────────────────────────────────────
 #  GAME ENTITIES
 # ──────────────────────────────────────────────
+
 class Star:
     def __init__(self, ppos=(0, 0, 0)):
         self.spawn_around(ppos)
@@ -28,11 +28,11 @@ class Star:
         if c_rand < 0.75:
             self.base_color = (255, 255, 255) # White
         elif c_rand < 0.85:
-            self.base_color = (180, 200, 255) # Blue-ish
+            self.base_color = (100, 100, 255) # Blue-ish
         elif c_rand < 0.95:
-            self.base_color = (255, 200, 180) # Red-ish
+            self.base_color = (255, 100, 100) # Red-ish
         else:
-            self.base_color = (255, 255, 180) # Yellow-ish
+            self.base_color = (255, 255, 100) # Yellow-ish
 
     def submit_to_renderer(self, renderer, ppos):
         spread = 3000

@@ -57,9 +57,13 @@ class Game:
         self.enemy_projectiles = []
 
         self.running = True
-        
+        self.paused = False
+
         # Track which enemies are registered in spatial partition
         self._registered_enemies = set()
+
+        # Load pause font
+        self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72)
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
         # ── UPDATE LASERS (using pool) ─────────────────────────
@@ -211,7 +215,12 @@ class Game:
 
         # Damage overlay
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
-    
+
+        # Pause overlay
+        if self.paused:
+            pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
+            screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
+
     def _submit_particle(self, pdata):
         """Helper method to submit a particle from pool data to renderer."""
         self.renderer.submit_sprite(pdata['x'], pdata['y'], pdata['z'], pdata['color'], 15 * pdata['life'])
@@ -227,22 +236,28 @@ class Game:
                     event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
                 ):
                     self.running = False
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                    self.paused = not self.paused
                 self.handler.process_event(event)
+
+            if self.handler.just_pressed('Options'):
+                self.paused = not self.paused
 
             keys = pygame.key.get_pressed()
 
-            # ── UPDATE ────────────────────────────────
-            self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles)
-            self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
-            self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
+            if not self.paused:
+                # ── UPDATE ────────────────────────────────
+                self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles)
+                self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
+                self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
 
-            # ── TARGETING ──────────────────────────────────────
-            # Keep target valid after kills/culls
-            self.player.clear_dead_target(self.enemies)
-            if self.player._key_target_closest:
-                self.player.target_closest(self.enemies)
-            elif self.player._key_cycle_target:
-                self.player.cycle_targets(self.enemies)
+                # ── TARGETING ──────────────────────────────────────
+                # Keep target valid after kills/culls
+                self.player.clear_dead_target(self.enemies)
+                if self.player._key_target_closest:
+                    self.player.target_closest(self.enemies)
+                elif self.player._key_cycle_target:
+                    self.player.cycle_targets(self.enemies)
 
             # ── DRAW ──────────────────────────────────
             self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.enemy_projectiles)
@@ -251,4 +266,3 @@ class Game:
             self.handler.update()
 
         pygame.quit()
-
