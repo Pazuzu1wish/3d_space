@@ -34,41 +34,60 @@ class Asteroid:
         self.rot_vel_z = random.uniform(-ASTEROID_ROTATION_SPEED_MAX, ASTEROID_ROTATION_SPEED_MAX)
         
         # Visuals
-        self.base_color = (random.randint(100, 140), random.randint(90, 120), random.randint(80, 110))
+        # 70% Gray, 15% Reddish/Iron, 15% Brownish
+        rand = random.random()
+        if rand < 0.7:
+            # Grayish
+            c = random.randint(100, 140)
+            self.base_color = (c, c, c + random.randint(-10, 10))
+        elif rand < 0.85:
+            # Reddish (Iron)
+            self.base_color = (random.randint(130, 170), random.randint(80, 110), random.randint(70, 90))
+        else:
+            # Brownish
+            self.base_color = (random.randint(120, 150), random.randint(100, 130), random.randint(60, 90))
+            
         self.verts, self.faces = self._generate_mesh()
         
     def _generate_mesh(self):
-        # Start with an octahedron
-        # 6 vertices
+        # Start with an icosahedron for more roundness
+        phi = (1 + 5**0.5) / 2
         raw_verts = [
-            (0, 0, 1), (0, 0, -1),
-            (1, 0, 0), (-1, 0, 0),
-            (0, 1, 0), (0, -1, 0)
+            (-1,  phi, 0), ( 1,  phi, 0), (-1, -phi, 0), ( 1, -phi, 0),
+            (0, -1,  phi), (0,  1,  phi), (0, -1, -phi), (0,  1, -phi),
+            ( phi, 0, -1), ( phi, 0,  1), (-phi, 0, -1), (-phi, 0,  1)
         ]
         
-        # Jitter vertices for rocky look
+        # Jitter and scale vertices
         jittered = []
         for vx, vy, vz in raw_verts:
-            j = 1.0 + random.uniform(-0.3, 0.3)
-            jittered.append((vx * j * self.scale, vy * j * self.scale, vz * j * self.scale))
+            # Normalize to sphere and then jitter
+            length = math.sqrt(vx*vx + vy*vy + vz*vz)
+            nx, ny, nz = vx/length, vy/length, vz/length
+            j = 1.0 + random.uniform(-0.25, 0.25)
+            jittered.append((nx * j * self.scale, ny * j * self.scale, nz * j * self.scale))
             
-        # 8 faces
-        faces = [
-            {'v': [0, 2, 4], 'color': self._adjust_color(0.9)},
-            {'v': [0, 4, 3], 'color': self._adjust_color(0.8)},
-            {'v': [0, 3, 5], 'color': self._adjust_color(0.7)},
-            {'v': [0, 5, 2], 'color': self._adjust_color(0.85)},
-            {'v': [1, 4, 2], 'color': self._adjust_color(0.6)},
-            {'v': [1, 3, 4], 'color': self._adjust_color(0.5)},
-            {'v': [1, 5, 3], 'color': self._adjust_color(0.55)},
-            {'v': [1, 2, 5], 'color': self._adjust_color(0.65)},
+        # 20 faces
+        raw_faces = [
+            (0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11),
+            (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
+            (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9),
+            (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)
         ]
         
+        faces = []
+        for idxs in raw_faces:
+            # Simple flat shading variety based on face index
+            shade = 0.5 + (random.random() * 0.5)
+            faces.append({'v': list(idxs), 'color': self._adjust_color(shade)})
+            
         return jittered, faces
 
     def _adjust_color(self, factor):
         r, g, b = self.base_color
-        return (int(r * factor), int(g * factor), int(b * factor))
+        return (max(0, min(255, int(r * factor))), 
+                max(0, min(255, int(g * factor))), 
+                max(0, min(255, int(b * factor))))
 
     def update(self, dt):
         self.x += self.vx * dt
@@ -85,8 +104,6 @@ class Asteroid:
 
     def on_hit(self, damage=1):
         self.hp -= damage
-        # Visual feedback: flash brighter? 
-        # For now, just HP reduction.
 
     def submit_to_renderer(self, renderer):
         # Rotation matrices
