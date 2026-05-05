@@ -113,21 +113,51 @@ class Asteroid:
         self.hp -= damage
 
     def split(self):
-        """Create smaller fragments if this asteroid hasn't fragmented too much."""
+        """Create smaller fragments that explode away from each other."""
         if self.generation >= 1: # Limit to one level of splitting for performance
             return []
             
         fragments = []
         num_fragments = random.randint(2, 4)
-        for _ in range(num_fragments):
+        impulse_mag = 450.0  # High velocity for satisfying "shatter"
+        
+        last_dx, last_dy, last_dz = 0, 0, 0
+        
+        for i in range(num_fragments):
+            if i == 0:
+                # Pick a random direction on a sphere
+                theta = random.uniform(0, 2 * math.pi)
+                phi = random.uniform(0, math.pi)
+                dx = math.sin(phi) * math.cos(theta)
+                dy = math.sin(phi) * math.sin(theta)
+                dz = math.cos(phi)
+                last_dx, last_dy, last_dz = dx, dy, dz
+            elif i == 1:
+                # Force the second fragment to go in the opposite direction
+                dx, dy, dz = -last_dx, -last_dy, -last_dz
+            else:
+                # Further fragments get fresh random directions
+                theta = random.uniform(0, 2 * math.pi)
+                phi = random.uniform(0, math.pi)
+                dx = math.sin(phi) * math.cos(theta)
+                dy = math.sin(phi) * math.sin(theta)
+                dz = math.cos(phi)
+
             f_scale = self.scale * random.uniform(0.3, 0.5)
-            f = Asteroid(self.x, self.y, self.z, scale=f_scale, generation=self.generation + 1, base_color=self.base_color)
+            # Offset position slightly so they don't overlap immediately
+            offset = f_scale * 0.5
+            f = Asteroid(self.x + dx * offset, self.y + dy * offset, self.z + dz * offset, 
+                         scale=f_scale, generation=self.generation + 1, base_color=self.base_color)
             
-            # Outward impulse
-            impulse = 150.0
-            f.vx = self.vx + random.uniform(-impulse, impulse)
-            f.vy = self.vy + random.uniform(-impulse, impulse)
-            f.vz = self.vz + random.uniform(-impulse, impulse)
+            # Inherit parent velocity and add outward impulse
+            f.vx = self.vx + dx * impulse_mag
+            f.vy = self.vy + dy * impulse_mag
+            f.vz = self.vz + dz * impulse_mag
+            
+            # Increase rotation speed of fragments for chaos
+            f.rot_vel_x *= 2.0
+            f.rot_vel_y *= 2.0
+            f.rot_vel_z *= 2.0
             
             fragments.append(f)
         return fragments
