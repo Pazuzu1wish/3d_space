@@ -169,7 +169,7 @@ class Player:
                     wx, wy, wz,
                     rfx * LASER_SPEED, rfy * LASER_SPEED, rfz * LASER_SPEED
                 )
-            self.weapons_cooldown = 0.20
+            self.weapons_cooldown = 0.28
             
         # ── CHECK PROJECTILE HITS ─────────────────────
         for bolt in enemy_projectiles[:]:

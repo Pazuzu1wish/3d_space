@@ -452,7 +452,7 @@ def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
 # ──────────────────────────────────────────────
 
 def draw_crosshair(surface, cx, cy, ready):
-    col = HUD_GREEN if ready else HUD_AMBER
+    col = HUD_RED if ready else HUD_AMBER
     gap = 10
     arm = 18
     thick = 1
