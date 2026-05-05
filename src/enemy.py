@@ -42,6 +42,10 @@ class Enemy:
         self.engine_color = (200, 200, 255)
         self.engine_size = 4.0
         self.trail_life = 0.5
+        self.engine_pulse_rate = 8.0
+        self.engine_time = random.uniform(0, 100)
+        self._last_dist = 0.0
+        self.trail_drift = 50.0
 
         # ── Newtonian physics (override per subclass) ──────────────
         self.max_speed      = 1500.0   # terminal velocity cap (u/s)
@@ -175,21 +179,33 @@ class Enemy:
             )
 
     def _spawn_engine_trail(self):
+        # Cull particles if too far
+        if self._last_dist > 30000:
+            return
+
         # Spawn a trail particle for every engine hardpoint
         for ox, oy, oz in self.engine_offsets:
             ex = self.x + self.right[0] * ox + self.up[0] * oy + self.forward[0] * oz
             ey = self.y + self.right[1] * ox + self.up[1] * oy + self.forward[1] * oz
             ez = self.z + self.right[2] * ox + self.up[2] * oy + self.forward[2] * oz
 
-            self.engine_trail.append([ex, ey, ez, self.trail_life, self.engine_color, self.engine_size])
+            # Add slight random drift velocity
+            dvx = (random.random() - 0.5) * self.trail_drift
+            dvy = (random.random() - 0.5) * self.trail_drift
+            dvz = (random.random() - 0.5) * self.trail_drift
+
+            self.engine_trail.append([ex, ey, ez, dvx, dvy, dvz, self.trail_life, self.engine_color, self.engine_size])
 
     def _update_engine_trail(self, dt):
         for p in self.engine_trail:
-            p[3] -= dt
-        self.engine_trail = [p for p in self.engine_trail if p[3] > 0]
+            p[0] += p[3] * dt # drift x
+            p[1] += p[4] * dt # drift y
+            p[2] += p[5] * dt # drift z
+            p[6] -= dt        # life
+        self.engine_trail = [p for p in self.engine_trail if p[6] > 0]
 
     def _submit_engine_trail(self, renderer):
-        for x, y, z, life, color, base_size in self.engine_trail:
+        for x, y, z, vx, vy, vz, life, color, base_size in self.engine_trail:
             ratio = max(0.0, life / (self.trail_life or TRAIL_LIFE_DIVISOR))
             # Fade color out as it dies
             r = min(255, max(0, int(color[0] * ratio)))
@@ -199,12 +215,29 @@ class Enemy:
             renderer.submit_sprite(x, y, z, (r, g, b), base_size * 4 * ratio)
 
     def _submit_engine_glow(self, renderer):
+        pulse = (math.sin(self.engine_time * self.engine_pulse_rate) + 1.0) * 0.5
+        
         for ox, oy, oz in self.engine_offsets:
             ex = self.x + self.right[0] * ox + self.up[0] * oy + self.forward[0] * oz
             ey = self.y + self.right[1] * ox + self.up[1] * oy + self.forward[1] * oz
             ez = self.z + self.right[2] * ox + self.up[2] * oy + self.forward[2] * oz
 
-            renderer.submit_sprite(ex, ey, ez, (255, 255, 255), self.engine_size * 2, is_glow=True)
+            if self._last_dist > 20000:
+                # Beacon mode (far away)
+                renderer.submit_sprite(ex, ey, ez, self.engine_color, self.engine_size * 4, is_glow=True)
+            else:
+                # Multi-layer bloom (close up)
+                core_size = self.engine_size * (1.0 + 0.5 * pulse)
+                mid_size = self.engine_size * 2.5 * (1.0 + 0.3 * pulse)
+                outer_size = self.engine_size * 5.0 * (1.0 + 0.1 * pulse)
+
+                # Outer soft halo
+                r, g, b = self.engine_color
+                renderer.submit_sprite(ex, ey, ez, (int(r*0.4), int(g*0.4), int(b*0.4)), outer_size, is_glow=True)
+                # Mid colored layer
+                renderer.submit_sprite(ex, ey, ez, self.engine_color, mid_size, is_glow=True)
+                # Bright white core
+                renderer.submit_sprite(ex, ey, ez, (255, 255, 255), core_size, is_glow=True)
 
     def dist_to_player(self, player_pos):
         dx = self.x - player_pos[0]
@@ -314,9 +347,11 @@ class SuicideDrone(Enemy):
 
         # Single bright red thruster
         self.engine_offsets = [(0, 0, -20)]
-        self.engine_color = (255, 100, 50)
+        self.engine_color = (255, 120, 80)
         self.engine_size = 5.0
+        self.engine_pulse_rate = 15.0
         self.trail_life = 0.4
+        self.trail_drift = 120.0
 
         self.t = 0
         self.pattern = _pattern_weave
@@ -364,11 +399,13 @@ class SuicideDrone(Enemy):
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
+        self.engine_time += dt
         self._pattern_check_timer += dt
 
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1
+        self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
         if self.pattern is not None:
@@ -440,9 +477,11 @@ class Dogfighter(Enemy):
 
         # Twin Blue Thrusters – repositioned to tail top
         self.engine_offsets = [(-32, -10, -45), (32, -10, -45)]
-        self.engine_color = (100, 200, 255)
+        self.engine_color = (60, 150, 255)
         self.engine_size = 4.5
+        self.engine_pulse_rate = 8.0
         self.trail_life = 0.6
+        self.trail_drift = 60.0
         self.hit_radius = 70
 
         self.mg_timer = 0.0
@@ -528,12 +567,14 @@ class Dogfighter(Enemy):
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
+        self.engine_time += dt
         self.mg_timer -= dt
         self.bolt_timer -= dt
         self.mode_timer -= dt
 
         px, py, pz = player_pos
         dist_to_player = self.dist_to_player(player_pos)
+        self._last_dist = dist_to_player
 
         # --- COLLISION AVOIDANCE (LATERAL PEEL-OFF) ---
         if dist_to_player < 800:
@@ -683,9 +724,11 @@ class Sniper(Enemy):
 
         # Single deep green thruster at back of long barrel
         self.engine_offsets = [(0, 0, -90)]
-        self.engine_color = (255, 0, 50)
+        self.engine_color = (150, 255, 50)
         self.engine_size = 6.0
-        self.trail_life = 0.8
+        self.engine_pulse_rate = 2.0
+        self.trail_life = 1.2
+        self.trail_drift = 10.0
 
         self.hit_radius = 70
 
@@ -761,10 +804,12 @@ class Sniper(Enemy):
     
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.timer -= dt
+        self.engine_time += dt
         px, py, pz = player_pos
 
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
         if dist < self.FLEE_RANGE:
@@ -868,9 +913,11 @@ class Corvette(Enemy):
             (-50, -10, -200), (50, -10, -200),
             (-20, 20, -200), (20, 20, -200)
         ]
-        self.engine_color = (255, 120, 40)
+        self.engine_color = (255, 140, 0)
         self.engine_size = 12.0
+        self.engine_pulse_rate = 3.0
         self.trail_life = 1.0
+        self.trail_drift = 30.0
 
         self.turret_timer = 0.0
         self.spawn_timer = random.uniform(5.0, 10.0)
@@ -975,12 +1022,14 @@ class Corvette(Enemy):
         ]
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
         self.t += dt
+        self.engine_time += dt
         self.turret_timer -= dt
         self.spawn_timer -= dt
 
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
         self._apply_newtonian((nx, ny, nz), dt)
@@ -1042,9 +1091,11 @@ class Minelayer(Enemy):
             (-60, 0, -30), (-20, 0, -30),
             (20, 0, -30), (60, 0, -30)
         ]
-        self.engine_color = (255, 140, 0)
+        self.engine_color = (255, 210, 0)
         self.engine_size = 5.0
+        self.engine_pulse_rate = 4.0
         self.trail_life = 0.5
+        self.trail_drift = 80.0
 
         self.state = 'traveling'
         self.flank_offset = None
@@ -1101,9 +1152,11 @@ class Minelayer(Enemy):
         self.flank_offset = (rx * dist, ry * dist, rz * dist)
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+        self.engine_time += dt
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
         p_fwd = get_forward_from_quat(player_orientation)
 
@@ -1215,9 +1268,11 @@ class StealthInterceptor(Enemy):
 
         # Twin thin thrusters
         self.engine_offsets = [(-10, 2, -30), (10, 2, -30)]
-        self.engine_color = (100, 100, 255)
+        self.engine_color = (180, 0, 255)
         self.engine_size = 4.0
+        self.engine_pulse_rate = 12.0
         self.trail_life = 0.3
+        self.trail_drift = 20.0
 
         self.stealthed = True
         self.state = 'traveling'
@@ -1275,9 +1330,11 @@ class StealthInterceptor(Enemy):
         self.reached_flank = False
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+        self.engine_time += dt
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
         p_fwd = get_forward_from_quat(player_orientation)
 
@@ -1377,7 +1434,9 @@ class Carrier(Enemy):
         ]
         self.engine_color = (200, 100, 255)
         self.engine_size = 25.0
-        self.trail_life = 1.2
+        self.engine_pulse_rate = 1.5
+        self.trail_life = 1.5
+        self.trail_drift = 20.0
 
         self.spawn_timer = 5.0
         self.sniper_timer = random.uniform(6.0, 12.0)
@@ -1443,10 +1502,12 @@ class Carrier(Enemy):
         self.sniper_timer -= dt
         self.bolt_timer -= dt
         self.mg_timer -= dt
+        self.engine_time += dt
 
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
         # Movement: orbit at range using Newtonian thrust
