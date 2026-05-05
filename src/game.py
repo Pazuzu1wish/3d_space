@@ -142,9 +142,10 @@ class Game:
             if bolt.life <= 0:
                 enemy_projectiles.remove(bolt)
 
-    def draw_game(self, screen, W, H, player, stars, enemies, enemy_projectiles):
+    def draw_game(self, screen, W, H, player, stars, enemies, enemy_projectiles, dt):
         screen.fill((5, 5, 15))
 
+        shake_offset = self.camera.update_shake(dt)
         self.camera.update(player.pos, player.orientation)
         self.renderer.clear()
 
@@ -211,6 +212,7 @@ class Game:
             dodge_flash=player.dodge_flash,
             shield_charge=player.shield_charge,
             shield_recharging=player.shield_recharging,
+            shake_offset=shake_offset,
         )
 
         # Damage overlay
@@ -260,7 +262,11 @@ class Game:
                     self.player.cycle_targets(self.enemies)
 
             # ── DRAW ──────────────────────────────────
-            self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.enemy_projectiles)
+            if self.player.shake_queued > 0:
+                self.camera.trigger_shake(self.player.shake_queued)
+                self.player.shake_queued = 0.0
+
+            self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.enemy_projectiles, dt)
 
             pygame.display.flip()
             self.handler.update()

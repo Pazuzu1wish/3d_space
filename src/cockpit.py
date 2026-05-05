@@ -738,7 +738,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      orientation=None, player_pos=None, player_vel=None,
                      enemies=None, player_hp=100, active_target=None,
                      dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0,
-                     shield_charge=1.0, shield_recharging=False):
+                     shield_charge=1.0, shield_recharging=False,
+                     shake_offset=(0.0, 0.0)):
 
     global _HUD_OVERLAY, _LAST_SIZE
 
@@ -788,5 +789,5 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
             )
 
     # Stamp the finished semi-transparent HUD onto the game screen
-    surface.blit(_HUD_OVERLAY, (0, 0))
+    surface.blit(_HUD_OVERLAY, shake_offset)
 

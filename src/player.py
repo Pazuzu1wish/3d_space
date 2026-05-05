@@ -36,6 +36,7 @@ class Player:
         self.shield = SHIELD_MAX
         self.shield_regen_timer = 0.0
         self.shield_flash = 0.0
+        self.shake_queued = 0.0
 
     @property
     def shield_charge(self):
@@ -180,6 +181,7 @@ class Player:
     def take_damage(self, amount):
         self.shield_regen_timer = SHIELD_DELAY
         self.hit_flash = HIT_FLASH_DURATION
+        self.shake_queued += amount
         if self.shield > 0:
             absorbed = min(self.shield, amount)
             self.shield -= absorbed

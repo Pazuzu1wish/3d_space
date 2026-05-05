@@ -59,6 +59,9 @@ WEAPON_SPREAD = 0.05                # weapon spread in radians
 TRAIL_LIFE_DIVISOR = 0.1            # divisor for trail life ratio calculation
 TARGETING_FOV = 100.0               # field of view for target lock in degrees
 
+SCREEN_SHAKE_DECAY = 40.0           # shake intensity decay per second
+SCREEN_SHAKE_MAX = 35.0             # maximum pixels of displacement
+
 # ──────────────────────────────────────────────
 # UI CONSTANTS
 # ──────────────────────────────────────────────
