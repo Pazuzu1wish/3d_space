@@ -16,11 +16,11 @@ class Star:
         
         # Randomize size: mostly small (1-2), occasionally larger (3-5)
         if random.random() < 0.95:
-            self.size = random.uniform(1.0, 2.0)
+            self.size = random.uniform(1.5, 3.0)
         else:
-            self.size = random.uniform(3.0, 6.0) # Occasional "Hero" stars
+            self.size = random.uniform(4.0, 8.0) # Occasional "Hero" stars
 
-        self.brightness = random.uniform(0.5, 1.0)
+        self.brightness = random.uniform(1.5, 2.0)
         
         # Color variety based on weighted probabilities
         # Mostly white/off-white, occasional blue/red/yellow
