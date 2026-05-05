@@ -20,7 +20,7 @@ MAX_RETRO_THRUST = 250
 DRAG = 0.01
 MAX_SPEED = 2500.0
 DODGE_COOLDOWN = 1.20
-DODGE_IMPULSE = 1400
+DODGE_IMPULSE = 2000
 DODGE_THRESHOLD = 0.20
 
 # ──────────────────────────────────────────────
