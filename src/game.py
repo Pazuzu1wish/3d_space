@@ -11,22 +11,25 @@ from src.star import Star
 from src.particle import Particle
 from src.player import Player
 from src.laser import Laser
+from src.spatial_partition import SpatialPartition
+from src.asteroid import Asteroid, AsteroidField
 from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     ENEMY_HIT_RADIUS_SQ, ENEMY_CULL_DISTANCE, HOMING_TURN_RATE,
     PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
-    SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER
+    SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
+    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE
 )
-from src.utils import draw_damage_overlay
-from src.director import WaveDirector
-from src.encounters import ENCOUNTER_SCRIPT
-from src.object_pool import ParticlePool, LaserPool
-from src.spatial_partition import SpatialPartition
 
 # ──────────────────────────────────────────────
 # MAIN LOOP
 # ──────────────────────────────────────────────
+
+from src.utils import draw_damage_overlay
+from src.director import WaveDirector
+from src.encounters import ENCOUNTER_SCRIPT
+from src.object_pool import ParticlePool, LaserPool
 
 class Game:
     def __init__(self):
@@ -55,6 +58,12 @@ class Game:
         self.stars = [Star(self.player.pos) for _ in range(350)]
         self.enemies = []
         self.enemy_projectiles = []
+        self.asteroids = []
+
+        # Spawn some initial asteroid fields near encounter points
+        for enc in ENCOUNTER_SCRIPT:
+            field = AsteroidField(enc['origin'], count=15, radius=3000)
+            self.asteroids.extend(field.asteroids)
 
         self.running = True
         self.paused = False
@@ -106,35 +115,77 @@ class Game:
                 self._registered_enemies.discard(id(e))
                 enemies.remove(e)
 
-        # ── REBUILD SPATIAL PARTITION (enemies have moved) ─────────
-        # Re-register all remaining enemies at their current positions
-        # Use each enemy's individual hit_radius for proper spatial partitioning
+        # ── UPDATE ASTEROIDS ──────────────────────
+        for a in self.asteroids[:]:
+            a.update(dt)
+            
+            # Asteroid destroyed
+            if a.hp <= 0:
+                for _ in range(ASTEROID_PARTICLES_ON_DESTROY):
+                    self.particle_pool.spawn(a.x, a.y, a.z, colors=[(120, 120, 120), (100, 100, 100), (80, 80, 80)])
+                self.asteroids.remove(a)
+                continue
+                
+            # Collision with player
+            dist_to_p = math.dist((a.x, a.y, a.z), player.pos)
+            if dist_to_p < (a.hit_radius + PLAYER_COLLISION_RADIUS):
+                player.take_damage(ASTEROID_DAMAGE)
+                # Bounce player back slightly?
+                # For now just damage and particles
+                for _ in range(PARTICLES_ON_PLAYER_HIT):
+                    self.particle_pool.spawn(player.pos[0], player.pos[1], player.pos[2])
+                a.on_hit(999) # Destroy asteroid on heavy impact
+                continue
+
+            # Cull far asteroids
+            if a.z < player.pos[2] + ENEMY_CULL_DISTANCE:
+                self.asteroids.remove(a)
+
+        # ── REBUILD SPATIAL PARTITION (enemies & asteroids) ─────────
         self.spatial.clear()
         self._registered_enemies.clear()
         for e in enemies:
             self.spatial.register_entity(e, (e.x, e.y, e.z), radius=e.hit_radius)
             self._registered_enemies.add(id(e))
+        
+        # Add asteroids to spatial partition for laser collision
+        for a in self.asteroids:
+            self.spatial.register_entity(a, (a.x, a.y, a.z), radius=a.hit_radius)
 
         # ── LASER HITS (spatial query) ─────────────────────────────
-        # Use the dynamic is_hit() method for flexible collision detection
         for l in self.laser_pool.get_active()[:]:
+            nearby_objects = self.spatial.query_collision((l.x, l.y, l.z), 800.0)
 
-            # CHANGE 1: Increase search radius to 800.0!
-            # Since the Carrier is 800 units long, its center could be up to 800
-            # units away from the laser hitting its nose. We must search a wider net.
-            nearby_enemies = self.spatial.query_collision((l.x, l.y, l.z), 800.0)
+            for obj in nearby_objects:
+                # Check if it's an enemy
+                if obj in enemies:
+                    if obj.is_hit(l.x, l.y, l.z):
+                        obj.on_hit()
+                        l.life = 0
+                        for _ in range(PARTICLES_ON_HIT):
+                            self.particle_pool.spawn(obj.x, obj.y, obj.z)
+                        break
+                # Check if it's an asteroid
+                elif obj in self.asteroids:
+                    if obj.is_hit(l.x, l.y, l.z):
+                        obj.on_hit(1)
+                        l.life = 0
+                        for _ in range(PARTICLES_ON_HIT):
+                            self.particle_pool.spawn(l.x, l.y, l.z)
+                        break
 
-            for e in nearby_enemies:
-                if e not in enemies:
-                    continue
-                    
-                # CHANGE 2: Use the dynamic is_hit() method instead of the hardcoded distance
-                if e.is_hit(l.x, l.y, l.z):
-                    e.on_hit()
-                    l.life = 0  # Pool's own update() will recycle it next tick
-                    for _ in range(PARTICLES_ON_HIT):
-                        self.particle_pool.spawn(e.x, e.y, e.z)
-                    break
+        # ── ENEMY VS ASTEROID COLLISION ──────────────────
+        for e in enemies:
+            nearby = self.spatial.query_collision((e.x, e.y, e.z), e.hit_radius + 500.0)
+            for obj in nearby:
+                if obj in self.asteroids:
+                    dist = math.sqrt((e.x - obj.x)**2 + (e.y - obj.y)**2 + (e.z - obj.z)**2)
+                    if dist < (e.hit_radius + obj.hit_radius):
+                        e.hp = 0 # Instant kill enemy on asteroid impact
+                        obj.on_hit(2) # Damage asteroid
+                        for _ in range(PARTICLES_ON_DESTROY):
+                            self.particle_pool.spawn(e.x, e.y, e.z)
+                        break
 
         # ── UPDATE PROJECTILES ────────────────────────
         for bolt in enemy_projectiles[:]:
@@ -178,6 +229,11 @@ class Game:
         for bolt in enemy_projectiles:
             if self.camera.sphere_in_frustum(bolt.x, bolt.y, bolt.z, 100):
                 bolt.submit_to_renderer(self.renderer)
+
+        # ── DRAW ASTEROIDS ─────────────────────────────
+        for a in self.asteroids:
+            if self.camera.sphere_in_frustum(a.x, a.y, a.z, a.scale * 2):
+                a.submit_to_renderer(self.renderer)
 
         # RENDER EVERYTHING
         self.renderer.render(screen)
