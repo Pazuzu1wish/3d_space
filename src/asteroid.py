@@ -10,12 +10,15 @@ from src.constants import (
 )
 
 class Asteroid:
-    def __init__(self, x, y, z, scale=None):
+    def __init__(self, x, y, z, scale=None, generation=0, base_color=None):
         self.x, self.y, self.z = float(x), float(y), float(z)
         self.scale = scale if scale else random.uniform(ASTEROID_MIN_SCALE, ASTEROID_MAX_SCALE)
+        self.generation = generation
         
         # Physics
-        self.hp = random.randint(ASTEROID_MIN_HP, ASTEROID_MAX_HP)
+        # HP scales with size, but fragments are easier to break
+        base_hp = random.randint(ASTEROID_MIN_HP, ASTEROID_MAX_HP)
+        self.hp = base_hp if generation == 0 else max(1, int(base_hp * 0.5))
         self.max_hp = self.hp
         self.hit_radius = self.scale * 0.8
         
@@ -34,18 +37,22 @@ class Asteroid:
         self.rot_vel_z = random.uniform(-ASTEROID_ROTATION_SPEED_MAX, ASTEROID_ROTATION_SPEED_MAX)
         
         # Visuals
-        # 70% Gray, 15% Reddish/Iron, 15% Brownish
-        rand = random.random()
-        if rand < 0.7:
-            # Grayish
-            c = random.randint(100, 140)
-            self.base_color = (c, c, c + random.randint(-10, 10))
-        elif rand < 0.85:
-            # Reddish (Iron)
-            self.base_color = (random.randint(130, 170), random.randint(80, 110), random.randint(70, 90))
+        if base_color:
+            self.base_color = base_color
         else:
-            # Brownish
-            self.base_color = (random.randint(120, 150), random.randint(100, 130), random.randint(60, 90))
+            # randomized color logic for top-level asteroids
+            # 70% Gray, 15% Reddish/Iron, 15% Brownish
+            rand = random.random()
+            if rand < 0.7:
+                # Grayish
+                c = random.randint(100, 140)
+                self.base_color = (c, c, c + random.randint(-10, 10))
+            elif rand < 0.85:
+                # Reddish (Iron)
+                self.base_color = (random.randint(130, 170), random.randint(80, 110), random.randint(70, 90))
+            else:
+                # Brownish
+                self.base_color = (random.randint(120, 150), random.randint(100, 130), random.randint(60, 90))
             
         self.verts, self.faces = self._generate_mesh()
         
@@ -104,6 +111,26 @@ class Asteroid:
 
     def on_hit(self, damage=1):
         self.hp -= damage
+
+    def split(self):
+        """Create smaller fragments if this asteroid hasn't fragmented too much."""
+        if self.generation >= 1: # Limit to one level of splitting for performance
+            return []
+            
+        fragments = []
+        num_fragments = random.randint(2, 4)
+        for _ in range(num_fragments):
+            f_scale = self.scale * random.uniform(0.3, 0.5)
+            f = Asteroid(self.x, self.y, self.z, scale=f_scale, generation=self.generation + 1, base_color=self.base_color)
+            
+            # Outward impulse
+            impulse = 150.0
+            f.vx = self.vx + random.uniform(-impulse, impulse)
+            f.vy = self.vy + random.uniform(-impulse, impulse)
+            f.vz = self.vz + random.uniform(-impulse, impulse)
+            
+            fragments.append(f)
+        return fragments
 
     def submit_to_renderer(self, renderer):
         # Rotation matrices

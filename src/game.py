@@ -121,6 +121,10 @@ class Game:
             
             # Asteroid destroyed
             if a.hp <= 0:
+                # Spawn fragments
+                fragments = a.split()
+                self.asteroids.extend(fragments)
+
                 for _ in range(ASTEROID_PARTICLES_ON_DESTROY):
                     self.particle_pool.spawn(a.x, a.y, a.z, colors=[(120, 120, 120), (100, 100, 100), (80, 80, 80)])
                 self.asteroids.remove(a)
