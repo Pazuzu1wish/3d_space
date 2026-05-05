@@ -78,7 +78,8 @@ class Game:
 
             # Drone destroyed
             if e.hp <= 0:
-                for _ in range(PARTICLES_ON_DESTROY):
+                p_count = 100 if getattr(e, 'did_detonate', False) else PARTICLES_ON_DESTROY
+                for _ in range(p_count):
                     self.particle_pool.spawn(e.x, e.y, e.z)
                 # Remove from spatial partition
                 self.spatial.unregister_entity(e)

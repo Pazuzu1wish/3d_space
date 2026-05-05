@@ -8,7 +8,10 @@ from src.math_engine import (
     basis_from_forward,
     get_forward_from_quat,
 )
-from src.constants import MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR
+from src.constants import (
+    MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR,
+    DRONE_DETONATION_RANGE, DRONE_EXPLOSION_RADIUS, DRONE_MAX_DAMAGE
+)
 from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
     CorvetteTurret, Mine, StealthShotgun
@@ -368,6 +371,7 @@ class SuicideDrone(Enemy):
         self.drag           = 0.2
 
         self.hit_radius = 200
+        self.did_detonate = False
 
         # Colors
         C_RED = (255, 30, 30)
@@ -436,19 +440,35 @@ class SuicideDrone(Enemy):
             offset[2] * self.thrust * 0.55,
         )
 
-        # Brake when closing on player too fast, else head straight at them
-        if self._approaching_too_fast(player_pos, brake_threshold=380.0):
-            spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
-            desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
-        else:
-            desired_heading = (nx, ny, nz)
+        # Proximity detonation (Ballistic Missile behavior)
+        if dist < DRONE_DETONATION_RANGE:
+            self.detonate(player)
+            return
 
+        # Proximity visual cue: pulse faster as it gets closer
+        if dist < 1500:
+            proximity_factor = 1.0 - (dist / 1500.0)
+            self.engine_pulse_rate = 15.0 + proximity_factor * 30.0
+
+        desired_heading = (nx, ny, nz)
         self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
 
         if self._flicker > 0:
             self._flicker -= dt * 8
+
+    def detonate(self, player=None):
+        """Triggers proximity explosion and deals radial damage to player."""
+        if player:
+            dist = self.dist_to_player(player.pos)
+            # Radial damage falloff: full damage at center, 0 at EXPLOSION_RADIUS
+            falloff = max(0.0, 1.0 - (dist / DRONE_EXPLOSION_RADIUS))
+            damage = DRONE_MAX_DAMAGE * falloff
+            player.take_damage(damage)
+        
+        self.did_detonate = True
+        self.hp = 0
 
     def on_hit(self):
         self.hp -= 1
