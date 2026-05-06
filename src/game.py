@@ -249,9 +249,9 @@ class Game:
 
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
 
-        if self.paused:
-            pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
-            screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
+        # if self.paused:
+        #     pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
+        #     screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
 
     def main(self):
         while self.running:

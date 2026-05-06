@@ -330,7 +330,7 @@ PATTERN_MAP = {
 # ──────────────────────────────────────────────
 
 class SuicideDrone(Enemy):
-    SPEED = 1400
+    SPEED = 2500
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
@@ -354,10 +354,10 @@ class SuicideDrone(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 2500.0
+        self.max_speed      = 2600.0
         self.thrust         = 9000.0
         self.lateral_thrust = 0.5
-        self.turn_rate      = 2.5
+        self.turn_rate      = 1.5
         self.drag           = 0.2
 
         self.hit_radius = 200
@@ -509,7 +509,7 @@ class Dogfighter(Enemy):
         self.pattern_scale = 2.5  # Dogfighters need larger sweeps than drones
 
         # ── Newtonian physics ──
-        self.max_speed      = 2000.0
+        self.max_speed      = 2500.0
         self.thrust         = 5000.0
         self.lateral_thrust = 0.35
         self.turn_rate      = 2.0
@@ -747,11 +747,11 @@ class Sniper(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 900.0
+        self.max_speed      = 1100.0
         self.thrust         = 3000.0
         self.lateral_thrust = 0.2
         self.turn_rate      = 2.0
-        self.drag           = 0.25
+        self.drag           = 0.35
 
         # Colors
         C_FOREST = (34, 139, 34)
