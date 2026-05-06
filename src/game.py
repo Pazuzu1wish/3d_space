@@ -22,7 +22,7 @@ from src.constants import (
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
     ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE,
     AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_WINDOW_SIZE, AIM_WINDOW_POS,
-    AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR
+    AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR, PLAYER_LASER_SPEED
 )
 
 # ──────────────────────────────────────────────
@@ -258,7 +258,7 @@ class Game:
         l2_val = self.handler.trigger_left()
         keys = pygame.key.get_pressed()
         if l2_val > AIM_MODE_THRESHOLD or keys[pygame.K_LSHIFT]:
-            self._render_magnified_window(screen, player, visible_entities, stars, dt)
+            self._render_magnified_window(screen, self.player, visible_entities, stars, dt)
 
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
 
@@ -288,7 +288,60 @@ class Game:
             if self.magnify_camera.sphere_in_frustum(l.x, l.y, l.z, 200):
                 l.submit_to_renderer(self.magnify_renderer)
 
+        # ── PARTICLES IN MAGNIFIED VIEW ────────────────────────
+        self.particle_pool.submit_to_renderer(self.magnify_renderer, self.magnify_camera)
+
         self.magnify_renderer.render(self.magnify_surf)
+
+        # ── LEAD INDICATOR (PIP Leading) ────────────────────────
+        if player.active_target:
+            target = player.active_target
+            # Target relative to player
+            rx = target.x - player.pos[0]
+            ry = target.y - player.pos[1]
+            rz = target.z - player.pos[2]
+            
+            # Relative velocity
+            p_vx, p_vy, p_vz = player.vel
+            vx = target.vx - p_vx
+            vy = target.vy - p_vy
+            vz = target.vz - p_vz
+            
+            # Quadratic: (v.v - s^2)t^2 + 2(r.v)t + (r.r) = 0
+            s = PLAYER_LASER_SPEED
+            a = (vx*vx + vy*vy + vz*vz) - s*s
+            b = 2 * (rx*vx + ry*vy + rz*vz)
+            c = rx*rx + ry*ry + rz*rz
+            
+            det = b*b - 4*a*c
+            if det >= 0:
+                sqrt_det = math.sqrt(det)
+                t1 = (-b - sqrt_det) / (2*a)
+                t2 = (-b + sqrt_det) / (2*a)
+                
+                t = -1
+                if t1 > 0 and t2 > 0: t = min(t1, t2)
+                elif t1 > 0: t = t1
+                elif t2 > 0: t = t2
+                
+                if t > 0:
+                    # Predicted world position
+                    lx = target.x + target.vx * t
+                    ly = target.y + target.vy * t
+                    lz = target.z + target.vz * t
+                    
+                    # Project onto magnification surface
+                    cx, cy, cz = self.magnify_camera.world_to_camera(lx, ly, lz)
+                    proj = self.magnify_camera.project(cx, cy, cz)
+                    if proj:
+                        psx, psy, _ = proj
+                        # Draw lead diamond/circle
+                        pts = [
+                            (psx, psy - 8), (psx + 8, psy),
+                            (psx, psy + 8), (psx - 8, psy)
+                        ]
+                        pygame.draw.polygon(self.magnify_surf, (255, 255, 0), pts, 1)
+                        pygame.draw.circle(self.magnify_surf, (255, 255, 0), (psx, psy), 2)
 
         # Draw crosshair in magnify window
         mid = AIM_WINDOW_SIZE // 2

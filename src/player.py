@@ -5,7 +5,7 @@ from src.constants import (
     PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
-    TARGETING_FOV
+    TARGETING_FOV, PLAYER_LASER_SPEED
 )
 
 SHIELD_MAX       = 100
@@ -160,7 +160,7 @@ class Player:
             forward, right, _ = get_basis_from_quat(self.orientation)
             rfx, rfy, rfz = forward
             rrx, rry, rrz = right
-            LASER_SPEED = 16000
+            LASER_SPEED = PLAYER_LASER_SPEED
             offset = 40
             for side in (-1, 1):
                 wx = self.pos[0] + rrx * offset * side + rfx * 20 + rfx * 50
