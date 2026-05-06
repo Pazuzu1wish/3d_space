@@ -59,7 +59,9 @@ class Star:
             b = min(255, int(self.base_color[2] * intensity))
             
             is_glow = self.size > 2.5
-            renderer.submit_sprite(self.x, self.y, self.z, (r, g, b), self.size, is_glow=is_glow)
+            # Pass cam_pos to avoid redundant world_to_camera in renderer
+            renderer.submit_sprite(self.x, self.y, self.z, (r, g, b), self.size, 
+                                 is_glow=is_glow, layer='background', cam_pos=(cx, cy, cz))
 
 
 

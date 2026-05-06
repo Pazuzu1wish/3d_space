@@ -162,7 +162,7 @@ class ParticlePool:
             # but renderer has access to camera)
             if camera.sphere_in_frustum(x, y, z, 50):
                 ratio = self.life[idx] / self.max_life[idx]
-                renderer.submit_sprite(x, y, z, self.color[idx], 15 * ratio)
+                renderer.submit_sprite(x, y, z, self.color[idx], 15 * ratio, layer='alpha')
 
     def get_active_particles(self) -> List[dict]:
         """Legacy shim for compatibility with existing game.py loops."""

@@ -215,7 +215,7 @@ class Enemy:
             g = min(255, max(0, int(color[1] * ratio)))
             b = min(255, max(0, int(color[2] * ratio)))
 
-            renderer.submit_sprite(x, y, z, (r, g, b), base_size * 4 * ratio)
+            renderer.submit_sprite(x, y, z, (r, g, b), base_size * 4 * ratio, layer='alpha')
 
     def _submit_engine_glow(self, renderer):
         pulse = (math.sin(self.engine_time * self.engine_pulse_rate) + 1.0) * 0.5
@@ -227,7 +227,7 @@ class Enemy:
 
             if self._last_dist > 20000:
                 # Beacon mode (far away)
-                renderer.submit_sprite(ex, ey, ez, self.engine_color, self.engine_size * 4, is_glow=True)
+                renderer.submit_sprite(ex, ey, ez, self.engine_color, self.engine_size * 4, is_glow=True, layer='alpha')
             else:
                 # Multi-layer bloom (close up)
                 core_size = self.engine_size * (1.0 + 0.5 * pulse)
@@ -236,11 +236,11 @@ class Enemy:
 
                 # Outer soft halo
                 r, g, b = self.engine_color
-                renderer.submit_sprite(ex, ey, ez, (int(r*0.4), int(g*0.4), int(b*0.4)), outer_size, is_glow=True)
+                renderer.submit_sprite(ex, ey, ez, (int(r*0.4), int(g*0.4), int(b*0.4)), outer_size, is_glow=True, layer='alpha')
                 # Mid colored layer
-                renderer.submit_sprite(ex, ey, ez, self.engine_color, mid_size, is_glow=True)
+                renderer.submit_sprite(ex, ey, ez, self.engine_color, mid_size, is_glow=True, layer='alpha')
                 # Bright white core
-                renderer.submit_sprite(ex, ey, ez, (255, 255, 255), core_size, is_glow=True)
+                renderer.submit_sprite(ex, ey, ez, (255, 255, 255), core_size, is_glow=True, layer='alpha')
 
     def dist_to_player(self, player_pos):
         dx = self.x - player_pos[0]
@@ -257,7 +257,7 @@ class Enemy:
     def submit_to_renderer(self, renderer):
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
-        renderer.submit_mesh((self.x, self.y, self.z), self.right, self.up, self.forward, self.verts, self.faces)
+        renderer.submit_mesh((self.x, self.y, self.z), self.right, self.up, self.forward, self.verts, self.faces, radius=self.hit_radius * 1.5)
 
 
 # ──────────────────────────────────────────────
