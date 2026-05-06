@@ -482,9 +482,9 @@ _HUD_LEAD_PIP    = (255, 200, 50, 200)
 _HUD_LEASH       = (255, 80, 80, 70)
 
 
-def _draw_dim_bracket(surface, sx, sy, half=14):
+def _draw_dim_bracket(surface, sx, sy, color=_HUD_DIM_TARGET, half=14):
     """Faint corner-bracket [ ] for an untargeted enemy."""
-    c = _HUD_DIM_TARGET
+    c = color
     t = 1
     # left vertical, right vertical
     pygame.draw.line(surface, c, (sx - half, sy - half), (sx - half, sy + half), t)
@@ -535,6 +535,18 @@ def draw_target_brackets(
 
     for enemy in enemies:
         if getattr(enemy, 'stealthed', False): continue  # Stealth Interceptor — hidden from HUD
+        
+        # Performance: Pre-calculate squared distance for culling and dimming
+        dx = enemy.x - player_pos[0]
+        dy = enemy.y - player_pos[1]
+        dz = enemy.z - player_pos[2]
+        dist_sq = dx*dx + dy*dy + dz*dz
+
+        # Hard cull: Don't process HUD brackets for things extremely far away (e.g. 100km)
+        # unless it is the active target.
+        if enemy is not active_target and dist_sq > 10000000000: # 100km^2
+            continue
+
         # Project the enemy's world position to screen
         cx, cy, cz = world_to_camera(
             enemy.x, enemy.y, enemy.z,
@@ -557,12 +569,8 @@ def draw_target_brackets(
             _draw_active_bracket(surface, sx, sy)
             active_screen = (sx, sy)
 
-            # Distance & hull readout (using squared distance to avoid sqrt)
-            dist_m = int(math.sqrt(
-                (enemy.x - player_pos[0])**2 +
-                (enemy.y - player_pos[1])**2 +
-                (enemy.z - player_pos[2])**2
-            ))
+            # Distance & hull readout (Only calculate sqrt for the active target)
+            dist_m = int(math.sqrt(dist_sq))
             # Get max HP from the enemy object
             max_hp = enemy.max_hp
             hull_pct = int(max(0, enemy.hp / max_hp) * 100)
@@ -573,7 +581,21 @@ def draw_target_brackets(
             surface.blit(hull_lbl, (sx - hull_lbl.get_width() // 2, sy + 22 + 14))
 
         else:
-            _draw_dim_bracket(surface, sx, sy)
+            # Dimming Logic: Use squared distance to fade out distant untargeted enemies
+            # Start fading at 15km, fully gone at 45km
+            if dist_sq > 225000000: # 15km^2
+                if dist_sq > 2025000000: # 45km^2
+                    continue
+                
+                # Linear fade from 15km (alpha 90) to 45km (alpha 0)
+                ratio = (dist_sq - 225000000) / 1800000000
+                alpha = int(90 * (1.0 - ratio))
+                if alpha < 5: continue
+                
+                dim_color = (_HUD_DIM_TARGET[0], _HUD_DIM_TARGET[1], _HUD_DIM_TARGET[2], alpha)
+                _draw_dim_bracket(surface, sx, sy, color=dim_color)
+            else:
+                _draw_dim_bracket(surface, sx, sy)
 
     # ── LEAD INDICATOR (PIP) ──────────────────────────────────────────────
     if active_target is not None and active_screen is not None:
