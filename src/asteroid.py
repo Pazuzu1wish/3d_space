@@ -55,6 +55,8 @@ class Asteroid:
                 self.base_color = (random.randint(120, 150), random.randint(100, 130), random.randint(60, 90))
             
         self.verts, self.faces = self._generate_mesh()
+        # Pre-calculate bounding radius for fast frustum culling
+        self.bounding_radius = self.scale * 1.5 # Padding for jittered verts
         
     def _generate_mesh(self):
         # Start with an icosahedron for more roundness
@@ -184,7 +186,8 @@ class Asteroid:
         fy = sy * sz - cy * sx * cz
         fz = cy * cx
         
-        renderer.submit_mesh((self.x, self.y, self.z), (rx, ry, rz), (ux, uy, uz), (fx, fy, fz), self.verts, self.faces)
+        renderer.submit_mesh((self.x, self.y, self.z), (rx, ry, rz), (ux, uy, uz), (fx, fy, fz), 
+                             self.verts, self.faces, layer='opaque', radius=self.bounding_radius)
 
 class AsteroidField:
     def __init__(self, origin, count=10, radius=2000):
