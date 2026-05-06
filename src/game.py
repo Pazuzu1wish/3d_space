@@ -20,7 +20,9 @@ from src.constants import (
     PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
-    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE
+    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE,
+    AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_WINDOW_SIZE, AIM_WINDOW_POS,
+    AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR
 )
 
 # ──────────────────────────────────────────────
@@ -74,6 +76,11 @@ class Game:
 
         # Load pause font
         self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72)
+
+        # Magnification resources
+        self.magnify_surf = pygame.Surface((AIM_WINDOW_SIZE, AIM_WINDOW_SIZE), pygame.SRCALPHA)
+        self.magnify_camera = Camera(AIM_WINDOW_SIZE, AIM_WINDOW_SIZE)
+        self.magnify_renderer = RenderPipeline(self.magnify_camera)
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
         # ── UPDATE LASERS (using pool) ─────────────────────────
@@ -247,11 +254,76 @@ class Game:
             shake_offset=shake_offset,
         )
 
+        # ── MAGNIFIED AIM WINDOW (L2) ──────────────────────────
+        l2_val = self.handler.trigger_left()
+        keys = pygame.key.get_pressed()
+        if l2_val > AIM_MODE_THRESHOLD or keys[pygame.K_LSHIFT]:
+            self._render_magnified_window(screen, player, visible_entities, stars, dt)
+
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
 
-        if self.paused:
-            pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
-            screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
+        # if self.paused:
+        #     pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
+        #     screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
+
+    def _render_magnified_window(self, screen, player, visible_entities, stars, dt):
+        """Render a secondary pass for the magnified aim window."""
+        self.magnify_surf.fill((5, 5, 25, 200)) # Darker, slightly blue tint
+        
+        # Update magnify camera to match player but with higher FOV
+        self.magnify_camera.fov = self.camera.fov * AIM_MAGNIFICATION
+        self.magnify_camera.update(player.pos, player.orientation)
+        self.magnify_renderer.clear()
+
+        # Re-submit entities to magnify_renderer
+        for star in stars:
+            star.submit_to_renderer(self.magnify_renderer, player.pos)
+        
+        for obj in visible_entities:
+            # Check if object is in frustum of the magnify camera
+            if self.magnify_camera.sphere_in_frustum(obj.x, obj.y, obj.z, getattr(obj, 'hit_radius', 500)):
+                obj.submit_to_renderer(self.magnify_renderer)
+
+        for l in self.laser_pool.get_active():
+            if self.magnify_camera.sphere_in_frustum(l.x, l.y, l.z, 200):
+                l.submit_to_renderer(self.magnify_renderer)
+
+        self.magnify_renderer.render(self.magnify_surf)
+
+        # Draw crosshair in magnify window
+        mid = AIM_WINDOW_SIZE // 2
+        pygame.draw.line(self.magnify_surf, AIM_WINDOW_CROSSHAIR_COLOR, (mid - 20, mid), (mid + 20, mid), 1)
+        pygame.draw.line(self.magnify_surf, AIM_WINDOW_CROSSHAIR_COLOR, (mid, mid - 20), (mid, mid + 20), 1)
+        pygame.draw.circle(self.magnify_surf, AIM_WINDOW_CROSSHAIR_COLOR, (mid, mid), 4, 1)
+
+        # Draw "AIM MODE" text
+        if not hasattr(self, '_aim_font'):
+            self._aim_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 14)
+        lbl = self._aim_font.render("MAGNIFIED AIM", True, (0, 200, 255))
+        self.magnify_surf.blit(lbl, (10, 10))
+
+        # Blit magnified window to main screen
+        screen.blit(self.magnify_surf, AIM_WINDOW_POS)
+        
+        # Draw frame/border
+        rect = (AIM_WINDOW_POS[0], AIM_WINDOW_POS[1], AIM_WINDOW_SIZE, AIM_WINDOW_SIZE)
+        pygame.draw.rect(screen, AIM_WINDOW_BORDER_COLOR, rect, 2)
+        
+        # Decorative corners
+        c_len = 30
+        x, y, w, h = rect
+        # TL
+        pygame.draw.line(screen, (255, 255, 255), (x-2, y-2), (x+c_len, y-2), 2)
+        pygame.draw.line(screen, (255, 255, 255), (x-2, y-2), (x-2, y+c_len), 2)
+        # TR
+        pygame.draw.line(screen, (255, 255, 255), (x+w-c_len, y-2), (x+w+2, y-2), 2)
+        pygame.draw.line(screen, (255, 255, 255), (x+w+2, y-2), (x+w+2, y+c_len), 2)
+        # BL
+        pygame.draw.line(screen, (255, 255, 255), (x-2, y+h-c_len), (x-2, y+h+2), 2)
+        pygame.draw.line(screen, (255, 255, 255), (x-2, y+h+2), (x+c_len, y+h+2), 2)
+        # BR
+        pygame.draw.line(screen, (255, 255, 255), (x+w-c_len, y+h+2), (x+w+2, y+h+2), 2)
+        pygame.draw.line(screen, (255, 255, 255), (x+w+2, y+h-c_len), (x+w+2, y+h+2), 2)
 
     def main(self):
         while self.running:

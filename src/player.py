@@ -55,9 +55,9 @@ class Player:
         # ── INPUT ─────────────────────────────────
         lx, ly = handler.stick_left()
         rx, _  = handler.stick_right()
-        fire_l = handler.trigger_left()  > 0.5
+        #fire_l = handler.trigger_left()  > 0.5
         fire_r = handler.trigger_right() > 0.5
-        fire_pressed = fire_l or fire_r
+        fire_pressed = fire_r
 
         if keys[pygame.K_w]:     ly = -1.0
         if keys[pygame.K_s]:     ly =  1.0
