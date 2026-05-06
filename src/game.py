@@ -13,6 +13,7 @@ from src.player import Player
 from src.laser import Laser
 from src.spatial_partition import SpatialPartition
 from src.asteroid import Asteroid, AsteroidField
+from src.nebula import NebulaSystem
 from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     ENEMY_HIT_RADIUS_SQ, ENEMY_CULL_DISTANCE, HOMING_TURN_RATE,
@@ -56,6 +57,7 @@ class Game:
         self.renderer = RenderPipeline(self.camera)
 
         self.stars = [Star(self.player.pos) for _ in range(350)]
+        self.nebulae = NebulaSystem(count=8, area_radius=30000)
         self.enemies = []
         self.enemy_projectiles = []
         self.asteroids = []
@@ -207,6 +209,9 @@ class Game:
 
         for star in stars:
             star.submit_to_renderer(self.renderer, player.pos)
+
+        # ── DRAW NEBULAE ────────────────────────────────
+        self.nebulae.submit_to_renderer(self.renderer)
 
         sniper_beams_to_draw = []
 
