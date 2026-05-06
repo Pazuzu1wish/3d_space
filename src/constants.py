@@ -99,8 +99,8 @@ ASTEROID_PARTICLES_ON_DESTROY = 40
 
 AIM_MODE_THRESHOLD = 0.5            # L2 trigger threshold to activate
 AIM_MAGNIFICATION = 5.0             # 5x magnification
-AIM_WINDOW_SIZE = 280               # Size of the zoom window
-AIM_WINDOW_POS = (1280 // 2 - 140, 760 // 2 - 140) # Position on screen
+AIM_WINDOW_SIZE = 420               # Size of the zoom window (increased 1.5x)
+AIM_WINDOW_POS = (1280 // 2 - 210, 760 // 2 - 210) # Position on screen
 AIM_WINDOW_BORDER_COLOR = (0, 200, 255, 180)
 AIM_WINDOW_CROSSHAIR_COLOR = (255, 50, 50, 200)
 
