@@ -750,7 +750,7 @@ class Sniper(Enemy):
         self.trail_life = 1.2
         self.trail_drift = 10.0
 
-        self.hit_radius = 70
+        self.hit_radius = 120
 
         self.state = 'aiming'
         self.timer = random.uniform(2.0, 4.0)
