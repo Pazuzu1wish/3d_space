@@ -257,17 +257,7 @@ class Enemy:
     def submit_to_renderer(self, renderer):
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
-
-        world_verts = {}
-        for v_id, (vx, vy, vz) in self.verts.items():
-            wx = self.x + vx * self.right[0] + vy * self.up[0] + vz * self.forward[0]
-            wy = self.y + vx * self.right[1] + vy * self.up[1] + vz * self.forward[1]
-            wz = self.z + vx * self.right[2] + vy * self.up[2] + vz * self.forward[2]
-            world_verts[v_id] = (wx, wy, wz)
-
-        for f in self.faces:
-            pts = tuple(world_verts[vid] for vid in f['v'])
-            renderer.submit_polygon(pts, f.get('color', self.base_color))
+        renderer.submit_mesh((self.x, self.y, self.z), self.right, self.up, self.forward, self.verts, self.faces)
 
 
 # ──────────────────────────────────────────────
@@ -470,8 +460,8 @@ class SuicideDrone(Enemy):
         self.did_detonate = True
         self.hp = 0
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
         if self._pattern_cache is _pattern_direct:
             self._pattern_cache = random.choice(PATTERNS[1:])
@@ -718,8 +708,8 @@ class Dogfighter(Enemy):
                 self.x, self.y, self.z, vx, vy, vz
             ))
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
         self.mode = 'attack_run'
         self.mode_timer = 3.0
@@ -906,8 +896,8 @@ class Sniper(Enemy):
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
 
 
@@ -1083,8 +1073,8 @@ class Corvette(Enemy):
         self._update_engine_trail(dt)
         if self._flicker > 0: self._flicker -= dt * 8
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
 
 
@@ -1265,8 +1255,8 @@ class Minelayer(Enemy):
         self._update_engine_trail(dt)
         if self._flicker > 0: self._flicker -= dt * 8
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
         if self.state == 'traveling' and random.random() < 0.3:
             self.flank_offset = None
@@ -1425,8 +1415,8 @@ class StealthInterceptor(Enemy):
         self._update_engine_trail(dt)
         if self._flicker > 0: self._flicker -= dt * 8
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
 
 
@@ -1604,8 +1594,8 @@ class Carrier(Enemy):
         self._update_engine_trail(dt)
         if self._flicker > 0: self._flicker -= dt * 8
 
-    def on_hit(self):
-        self.hp -= 1
+    def on_hit(self, damage=1):
+        self.hp -= damage
         self._flicker = 1
 
 

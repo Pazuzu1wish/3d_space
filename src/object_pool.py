@@ -93,87 +93,99 @@ class ObjectPool(Generic[T]):
 
 
 class ParticlePool:
-    """Specialized pool for particle effects with position-based initialization."""
+    """Specialized high-performance pool for particle effects using parallel lists."""
     
-    def __init__(self, particle_class, initial_size: int = 200, max_size: int = 1000):
-        self._particle_class = particle_class
-        self._pool: List[dict] = []
-        self._active: List[dict] = []
-        self._max_size = max_size
+    def __init__(self, particle_class=None, initial_size: int = 500, max_size: int = 2000):
+        self.max_size = max_size
         
-        # Pre-allocate particle data dictionaries
-        for _ in range(initial_size):
-            self._pool.append(self._create_particle_data())
-    
-    def _create_particle_data(self) -> dict:
-        """Create a new particle data structure."""
-        return {
-            'x': 0.0, 'y': 0.0, 'z': 0.0,
-            'vx': 0.0, 'vy': 0.0, 'vz': 0.0,
-            'life': 0.0,
-            'color': (255, 100, 50),
-            'active': False
-        }
+        # Parallel lists for particle data (much faster than list of dicts)
+        self.px = [0.0] * max_size
+        self.py = [0.0] * max_size
+        self.pz = [0.0] * max_size
+        self.vx = [0.0] * max_size
+        self.vy = [0.0] * max_size
+        self.vz = [0.0] * max_size
+        self.life = [0.0] * max_size
+        self.max_life = [1.0] * max_size
+        self.color = [(255, 255, 255)] * max_size
+        self.active = [False] * max_size
+        
+        # Free indices stack for O(1) allocation
+        self.free_indices = list(range(max_size - 1, -1, -1))
+        self.active_indices = set()
     
     def spawn(self, x: float, y: float, z: float, 
               velocity_range: tuple = (-300, 300),
               life: float = 1.0,
-              colors: Optional[list] = None) -> Optional[dict]:
+              colors: Optional[list] = None) -> None:
         """Spawn a particle at the given position."""
-        if self._pool:
-            particle = self._pool.pop()
-        elif self._max_size is None or len(self._active) < self._max_size:
-            particle = self._create_particle_data()
-        else:
-            return None
+        if not self.free_indices:
+            return
+            
+        idx = self.free_indices.pop()
+        self.active_indices.add(idx)
         
-        # Initialize particle
-        particle['x'] = x
-        particle['y'] = y
-        particle['z'] = z
-        particle['vx'] = random.uniform(*velocity_range)
-        particle['vy'] = random.uniform(*velocity_range)
-        particle['vz'] = random.uniform(*velocity_range)
-        particle['life'] = life
-        particle['color'] = random.choice(colors) if colors else random.choice(_PARTICLE_COLORS)
-        particle['active'] = True
-        
-        self._active.append(particle)
-        return particle
+        self.px[idx] = x
+        self.py[idx] = y
+        self.pz[idx] = z
+        self.vx[idx] = random.uniform(*velocity_range)
+        self.vy[idx] = random.uniform(*velocity_range)
+        self.vz[idx] = random.uniform(*velocity_range)
+        self.life[idx] = life
+        self.max_life[idx] = life
+        self.color[idx] = random.choice(colors) if colors else random.choice(_PARTICLE_COLORS)
+        self.active[idx] = True
     
     def update(self, dt: float) -> None:
         """Update all active particles and recycle dead ones."""
-        for particle in self._active[:]:
-            if not particle['active']:
-                continue
-                
-            # Update position
-            particle['x'] += particle['vx'] * dt
-            particle['y'] += particle['vy'] * dt
-            particle['z'] += particle['vz'] * dt
-            particle['life'] -= dt
+        to_remove = []
+        for idx in self.active_indices:
+            self.px[idx] += self.vx[idx] * dt
+            self.py[idx] += self.vy[idx] * dt
+            self.pz[idx] += self.vz[idx] * dt
+            self.life[idx] -= dt
             
-            # Recycle if dead
-            if particle['life'] <= 0:
-                particle['active'] = False
-                self._active.remove(particle)
-                if len(self._pool) < self._max_size:
-                    self._pool.append(particle)
+            if self.life[idx] <= 0:
+                self.active[idx] = False
+                to_remove.append(idx)
+        
+        for idx in to_remove:
+            self.active_indices.remove(idx)
+            self.free_indices.append(idx)
     
+    def submit_to_renderer(self, renderer, camera):
+        """Batch submit active particles to the renderer with frustum culling."""
+        for idx in self.active_indices:
+            x, y, z = self.px[idx], self.py[idx], self.pz[idx]
+            # Fast distance-based culling before heavy sphere-in-frustum
+            # (Assuming camera.pos is available via player in game.py, 
+            # but renderer has access to camera)
+            if camera.sphere_in_frustum(x, y, z, 50):
+                ratio = self.life[idx] / self.max_life[idx]
+                renderer.submit_sprite(x, y, z, self.color[idx], 15 * ratio)
+
     def get_active_particles(self) -> List[dict]:
-        """Get list of currently active particles."""
-        return [p for p in self._active if p['active']]
-    
+        """Legacy shim for compatibility with existing game.py loops."""
+        results = []
+        for idx in self.active_indices:
+            results.append({
+                'x': self.px[idx], 'y': self.py[idx], 'z': self.pz[idx],
+                'life': self.life[idx] / self.max_life[idx],
+                'color': self.color[idx],
+                'active': True
+            })
+        return results
+
     def get_active_count(self) -> int:
-        """Get number of active particles."""
-        return sum(1 for p in self._active if p['active'])
+        return len(self.active_indices)
     
     def clear(self) -> None:
         """Clear all active particles."""
-        for particle in self._active:
-            particle['active'] = False
-        self._pool.extend(self._active)
-        self._active.clear()
+        for idx in self.active_indices:
+            self.active[idx] = False
+            self.free_indices.append(idx)
+        self.active_indices.clear()
+
 
 
 class LaserPool:

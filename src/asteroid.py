@@ -163,33 +163,28 @@ class Asteroid:
         return fragments
 
     def submit_to_renderer(self, renderer):
-        # Rotation matrices
+        # Pre-calculate basis vectors from Euler angles for the whole mesh
         cx, sx = math.cos(self.angle_x), math.sin(self.angle_x)
         cy, sy = math.cos(self.angle_y), math.sin(self.angle_y)
         cz, sz = math.cos(self.angle_z), math.sin(self.angle_z)
         
-        world_verts = []
-        for vx, vy, vz in self.verts:
-            # Rotate Y
-            tx = vx * cy + vz * sy
-            tz = -vx * sy + vz * cy
-            vx, vz = tx, tz
-            
-            # Rotate X
-            ty = vy * cx - vz * sx
-            tz = vy * sx + vz * cx
-            vy, vz = ty, tz
-            
-            # Rotate Z
-            tx = vx * cz - vy * sz
-            ty = vx * sz + vy * cz
-            vx, vy = tx, ty
-            
-            world_verts.append((self.x + vx, self.y + vy, self.z + vz))
-            
-        for f in self.faces:
-            pts = [world_verts[idx] for idx in f['v']]
-            renderer.submit_polygon(pts, f['color'])
+        # Correct derivation of basis vectors for Rz * Rx * Ry
+        # Right (1, 0, 0)
+        rx = cy * cz - sy * sx * sz
+        ry = cy * sz + sy * sx * cz
+        rz = -sy * cx
+        
+        # Up (0, 1, 0)
+        ux = -cx * sz
+        uy = cx * cz
+        uz = sx
+        
+        # Forward (0, 0, 1)
+        fx = sy * cz + cy * sx * sz
+        fy = sy * sz - cy * sx * cz
+        fz = cy * cx
+        
+        renderer.submit_mesh((self.x, self.y, self.z), (rx, ry, rz), (ux, uy, uz), (fx, fy, fz), self.verts, self.faces)
 
 class AsteroidField:
     def __init__(self, origin, count=10, radius=2000):

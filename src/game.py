@@ -47,11 +47,11 @@ class Game:
         self.director = WaveDirector(ENCOUNTER_SCRIPT)
 
         # Initialize object pools for performance
-        self.particle_pool = ParticlePool(Particle, initial_size=300, max_size=1500)
+        self.particle_pool = ParticlePool(initial_size=500, max_size=2000)
         self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
         
-        # Initialize spatial partitioning for collision detection
-        self.spatial = SpatialPartition(world_size=20000.0, cell_size=500.0)
+        # Initialize spatial partitioning for collision detection and culling
+        self.spatial = SpatialPartition(cell_size=1000.0)
 
         self.camera = Camera(self.W, self.H)
         self.renderer = RenderPipeline(self.camera)
@@ -65,13 +65,12 @@ class Game:
         # Spawn some initial asteroid fields near encounter points
         for enc in ENCOUNTER_SCRIPT:
             field = AsteroidField(enc['origin'], count=15, radius=3000)
-            self.asteroids.extend(field.asteroids)
+            for a in field.asteroids:
+                self.asteroids.append(a)
+                self.spatial.register_entity(a, (a.x, a.y, a.z))
 
         self.running = True
         self.paused = False
-
-        # Track which enemies are registered in spatial partition
-        self._registered_enemies = set()
 
         # Load pause font
         self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72)
@@ -86,15 +85,14 @@ class Game:
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies, player)
+            self.spatial.update_entity(e, (e.x, e.y, e.z))
 
             # Drone destroyed
             if e.hp <= 0:
                 p_count = 100 if getattr(e, 'did_detonate', False) else PARTICLES_ON_DESTROY
                 for _ in range(p_count):
                     self.particle_pool.spawn(e.x, e.y, e.z)
-                # Remove from spatial partition
                 self.spatial.unregister_entity(e)
-                self._registered_enemies.discard(id(e))
                 enemies.remove(e)
                 continue
 
@@ -103,92 +101,71 @@ class Game:
                 player.take_damage(COLLISION_DAMAGE)
                 for _ in range(PARTICLES_ON_PLAYER_HIT):
                     self.particle_pool.spawn(e.x, e.y, e.z)
-                # Remove from spatial partition
                 self.spatial.unregister_entity(e)
-                self._registered_enemies.discard(id(e))
                 enemies.remove(e)
                 continue
 
             # Cull enemies far behind the camera
             cx, cy, cz = self.camera.world_to_camera(e.x, e.y, e.z)
             if cz < ENEMY_CULL_DISTANCE:
-                # Remove from spatial partition
                 self.spatial.unregister_entity(e)
-                self._registered_enemies.discard(id(e))
                 enemies.remove(e)
 
         # ── UPDATE ASTEROIDS ──────────────────────
         for a in self.asteroids[:]:
             a.update(dt)
+            self.spatial.update_entity(a, (a.x, a.y, a.z))
             
             # Asteroid destroyed
             if a.hp <= 0:
-                # Spawn fragments
                 fragments = a.split()
-                self.asteroids.extend(fragments)
+                for f in fragments:
+                    self.asteroids.append(f)
+                    self.spatial.register_entity(f, (f.x, f.y, f.z))
 
                 for _ in range(ASTEROID_PARTICLES_ON_DESTROY):
                     self.particle_pool.spawn(a.x, a.y, a.z, colors=[(120, 120, 120), (100, 100, 100), (80, 80, 80)])
+                self.spatial.unregister_entity(a)
                 self.asteroids.remove(a)
                 continue
                 
             # Collision with player
-            dist_to_p = math.dist((a.x, a.y, a.z), player.pos)
+            dist_to_p = math.sqrt((a.x-player.pos[0])**2 + (a.y-player.pos[1])**2 + (a.z-player.pos[2])**2)
             if dist_to_p < (a.hit_radius + PLAYER_COLLISION_RADIUS):
                 player.take_damage(ASTEROID_DAMAGE)
-                # Bounce player back slightly?
-                # For now just damage and particles
                 for _ in range(PARTICLES_ON_PLAYER_HIT):
                     self.particle_pool.spawn(player.pos[0], player.pos[1], player.pos[2])
-                a.on_hit(999) # Destroy asteroid on heavy impact
+                a.on_hit(999) 
                 continue
 
             # Cull far asteroids
             if a.z < player.pos[2] + ENEMY_CULL_DISTANCE:
+                self.spatial.unregister_entity(a)
                 self.asteroids.remove(a)
-
-        # ── REBUILD SPATIAL PARTITION (enemies & asteroids) ─────────
-        self.spatial.clear()
-        self._registered_enemies.clear()
-        for e in enemies:
-            self.spatial.register_entity(e, (e.x, e.y, e.z), radius=e.hit_radius)
-            self._registered_enemies.add(id(e))
-        
-        # Add asteroids to spatial partition for laser collision
-        for a in self.asteroids:
-            self.spatial.register_entity(a, (a.x, a.y, a.z), radius=a.hit_radius)
 
         # ── LASER HITS (spatial query) ─────────────────────────────
         for l in self.laser_pool.get_active()[:]:
-            nearby_objects = self.spatial.query_collision((l.x, l.y, l.z), 800.0)
+            # Use spatial query for narrow search
+            nearby_objects = self.spatial.query_nearby((l.x, l.y, l.z), 800.0)
 
             for obj in nearby_objects:
-                # Check if it's an enemy
-                if obj in enemies:
-                    if obj.is_hit(l.x, l.y, l.z):
-                        obj.on_hit()
-                        l.life = 0
-                        for _ in range(PARTICLES_ON_HIT):
-                            self.particle_pool.spawn(obj.x, obj.y, obj.z)
-                        break
-                # Check if it's an asteroid
-                elif obj in self.asteroids:
-                    if obj.is_hit(l.x, l.y, l.z):
+                if hasattr(obj, 'is_hit') and obj.is_hit(l.x, l.y, l.z):
+                    if hasattr(obj, 'on_hit'):
                         obj.on_hit(1)
-                        l.life = 0
-                        for _ in range(PARTICLES_ON_HIT):
-                            self.particle_pool.spawn(l.x, l.y, l.z)
-                        break
+                    l.life = 0
+                    for _ in range(PARTICLES_ON_HIT):
+                        self.particle_pool.spawn(l.x, l.y, l.z)
+                    break
 
         # ── ENEMY VS ASTEROID COLLISION ──────────────────
         for e in enemies:
-            nearby = self.spatial.query_collision((e.x, e.y, e.z), e.hit_radius + 500.0)
+            nearby = self.spatial.query_nearby((e.x, e.y, e.z), e.hit_radius + 500.0)
             for obj in nearby:
                 if obj in self.asteroids:
-                    dist = math.sqrt((e.x - obj.x)**2 + (e.y - obj.y)**2 + (e.z - obj.z)**2)
-                    if dist < (e.hit_radius + obj.hit_radius):
-                        e.hp = 0 # Instant kill enemy on asteroid impact
-                        obj.on_hit(2) # Damage asteroid
+                    dist_sq = (e.x - obj.x)**2 + (e.y - obj.y)**2 + (e.z - obj.z)**2
+                    if dist_sq < (e.hit_radius + obj.hit_radius)**2:
+                        e.on_hit(999) 
+                        obj.on_hit(2)
                         for _ in range(PARTICLES_ON_DESTROY):
                             self.particle_pool.spawn(e.x, e.y, e.z)
                         break
@@ -196,7 +173,6 @@ class Game:
         # ── UPDATE PROJECTILES ────────────────────────
         for bolt in enemy_projectiles[:]:
             bolt.update(dt, player.pos)
-
             if bolt.life <= 0:
                 enemy_projectiles.remove(bolt)
 
@@ -207,47 +183,37 @@ class Game:
         self.camera.update(player.pos, player.orientation)
         self.renderer.clear()
 
+        # 1. Broad-phase Frustum Culling via Spatial Hash
+        visible_entities = self.spatial.query_visible(self.camera)
+        
+        # 2. Submit static/environment
         for star in stars:
             star.submit_to_renderer(self.renderer, player.pos)
-
-        # ── DRAW NEBULAE ────────────────────────────────
         self.nebulae.submit_to_renderer(self.renderer)
 
+        # 3. Submit visible entities
         sniper_beams_to_draw = []
+        for obj in visible_entities:
+            obj.submit_to_renderer(self.renderer)
+            if getattr(obj, 'state', '') == 'charging':
+                sniper_beams_to_draw.append(obj)
 
-        # ── DRAW ENEMIES & SNIPER LASERS ────────────────
-        for e in enemies:
-            if self.camera.sphere_in_frustum(e.x, e.y, e.z, getattr(e, 'hit_radius', 50) * 2):
-                e.submit_to_renderer(self.renderer)
-
-                # If this is a Sniper in the charging state, remember it to draw the targeting beam on top
-                if getattr(e, 'state', '') == 'charging':
-                    sniper_beams_to_draw.append(e)
-
-        # Draw particles from pool
-        for pdata in self.particle_pool.get_active_particles():
-            if self.camera.sphere_in_frustum(pdata['x'], pdata['y'], pdata['z'], 50):
-                self._submit_particle(pdata)
+        # 4. Submit non-spatial entities (small/numerous projectiles)
+        for bolt in enemy_projectiles:
+            if self.camera.sphere_in_frustum(bolt.x, bolt.y, bolt.z, 100):
+                bolt.submit_to_renderer(self.renderer)
         
-        # Draw lasers from pool
         for l in self.laser_pool.get_active():
             if self.camera.sphere_in_frustum(l.x, l.y, l.z, 200):
                 l.submit_to_renderer(self.renderer)
 
-        # Draw projectiles
-        for bolt in enemy_projectiles:
-            if self.camera.sphere_in_frustum(bolt.x, bolt.y, bolt.z, 100):
-                bolt.submit_to_renderer(self.renderer)
-
-        # ── DRAW ASTEROIDS ─────────────────────────────
-        for a in self.asteroids:
-            if self.camera.sphere_in_frustum(a.x, a.y, a.z, a.scale * 2):
-                a.submit_to_renderer(self.renderer)
+        # 5. Optimized Particle Submission
+        self.particle_pool.submit_to_renderer(self.renderer, self.camera)
 
         # RENDER EVERYTHING
         self.renderer.render(screen)
 
-        # Draw sniper beams on top
+        # Draw sniper beams on top (2D UI element)
         for e in sniper_beams_to_draw:
             cx, cy, cz = self.camera.world_to_camera(e.x, e.y, e.z)
             if cz > CAMERA_CLIP_NEAR:
@@ -281,22 +247,16 @@ class Game:
             shake_offset=shake_offset,
         )
 
-        # Damage overlay
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
 
-        # Pause overlay
         if self.paused:
             pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
             screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
 
-    def _submit_particle(self, pdata):
-        """Helper method to submit a particle from pool data to renderer."""
-        self.renderer.submit_sprite(pdata['x'], pdata['y'], pdata['z'], pdata['color'], 15 * pdata['life'])
-
     def main(self):
-
         while self.running:
             dt = self.clock.tick(60) / 1000.0
+            # ... (rest of main remains the same)
 
             # ── EVENTS ───────────────────────────────
             for event in pygame.event.get():
