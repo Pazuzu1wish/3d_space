@@ -11,10 +11,10 @@ from src.constants import (
 )
 
 # ── Per-type population caps ───────────────────────────────────────────────
-MAX_SNIPERS     = 2
-MAX_CORVETTES   = 1
-MAX_MINELAYERS  = 2
-MAX_STEALTH     = 2
+MAX_SNIPERS     = 0
+MAX_CORVETTES   = 0
+MAX_MINELAYERS  = 0
+MAX_STEALTH     = 0
 # Carriers are scripted-only — no filler cap needed
 
 # ── Filler spawn table ────────────────────────────────────────────────────
