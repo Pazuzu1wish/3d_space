@@ -57,8 +57,8 @@ class Game:
         self.renderer = RenderPipeline(self.camera) # Init RenderPipeline class
 
         # Initialize entities
-        self.stars = [Star(self.player.pos) for _ in range(350)] # Init Star class
-        self.nebulae = NebulaSystem(count=4, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
+        self.stars = [Star(self.player.pos) for _ in range(20)] # Init Star class
+        self.nebulae = NebulaSystem(count=8, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
         self.enemies = [] # Init Enemy class
         self.enemy_projectiles = [] # Init EnemyProjectiles class
         self.asteroids = [] # Init Asteroid class
@@ -66,7 +66,7 @@ class Game:
         # Spawn some initial asteroid fields near encounter points 
         # TODO: Refactor asteroid field creation logic 
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=20, radius=3000)
+            field = AsteroidField(enc['origin'], count=50, radius=30000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
