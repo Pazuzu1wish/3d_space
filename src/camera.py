@@ -1,5 +1,5 @@
 import math
-from src.math_engine import quat_rotate_vec, quat_conjugate
+from src.math_engine import quat_conjugate
 
 class Camera:
     def __init__(self, W, H, fov=400.0, near_clip=0.1):
@@ -12,20 +12,38 @@ class Camera:
         
         self.pos = (0.0, 0.0, 0.0)
         self.orientation = (1.0, 0.0, 0.0, 0.0) # w, x, y, z
-        self._inv_quat = self.orientation
         
         self.shake_amount = 0.0
         self.shake_offset = (0.0, 0.0)
+
+        # Pre-computed inverse rotation matrix coefficients (set in update())
+        # These turn world_to_camera into 9 muls + 9 adds, zero quat math.
+        self._r00 = 1.0; self._r01 = 0.0; self._r02 = 0.0
+        self._r10 = 0.0; self._r11 = 1.0; self._r12 = 0.0
+        self._r20 = 0.0; self._r21 = 0.0; self._r22 = 1.0
         
     def update(self, pos, orientation):
         self.pos = pos
         self.orientation = orientation
-        self._inv_quat = quat_conjugate(self.orientation)
+        # Pre-compute the inverse (conjugate) rotation matrix coefficients once
+        w = orientation[0]
+        qx = -orientation[1]; qy = -orientation[2]; qz = -orientation[3]
+        xx = qx*qx; yy = qy*qy; zz = qz*qz
+        xy = qx*qy; xz = qx*qz; yz = qy*qz
+        wx = w*qx;  wy = w*qy;  wz = w*qz
+        self._r00 = 1.0 - 2.0*(yy+zz); self._r01 = 2.0*(xy-wz);       self._r02 = 2.0*(xz+wy)
+        self._r10 = 2.0*(xy+wz);       self._r11 = 1.0 - 2.0*(xx+zz); self._r12 = 2.0*(yz-wx)
+        self._r20 = 2.0*(xz-wy);       self._r21 = 2.0*(yz+wx);       self._r22 = 1.0 - 2.0*(xx+yy)
         
     def world_to_camera(self, x, y, z):
+        """Transform world point to camera space using pre-computed rotation matrix."""
         px, py, pz = self.pos
         dx, dy, dz = x - px, y - py, z - pz
-        return quat_rotate_vec(self._inv_quat, (dx, dy, dz))
+        return (
+            dx*self._r00 + dy*self._r01 + dz*self._r02,
+            dx*self._r10 + dy*self._r11 + dz*self._r12,
+            dx*self._r20 + dy*self._r21 + dz*self._r22,
+        )
         
     def project(self, cx, cy, cz):
         if cz <= self.near_clip:
@@ -54,9 +72,13 @@ class Camera:
     def sphere_in_frustum(self, x, y, z, radius):
         """
         Fast frustum culling using a bounding sphere.
-        Returns True if the sphere is potentially visible.
+        Returns (visible, cx, cy, cz) — reuse the camera-space coords downstream.
         """
-        cx, cy, cz = self.world_to_camera(x, y, z)
+        px, py, pz = self.pos
+        dx, dy, dz = x - px, y - py, z - pz
+        cx = dx*self._r00 + dy*self._r01 + dz*self._r02
+        cy = dx*self._r10 + dy*self._r11 + dz*self._r12
+        cz = dx*self._r20 + dy*self._r21 + dz*self._r22
         
         # Behind near clip plane entirely?
         if cz + radius < self.near_clip:
@@ -67,7 +89,6 @@ class Camera:
             return True
             
         # Check against screen boundaries using a simple projection estimate
-        # Estimate screen space radius
         scale = self.fov / cz
         screen_radius = radius * scale
         

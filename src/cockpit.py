@@ -31,6 +31,7 @@ PROJECT_ROOT = Path(__file__).parent.parent  # Adjust number of .parent calls ba
 ASSETS_PATH = PROJECT_ROOT / 'assets' / 'fonts'
 
 _FONT_CACHE = {}
+_LABEL_CACHE = {}  # (size, text, color) -> Surface
 
 def custom_font(size):
     if size not in _FONT_CACHE:
@@ -41,13 +42,20 @@ def custom_font(size):
             _FONT_CACHE[size] = pygame.font.SysFont(None, size)
     return _FONT_CACHE[size]
 
+def _cached_label(font_size, text, color):
+    """Return a cached font.render surface for static text."""
+    key = (font_size, text, color)
+    if key not in _LABEL_CACHE:
+        _LABEL_CACHE[key] = custom_font(font_size).render(text, True, color)
+    return _LABEL_CACHE[key]
+
 
 # ──────────────────────────────────────────────
 #  HEADING TAPE (COMPASS)
 # ──────────────────────────────────────────────
 
-def draw_heading_tape(surface, cx, y, orientation):
-    forward, right, up = get_basis_from_quat(orientation)
+def draw_heading_tape(surface, cx, y, orientation, basis=None):
+    forward, right, up = basis if basis else get_basis_from_quat(orientation)
 
     heading_rad = math.atan2(forward[0], forward[2])
     heading_deg = math.degrees(heading_rad)
@@ -108,8 +116,8 @@ def draw_heading_tape(surface, cx, y, orientation):
 #  PITCH LADDER
 # ──────────────────────────────────────────────
 
-def draw_pitch_ladder(surface, cx, cy, orientation):
-    forward, right, up = get_basis_from_quat(orientation)
+def draw_pitch_ladder(surface, cx, cy, orientation, basis=None):
+    forward, right, up = basis if basis else get_basis_from_quat(orientation)
 
     pitch_angle = math.asin(max(-1.0, min(1.0, -forward[1])))
     roll_angle = math.atan2(right[1], up[1])
@@ -182,10 +190,10 @@ def draw_pitch_ladder(surface, cx, cy, orientation):
 _RADAR_CACHE = {}
 
 
-def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000):
+def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000, basis=None):
     global _RADAR_CACHE
 
-    forward, right, up = get_basis_from_quat(orientation)
+    forward, right, up = basis if basis else get_basis_from_quat(orientation)
     tilt_factor = 0.5  # How much the radar is tilted (0.0 = edge on, 1.0 = top down)
 
     # ─── 1. DRAW (OR BLIT CACHED) HOLOSPHERE WIREFRAME ────────────────────
@@ -339,7 +347,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
             pygame.draw.line(surface, orig_col, (true_ox - 4, true_oy), (true_ox + 4, true_oy), 1)
             pygame.draw.line(surface, orig_col, (true_ox, true_oy - 4), (true_ox, true_oy + 4), 1)
 
-            lbl_orig = custom_font(10).render("ORIGIN", True, orig_col)
+            lbl_orig = _cached_label(10, "ORIGIN", orig_col)
             surface.blit(lbl_orig, (true_ox + 4, true_oy + 4))
 
     # ─── 5. DRAW THE PLAYER MARKER ────────────────────────────────────────
@@ -349,7 +357,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
     ind_y = cy - int(forward[2] * 12 * tilt_factor)
     pygame.draw.line(surface, HUD_GREEN, (cx, cy), (ind_x, ind_y), 2)
 
-    lbl = custom_font(12).render("3D SENSOR", True, HUD_GREEN)
+    lbl = _cached_label(12, "3D SENSOR", HUD_GREEN)
     surface.blit(lbl, (cx - lbl.get_width() // 2, cy + radius + 5))
 
 # ──────────────────────────────────────────────
@@ -383,7 +391,7 @@ def draw_throttle_bar(surface, x, y, h, throttle):
         pygame.draw.line(surface, HUD_DIM, (x - 2, ty_down), (x, ty_down), 1)
 
     f = custom_font(10)
-    surface.blit(f.render("THR", True, HUD_GREEN), (x - 8, y - 14))
+    surface.blit(_cached_label(10, "THR", HUD_GREEN), (x - 8, y - 14))
     
     if throttle >= 0:
         col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
@@ -433,7 +441,7 @@ def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
         pygame.draw.line(surface, HUD_DIM, (x + w, ty), (x + w + 2, ty), 1)
 
     f = custom_font(10)
-    surface.blit(f.render("DCH", True, HUD_GREEN), (x - 8, y - 14))
+    surface.blit(_cached_label(10, "DCH", HUD_GREEN), (x - 8, y - 14))
 
     # Ready / charging label
     if dodge_ready:
@@ -611,8 +619,7 @@ def draw_target_brackets(
 # ──────────────────────────────────────────────
 
 def print_spd(surface, x, y):
-    f = custom_font(12)
-    lbl = f.render("SPEED", True, HUD_DIM)
+    lbl = _cached_label(12, "SPEED", HUD_DIM)
     surface.blit(lbl, (x, y))
 
 
@@ -625,8 +632,7 @@ def draw_speed(surface, x, y, current_speed):
 
 
 def print_kph(surface, x, y):
-    f = custom_font(10)
-    lbl = f.render("K.P.H.", True, HUD_GREEN)
+    lbl = _cached_label(10, "K.P.H.", HUD_GREEN)
     surface.blit(lbl, (x, y))
 
 # ──────────────────────────────────────────────
@@ -670,7 +676,7 @@ def draw_hull_bar(surface, W, H, player_hp, max_hp=100,
     # Labels
     f_lbl = custom_font(11)
     f_val = custom_font(11)
-    lbl = f_lbl.render("HULL", True, HUD_DIM)
+    lbl = _cached_label(11, "HULL", HUD_DIM)
     val = f_val.render(f"{int(ratio * 100):3d}%", True, col)
     surface.blit(lbl, (bar_x - lbl.get_width() - 8,
                        bar_y + bar_h // 2 - lbl.get_height() // 2))
@@ -768,13 +774,15 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                   shield_recharging=shield_recharging)
     
     if orientation is not None:
-        draw_heading_tape(_HUD_OVERLAY, cx, 30, orientation)
-        draw_pitch_ladder(_HUD_OVERLAY, cx, cy, orientation)
+        # Compute basis vectors ONCE, pass to all sub-functions
+        basis = get_basis_from_quat(orientation)
+        draw_heading_tape(_HUD_OVERLAY, cx, 30, orientation, basis=basis)
+        draw_pitch_ladder(_HUD_OVERLAY, cx, cy, orientation, basis=basis)
 
         r_cx, r_cy, r_r = 90, H - 95, 75
         draw_radar(_HUD_OVERLAY, r_cx, r_cy, r_r, orientation,
                    player_pos or [0, 0, 0],
-                   enemies or [])
+                   enemies or [], basis=basis)
 
         # ── Target brackets and lead indicator
         if enemies and player_pos is not None:

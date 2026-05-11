@@ -181,9 +181,17 @@ class Enemy:
                 (self.vx, self.vy, self.vz)
             )
 
+    # Max trail particles per engine hardpoint
+    _TRAIL_CAP_PER_ENGINE = 20
+
     def _spawn_engine_trail(self):
         # Cull particles if too far
-        if self._last_dist > 30000:
+        if self._last_dist > 15000:
+            return
+
+        # Cap trail length for headroom
+        max_trail = self._TRAIL_CAP_PER_ENGINE * len(self.engine_offsets)
+        if len(self.engine_trail) >= max_trail:
             return
 
         # Spawn a trail particle for every engine hardpoint
@@ -225,8 +233,8 @@ class Enemy:
             ey = self.y + self.right[1] * ox + self.up[1] * oy + self.forward[1] * oz
             ez = self.z + self.right[2] * ox + self.up[2] * oy + self.forward[2] * oz
 
-            if self._last_dist > 20000:
-                # Beacon mode (far away)
+            if self._last_dist > 5000:
+                # Beacon mode (far away) — single sprite instead of 3
                 renderer.submit_sprite(ex, ey, ez, self.engine_color, self.engine_size * 4, is_glow=True, layer='alpha')
             else:
                 # Multi-layer bloom (close up)

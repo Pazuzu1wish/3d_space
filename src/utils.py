@@ -146,14 +146,18 @@ def spawn_enemy(etype, player_pos, orientation):
 # UI HELPERS
 # ──────────────────────────────────────────────
 
+_DAMAGE_OVERLAY = None
+
 def draw_damage_overlay(screen, W, H, intensity):
     """Red vignette that fades in when the player is hit."""
+    global _DAMAGE_OVERLAY
     if intensity <= 0:
         return
+    if _DAMAGE_OVERLAY is None or _DAMAGE_OVERLAY.get_size() != (W, H):
+        _DAMAGE_OVERLAY = pygame.Surface((W, H), pygame.SRCALPHA)
     alpha = int(min(200, intensity * 200))
-    overlay = pygame.Surface((W, H), pygame.SRCALPHA)
-    pygame.draw.rect(overlay, (220, 20, 20, alpha), (0, 0, W, H))
-    screen.blit(overlay, (0, 0))
+    _DAMAGE_OVERLAY.fill((220, 20, 20, alpha))
+    screen.blit(_DAMAGE_OVERLAY, (0, 0))
 
 # ──────────────────────────────────────────────
 # Fix winding helper

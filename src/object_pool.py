@@ -225,14 +225,17 @@ class LaserPool:
     
     def update(self, dt: float) -> None:
         """Update all active lasers and recycle expired ones."""
-        for laser in self._active[:]:
+        still_active = []
+        for laser in self._active:
             if hasattr(laser, 'update'):
                 laser.update(dt)
             
             if getattr(laser, 'life', 0) <= 0:
-                self._active.remove(laser)
                 if len(self._pool) < self._max_size:
                     self._pool.append(laser)
+            else:
+                still_active.append(laser)
+        self._active = still_active
     
     def get_active(self) -> List[object]:
         """Get list of active lasers."""

@@ -47,13 +47,19 @@ def quat_conjugate(q):
 
 
 def quat_rotate_vec(q, v):
-    """Rotate vector v = (vx, vy, vz) by unit quaternion q."""
+    """Rotate vector v = (vx, vy, vz) by unit quaternion q.
+    Uses direct rotation matrix formula instead of q*p*q* (3x faster)."""
+    w, qx, qy, qz = q
     vx, vy, vz = v
-    # p = pure quaternion form of v
-    p = (0.0, vx, vy, vz)
-    # rotated = q * p * q*
-    r = quat_mul(quat_mul(q, p), quat_conjugate(q))
-    return r[1], r[2], r[3]
+    # Pre-compute common terms
+    xx = qx * qx; yy = qy * qy; zz = qz * qz
+    xy = qx * qy; xz = qx * qz; yz = qy * qz
+    wx = w * qx;  wy = w * qy;  wz = w * qz
+    return (
+        vx * (1.0 - 2.0*(yy + zz)) + vy * 2.0*(xy - wz) + vz * 2.0*(xz + wy),
+        vx * 2.0*(xy + wz) + vy * (1.0 - 2.0*(xx + zz)) + vz * 2.0*(yz - wx),
+        vx * 2.0*(xz - wy) + vy * 2.0*(yz + wx) + vz * (1.0 - 2.0*(xx + yy)),
+    )
 
 
 # ── Body-local rotation accumulation ──────────
@@ -87,19 +93,51 @@ def rotate_roll(q, delta):
 # ── Derived basis vectors ──────────────────────
 
 def get_basis_from_quat(q):
-    """Return (forward, right, up) unit vectors from orientation quaternion."""
-    forward = quat_rotate_vec(q, (0.0, 0.0, 1.0))
-    right   = quat_rotate_vec(q, (1.0, 0.0, 0.0))
-    up      = quat_rotate_vec(q, (0.0, 1.0, 0.0))
+    """Return (forward, right, up) unit vectors from orientation quaternion.
+    Builds the rotation matrix once and extracts all 3 columns directly."""
+    w, qx, qy, qz = q
+    xx = qx * qx; yy = qy * qy; zz = qz * qz
+    xy = qx * qy; xz = qx * qz; yz = qy * qz
+    wx = w * qx;  wy = w * qy;  wz = w * qz
+    # Right = column 0 (rotation of (1,0,0))
+    right = (
+        1.0 - 2.0*(yy + zz),
+        2.0*(xy + wz),
+        2.0*(xz - wy),
+    )
+    # Up = column 1 (rotation of (0,1,0))
+    up = (
+        2.0*(xy - wz),
+        1.0 - 2.0*(xx + zz),
+        2.0*(yz + wx),
+    )
+    # Forward = column 2 (rotation of (0,0,1))
+    forward = (
+        2.0*(xz + wy),
+        2.0*(yz - wx),
+        1.0 - 2.0*(xx + yy),
+    )
     return forward, right, up
 
 
 def get_forward_from_quat(q):
-    return quat_rotate_vec(q, (0.0, 0.0, 1.0))
+    """Extract just the forward (Z) vector from a quaternion — avoids full basis build."""
+    w, qx, qy, qz = q
+    return (
+        2.0*(qx*qz + w*qy),
+        2.0*(qy*qz - w*qx),
+        1.0 - 2.0*(qx*qx + qy*qy),
+    )
 
 
 def get_right_from_quat(q):
-    return quat_rotate_vec(q, (1.0, 0.0, 0.0))
+    """Extract just the right (X) vector from a quaternion."""
+    w, qx, qy, qz = q
+    return (
+        1.0 - 2.0*(qy*qy + qz*qz),
+        2.0*(qx*qy + w*qz),
+        2.0*(qx*qz - w*qy),
+    )
 
 
 # ── World → Camera transform ───────────────────
@@ -109,11 +147,22 @@ def world_to_camera(x, y, z, px, py, pz, q):
 
     px,py,pz  – camera/player world position
     q         – camera orientation quaternion (w,x,y,z)
+
+    Inlines conjugate + rotation to avoid intermediate tuple allocations.
     """
     # Translate
     dx, dy, dz = x - px, y - py, z - pz
-    # Inverse-rotate by camera orientation (= conjugate rotation)
-    return quat_rotate_vec(quat_conjugate(q), (dx, dy, dz))
+    # Conjugate: negate x,y,z components of q
+    w = q[0]; qx = -q[1]; qy = -q[2]; qz = -q[3]
+    # Direct rotation matrix formula
+    xx = qx * qx; yy = qy * qy; zz = qz * qz
+    xy = qx * qy; xz = qx * qz; yz = qy * qz
+    wx = w * qx;  wy = w * qy;  wz = w * qz
+    return (
+        dx * (1.0 - 2.0*(yy + zz)) + dy * 2.0*(xy - wz) + dz * 2.0*(xz + wy),
+        dx * 2.0*(xy + wz) + dy * (1.0 - 2.0*(xx + zz)) + dz * 2.0*(yz - wx),
+        dx * 2.0*(xz - wy) + dy * 2.0*(yz + wx) + dz * (1.0 - 2.0*(xx + yy)),
+    )
 
 
 # ── Projection ────────────────────────────────
