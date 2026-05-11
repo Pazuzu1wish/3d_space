@@ -82,7 +82,6 @@ class Game:
         self.magnify_surf = pygame.Surface((AIM_WINDOW_SIZE, AIM_WINDOW_SIZE), pygame.SRCALPHA) # Initialize magnification surface
         self.magnify_camera = Camera(AIM_WINDOW_SIZE, AIM_WINDOW_SIZE) # Initialize magnification camera
         self.magnify_renderer = RenderPipeline(self.magnify_camera) # Initialize magnification renderer
-        self._magnify_frame_counter = 0  # Throttle magnified view to every 2nd frame
 
 # -------------------------------------------------------------------------
 # Game Loop Methods
@@ -264,17 +263,7 @@ class Game:
         l2_val = self.handler.trigger_left()
         keys = pygame.key.get_pressed()
         if l2_val > AIM_MODE_THRESHOLD or keys[pygame.K_LSHIFT]:
-            self._magnify_frame_counter += 1
-            # Only re-render the magnified view every 2nd frame (30fps zoom)
-            if self._magnify_frame_counter % 2 == 0:
-                self._render_magnified_window(screen, self.player, visible_entities, stars, dt)
-            else:
-                # Blit the stale magnified surface from last render
-                screen.blit(self.magnify_surf, AIM_WINDOW_POS)
-                rect = (AIM_WINDOW_POS[0], AIM_WINDOW_POS[1], AIM_WINDOW_SIZE, AIM_WINDOW_SIZE)
-                pygame.draw.rect(screen, AIM_WINDOW_BORDER_COLOR, rect, 2)
-        else:
-            self._magnify_frame_counter = 0
+            self._render_magnified_window(screen, self.player, visible_entities, stars, dt)
 
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
 
