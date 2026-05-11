@@ -37,6 +37,7 @@ class Player:
         self.shield_regen_timer = 0.0
         self.shield_flash = 0.0
         self.shake_queued = 0.0
+        self.rumble_queued = 0.0
 
     @property
     def shield_charge(self):
@@ -171,7 +172,14 @@ class Player:
                     rfx * LASER_SPEED, rfy * LASER_SPEED, rfz * LASER_SPEED
                 )
             self.weapons_cooldown = 0.15
+            handler.rumble(0.0, 0.12, 50)
             
+        # ── RUMBLE FEEDBACK ───────────────────────────
+        if self.rumble_queued > 0:
+            intensity = min(1.0, self.rumble_queued / 30.0)
+            handler.rumble(intensity, intensity * 0.5, 200)
+            self.rumble_queued = 0.0
+
         # ── CHECK PROJECTILE HITS ─────────────────────
         for bolt in enemy_projectiles[:]:
             if bolt.check_player_collision(self, particles):
@@ -182,6 +190,7 @@ class Player:
         self.shield_regen_timer = SHIELD_DELAY
         self.hit_flash = HIT_FLASH_DURATION
         self.shake_queued += amount
+        self.rumble_queued += amount
         if self.shield > 0:
             absorbed = min(self.shield, amount)
             self.shield -= absorbed
