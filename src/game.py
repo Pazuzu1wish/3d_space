@@ -1,88 +1,93 @@
 import pygame
 import math
-from src.math_engine import (
-    world_to_camera, project_to_screen
-)
 from src.camera import Camera
 from src.renderer import RenderPipeline
 from src.cockpit import draw_cockpit_hud
 from src.controller import DS4Input
 from src.star import Star
-from src.particle import Particle
 from src.player import Player
 from src.laser import Laser
 from src.spatial_partition import SpatialPartition
-from src.asteroid import Asteroid, AsteroidField
-from src.nebula import NebulaSystem
+from src.asteroid import AsteroidField
+from src.nebula  import NebulaSystem
 from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
-    ENEMY_HIT_RADIUS_SQ, ENEMY_CULL_DISTANCE, HOMING_TURN_RATE,
-    PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
+    ENEMY_CULL_DISTANCE,PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
     ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE,
     AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_WINDOW_SIZE, AIM_WINDOW_POS,
     AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR, PLAYER_LASER_SPEED
 )
-
-# ──────────────────────────────────────────────
-# MAIN LOOP
-# ──────────────────────────────────────────────
-
 from src.utils import draw_damage_overlay
 from src.director import WaveDirector
 from src.encounters import ENCOUNTER_SCRIPT
 from src.object_pool import ParticlePool, LaserPool
 
+# ──────────────────────────────────────────────
+# Game Class
+# ──────────────────────────────────────────────
+
 class Game:
     def __init__(self):
-        pygame.init()
-        self.W, self.H = 1280, 760
-        self.screen = pygame.display.set_mode((self.W, self.H))
-        pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
-        self.clock = pygame.time.Clock()
+        # Initialize Pygame screen and clock
+        pygame.init() # Init Pygame
+        self.W, self.H = 1280, 760 # Set Screen size
+        self.screen = pygame.display.set_mode((self.W, self.H)) # Set display mode with screen size variables
+        pygame.display.set_caption("🚀 3D Cockpit Dogfighter") # Set Window title
+        self.clock = pygame.time.Clock() # Init clock for controlling FPS
 
-        self.handler = DS4Input()
-        self.handler.init()
+        # Initialize DS4 controller handler
+        self.handler = DS4Input() # Init DS4 controller handler
+        self.handler.init() # Init DS4 controller handler
 
-        self.player = Player()
-        self.director = WaveDirector(ENCOUNTER_SCRIPT)
+        # Initialize player and wave director
+        self.player = Player() # Init Player class
+        self.director = WaveDirector(ENCOUNTER_SCRIPT) # Init WaveDirector class
 
         # Initialize object pools for performance
-        self.particle_pool = ParticlePool(initial_size=500, max_size=2000)
-        self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
+        self.particle_pool = ParticlePool(initial_size=500, max_size=2000) # Init ParticlePool class
+        self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150) # Init LaserPool class
         
         # Initialize spatial partitioning for collision detection and culling
-        self.spatial = SpatialPartition(cell_size=1000.0)
+        self.spatial = SpatialPartition(cell_size=1000.0) # Init SpatialPartition class
 
-        self.camera = Camera(self.W, self.H)
-        self.renderer = RenderPipeline(self.camera)
+        # Initialize camera and renderer
+        self.camera = Camera(self.W, self.H) # Init Camera class
+        self.renderer = RenderPipeline(self.camera) # Init RenderPipeline class
 
-        self.stars = [Star(self.player.pos) for _ in range(350)]
-        self.nebulae = NebulaSystem(count=8, area_radius=30000)
-        self.enemies = []
-        self.enemy_projectiles = []
-        self.asteroids = []
+        # Initialize entities
+        self.stars = [Star(self.player.pos) for _ in range(350)] # Init Star class
+        self.nebulae = NebulaSystem(count=4, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
+        self.enemies = [] # Init Enemy class
+        self.enemy_projectiles = [] # Init EnemyProjectiles class
+        self.asteroids = [] # Init Asteroid class
 
-        # Spawn some initial asteroid fields near encounter points
+        # Spawn some initial asteroid fields near encounter points 
+        # TODO: Refactor asteroid field creation logic 
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=15, radius=3000)
+            field = AsteroidField(enc['origin'], count=20, radius=3000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
+        
+        # Initialize game state flags
+        self.running = True # Set game state flag to True
+        self.paused = False # Set game state flag to False
 
-        self.running = True
-        self.paused = False
+        # Initialize pause font
+        self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72) # TODO add cache for this font
 
-        # Load pause font
-        self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72)
+        # Initialize magnification resources for aim window
+        self.magnify_surf = pygame.Surface((AIM_WINDOW_SIZE, AIM_WINDOW_SIZE), pygame.SRCALPHA) # Initialize magnification surface
+        self.magnify_camera = Camera(AIM_WINDOW_SIZE, AIM_WINDOW_SIZE) # Initialize magnification camera
+        self.magnify_renderer = RenderPipeline(self.magnify_camera) # Initialize magnification renderer
 
-        # Magnification resources
-        self.magnify_surf = pygame.Surface((AIM_WINDOW_SIZE, AIM_WINDOW_SIZE), pygame.SRCALPHA)
-        self.magnify_camera = Camera(AIM_WINDOW_SIZE, AIM_WINDOW_SIZE)
-        self.magnify_renderer = RenderPipeline(self.magnify_camera)
+# -------------------------------------------------------------------------
+# Game Loop Methods
+# -------------------------------------------------------------------------
 
-    def update_entities(self, dt, player, enemies, enemy_projectiles):
+    def update_entities(self, dt, player, enemies, enemy_projectiles): 
         # ── UPDATE LASERS (using pool) ─────────────────────────
         self.laser_pool.update(dt)
         
@@ -381,7 +386,6 @@ class Game:
     def main(self):
         while self.running:
             dt = self.clock.tick(60) / 1000.0
-            # ... (rest of main remains the same)
 
             # ── EVENTS ───────────────────────────────
             for event in pygame.event.get():
