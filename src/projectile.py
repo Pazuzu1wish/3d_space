@@ -85,7 +85,7 @@ class SniperBeam(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(
             x, y, z, vx, vy, vz,
-            life=5.0, damage=0.0, color=(10, 255, 10), size_mult=6.0, homing=False
+            life=5.0, damage=0.0, color=(255, 30, 30), size_mult=6.0, homing=False
         )
 
 

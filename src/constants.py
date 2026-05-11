@@ -87,10 +87,10 @@ ASTEROID_MIN_HP = 5
 ASTEROID_MAX_HP = 20
 ASTEROID_DAMAGE = 35.0
 ASTEROID_MIN_SCALE = 80.0
-ASTEROID_MAX_SCALE = 600.0
-ASTEROID_SPAWN_RADIUS = 2500.0
+ASTEROID_MAX_SCALE = 1000.0
+ASTEROID_SPAWN_RADIUS = 8500.0
 ASTEROID_ROTATION_SPEED_MAX = 1.5
-ASTEROID_DRIFT_SPEED_MAX = 250.0
+ASTEROID_DRIFT_SPEED_MAX = 700.0
 ASTEROID_PARTICLES_ON_DESTROY = 40
 
 # ──────────────────────────────────────────────
@@ -98,7 +98,7 @@ ASTEROID_PARTICLES_ON_DESTROY = 40
 # ──────────────────────────────────────────────
 
 AIM_MODE_THRESHOLD = 0.5            # L2 trigger threshold to activate
-AIM_MAGNIFICATION_MIN = 1.5         # Minimum magnification (light trigger pull)
+AIM_MAGNIFICATION_MIN = 1.25         # Minimum magnification (light trigger pull)
 AIM_MAGNIFICATION_MAX = 8.0         # Maximum magnification (full trigger pull)
 AIM_MAGNIFICATION = 5.0             # Default magnification for keyboard (LShift)
 AIM_WINDOW_SIZE = 420               # Size of the zoom window (increased 1.5x)

@@ -738,11 +738,11 @@ class Sniper(Enemy):
         self.hp = 1
         self.max_hp = 1
         self.hit_radius = 120       # was 70
-        self.base_color = (150, 255, 100)
+        self.base_color = (210, 165, 45)
 
         # Single deep green thruster at back of long barrel
         self.engine_offsets = [(0, 0, -90)]
-        self.engine_color = (150, 255, 50)
+        self.engine_color = (255, 50, 50)
         self.engine_size = 6.0
         self.engine_pulse_rate = 2.0
         self.trail_life = 1.2
@@ -762,9 +762,9 @@ class Sniper(Enemy):
         self.drag           = 0.35
 
         # Colors
-        C_FOREST = (34, 139, 34)
-        C_LIME = (50, 255, 50)
-        C_BLACK = (25, 25, 30)
+        C_GOLD = (210, 165, 45)
+        C_SILVER = (180, 180, 190)
+        C_RED = (220, 30, 30)
 
         # Symmetrical, needle-like railgun ship
         self.verts = {
@@ -787,36 +787,36 @@ class Sniper(Enemy):
             'v16': (10, -8, -90),    # 16: tail BR
         }
         self.faces = [
-            {'v': ['v0', 'v2', 'v3'], 'color': C_LIME},   # 0  needle right
-            {'v': ['v0', 'v4', 'v2'], 'color': C_LIME},   # 1  needle right-bot
-            {'v': ['v0', 'v3', 'v1'], 'color': C_LIME},   # 2  needle left
-            {'v': ['v0', 'v1', 'v4'], 'color': C_LIME},   # 3  needle left-bot
-            {'v': ['v3', 'v6', 'v5'], 'color': C_FOREST}, # 4  barrel→shoulder top
-            {'v': ['v3', 'v5', 'v1'], 'color': C_FOREST}, # 5  barrel→shoulder top-L
-            {'v': ['v1', 'v5', 'v7'], 'color': C_FOREST}, # 6  barrel→shoulder left
-            {'v': ['v1', 'v7', 'v4'], 'color': C_FOREST}, # 7  barrel→shoulder left-bot
-            {'v': ['v4', 'v7', 'v8'], 'color': C_FOREST}, # 8  barrel→shoulder bot
-            {'v': ['v4', 'v8', 'v2'], 'color': C_FOREST}, # 9  barrel→shoulder bot-R
-            {'v': ['v2', 'v8', 'v6'], 'color': C_FOREST}, # 10 barrel→shoulder right
-            {'v': ['v2', 'v6', 'v3'], 'color': C_FOREST}, # 11 barrel→shoulder right-top
-            {'v': ['v5', 'v10', 'v9'], 'color': C_BLACK}, # 12 shoulder→rear top
-            {'v': ['v5', 'v6', 'v10'], 'color': C_BLACK}, # 13 shoulder→rear top-R
-            {'v': ['v5', 'v9', 'v11'], 'color': C_BLACK}, # 14 shoulder→rear left
-            {'v': ['v5', 'v11', 'v7'], 'color': C_BLACK}, # 15 shoulder→rear left-bot
-            {'v': ['v6', 'v12', 'v10'], 'color': C_BLACK},# 16 shoulder→rear right
-            {'v': ['v6', 'v8', 'v12'], 'color': C_BLACK}, # 17 shoulder→rear right-bot
-            {'v': ['v7', 'v11', 'v12'], 'color': C_BLACK},# 18 shoulder→rear bot
-            {'v': ['v7', 'v12', 'v8'], 'color': C_BLACK}, # 19 shoulder→rear bot-R
-            {'v': ['v9', 'v14', 'v13'], 'color': C_BLACK},# 20 rear→tail top
-            {'v': ['v9', 'v10', 'v14'], 'color': C_BLACK},# 21 rear→tail top-R
-            {'v': ['v9', 'v13', 'v15'], 'color': C_BLACK},# 22 rear→tail left
-            {'v': ['v9', 'v15', 'v11'], 'color': C_BLACK},# 23 rear→tail left-bot
-            {'v': ['v10', 'v16', 'v14'], 'color': C_BLACK},# 24 rear→tail right
-            {'v': ['v10', 'v12', 'v16'], 'color': C_BLACK},# 25 rear→tail right-bot
-            {'v': ['v11', 'v15', 'v16'], 'color': C_BLACK},# 26 rear→tail bot
-            {'v': ['v11', 'v16', 'v12'], 'color': C_BLACK},# 27 rear→tail bot-R
-            {'v': ['v13', 'v16', 'v15'], 'color': C_FOREST},# 28 tail cap
-            {'v': ['v13', 'v14', 'v16'], 'color': C_FOREST},# 29 tail cap
+            {'v': ['v0', 'v2', 'v3'], 'color': C_RED},    # 0  needle right
+            {'v': ['v0', 'v4', 'v2'], 'color': C_RED},    # 1  needle right-bot
+            {'v': ['v0', 'v3', 'v1'], 'color': C_RED},    # 2  needle left
+            {'v': ['v0', 'v1', 'v4'], 'color': C_RED},    # 3  needle left-bot
+            {'v': ['v3', 'v6', 'v5'], 'color': C_GOLD},   # 4  barrel→shoulder top
+            {'v': ['v3', 'v5', 'v1'], 'color': C_GOLD},   # 5  barrel→shoulder top-L
+            {'v': ['v1', 'v5', 'v7'], 'color': C_GOLD},   # 6  barrel→shoulder left
+            {'v': ['v1', 'v7', 'v4'], 'color': C_GOLD},   # 7  barrel→shoulder left-bot
+            {'v': ['v4', 'v7', 'v8'], 'color': C_GOLD},   # 8  barrel→shoulder bot
+            {'v': ['v4', 'v8', 'v2'], 'color': C_GOLD},   # 9  barrel→shoulder bot-R
+            {'v': ['v2', 'v8', 'v6'], 'color': C_GOLD},   # 10 barrel→shoulder right
+            {'v': ['v2', 'v6', 'v3'], 'color': C_GOLD},   # 11 barrel→shoulder right-top
+            {'v': ['v5', 'v10', 'v9'], 'color': C_SILVER},# 12 shoulder→rear top
+            {'v': ['v5', 'v6', 'v10'], 'color': C_SILVER},# 13 shoulder→rear top-R
+            {'v': ['v5', 'v9', 'v11'], 'color': C_SILVER},# 14 shoulder→rear left
+            {'v': ['v5', 'v11', 'v7'], 'color': C_SILVER},# 15 shoulder→rear left-bot
+            {'v': ['v6', 'v12', 'v10'], 'color': C_SILVER},# 16 shoulder→rear right
+            {'v': ['v6', 'v8', 'v12'], 'color': C_SILVER}, # 17 shoulder→rear right-bot
+            {'v': ['v7', 'v11', 'v12'], 'color': C_SILVER},# 18 shoulder→rear bot
+            {'v': ['v7', 'v12', 'v8'], 'color': C_SILVER}, # 19 shoulder→rear bot-R
+            {'v': ['v9', 'v14', 'v13'], 'color': C_SILVER},# 20 rear→tail top
+            {'v': ['v9', 'v10', 'v14'], 'color': C_SILVER},# 21 rear→tail top-R
+            {'v': ['v9', 'v13', 'v15'], 'color': C_SILVER},# 22 rear→tail left
+            {'v': ['v9', 'v15', 'v11'], 'color': C_SILVER},# 23 rear→tail left-bot
+            {'v': ['v10', 'v16', 'v14'], 'color': C_SILVER},# 24 rear→tail right
+            {'v': ['v10', 'v12', 'v16'], 'color': C_SILVER},# 25 rear→tail right-bot
+            {'v': ['v11', 'v15', 'v16'], 'color': C_SILVER},# 26 rear→tail bot
+            {'v': ['v11', 'v16', 'v12'], 'color': C_SILVER},# 27 rear→tail bot-R
+            {'v': ['v13', 'v16', 'v15'], 'color': C_GOLD},  # 28 tail cap
+            {'v': ['v13', 'v14', 'v16'], 'color': C_GOLD},  # 29 tail cap
         ]
 
     
@@ -837,7 +837,7 @@ class Sniper(Enemy):
         elif self.state == 'fleeing' and dist > self.FLEE_RANGE + 1000:
             self.state = 'aiming'
             self.timer = 2.0
-            self.base_color = (150, 255, 100)   # uncloak on re-engage
+            self.base_color = (210, 165, 45)   # uncloak on re-engage
             self.engine_size = 6.0
 
         if self.state == 'aiming' and self.timer <= 0:
@@ -878,7 +878,7 @@ class Sniper(Enemy):
                 
                 self.state = 'aiming'
                 self.timer = random.uniform(4.0, 6.0)
-                self.base_color = (150, 255, 100)
+                self.base_color = (210, 165, 45)
 
         if self.state == 'fleeing':
             # Rotate away from player and thrust
