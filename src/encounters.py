@@ -1,81 +1,112 @@
 ENCOUNTER_SCRIPT = [
-    # ── ENCOUNTER 1 ──────────────────────────────────────────────────────────
-    # Opening skirmish: a wedge of drones with a dogfighter anchor.
-    # Filler is suppressed so this set-piece has room to breathe.
+    # ── ENCOUNTER 1: THE SNIPER GAUNTLET ─────────────────────────────────────
+    # A wall of snipers protected by a screen of drones.
     {
         'trigger_dist': 8000,
-        'origin': (0, 0, 8000),
-        'formation': 'wedge',
+        'origin': (0, 0, 10000),
+        'formation': 'gauntlet',
         'enemies': [
-            ('fighter', (100 , 0, 0)),
-            ('fighter',   (-200,   0,    0)),
-            ('fighter',   (   0,   0,    0)),
-            ('carrier',    (   100, 200, 100))
-            ],
-        'filler': False,
-    },
-
-    # ── ENCOUNTER 2 ──────────────────────────────────────────────────────────
-    # Pincer: fighters come from both flanks while drones rush the nose.
-    {
-        'trigger_dist': 6000,
-        'origin': (2000, -500, 16000),
-        'formation': 'pincer',
-        'enemies': [
-            ('fighter', (-800,   0,    0)),
-            ('fighter', ( 800,   0,    0)),
-            ('drone',   (-200, 200,  200)),
-            ('drone',   ( 200, 200,  200)),
-            ('drone',   (   0, -200, 200)),
+            # The Snipers (Rear Guard)
+            ('sniper', (-1200, -1200, -500)),
+            ('sniper', ( 1200, -1200, -500)),
+            ('sniper', (-1200,  1200, -500)),
+            ('sniper', ( 1200,  1200, -500)),
+            # The Drone Screen (Vanguard)
+            ('drone',  (-400,  200, 800)),
+            ('drone',  ( 400,  200, 800)),
+            ('drone',  (-800, -200, 1200)),
+            ('drone',  ( 800, -200, 1200)),
+            ('drone',  (   0,  600, 1000)),
+            ('drone',  (   0, -600, 1000)),
+            ('drone',  (-1200, 0,   1500)),
+            ('drone',  ( 1200, 0,   1500)),
         ],
         'filler': False,
     },
 
-    # ── ENCOUNTER 3 ──────────────────────────────────────────────────────────
-    # Sniper nest: two snipers hang back while a minelayer cuts across
-    # the player's path to complicate approach.
+    # ── ENCOUNTER 2: CARRIER STRIKE GROUP ────────────────────────────────────
+    # A massive set-piece featuring the capital ship and its escorts.
     {
         'trigger_dist': 7000,
-        'origin': (-1000, 800, 28000),
-        'formation': 'sniper_nest',
+        'origin': (2000, -500, 25000),
+        'formation': 'strike_group',
         'enemies': [
-            ('fighter',    (-600,  400, -200)),
-            ('fighter',    ( 600,  400, -200)),
-            ('fighter', (   0, -200,  300)),
+            ('carrier',  (0, 0, 0)),
+            # Escorts
+            ('corvette', (-1800, -300, 600)),
+            ('corvette', ( 1800, -300, 600)),
+            # High Cover
+            ('fighter',  (-1000, 800, 300)),
+            ('fighter',  ( 1000, 800, 300)),
+            ('fighter',  (-500, 1200, 600)),
+            ('fighter',  ( 500, 1200, 600)),
+            # Close defense
+            ('drone',    (-300, -400, 400)),
+            ('drone',    ( 300, -400, 400)),
+            ('drone',    (   0, -800, 200)),
         ],
         'filler': False,
     },
 
-    # ── ENCOUNTER 4 ──────────────────────────────────────────────────────────
-    # Stealth ambush: interceptors decloak close in while a corvette
-    # lumbers in from the front to eat fire.
+    # ── ENCOUNTER 3: THE STEALTH MINEFIELD ───────────────────────────────────
+    # Hazard-based area with invisible threats.
+    {
+        'trigger_dist': 7000,
+        'origin': (-1500, 1000, 40000),
+        'formation': 'minefield',
+        'enemies': [
+            # The Minelayers
+            ('minelayer', (-2500, 0, 0)),
+            ('minelayer', (    0, 0, 0)),
+            ('minelayer', ( 2500, 0, 0)),
+            # The Ambushers
+            ('stealth',   (-1800,  600, 600)),
+            ('stealth',   ( 1800,  600, 600)),
+            ('stealth',   (-1200, -600, 900)),
+            ('stealth',   ( 1200, -600, 900)),
+        ],
+        'filler': False,
+    },
+
+    # ── ENCOUNTER 4: THE SWARM ───────────────────────────────────────────────
+    # Pure volume of weak enemies rushing the player.
     {
         'trigger_dist': 6000,
-        'origin': (3000, -1200, 40000),
-        'formation': 'ambush',
+        'origin': (0, -1200, 55000),
+        'formation': 'swarm',
         'enemies': [
-            ('fighter', (   0,    0,  -600)),
-            ('fighter',  ( 500,  200,   400)),
-            ('fighter',  (   0, -300,   500)),
-            ('drone',    (-200, -100,   200)),
-            ('drone',    ( 200, -100,   200)),
+            ('drone', (x, y, z)) for x, y, z in [
+                (-300, -300, 0), (300, -300, 0), (-300, 300, 0), (300, 300, 0),
+                (-600, 0, 300), (600, 0, 300), (0, -600, 300), (0, 600, 300),
+                (-200, -200, 600), (200, -200, 600), (-200, 200, 600), (200, 200, 600),
+                (0, 0, 900), (-400, 0, 900), (400, 0, 900), (0, 400, 1200)
+            ]
         ],
         'filler': False,
     },
 
-    # ── ENCOUNTER 5 ──────────────────────────────────────────────────────────
-    # Boss wave: a flanked by dogfighters.
-    # Filler suppressed — this is the climax.
+    # ── ENCOUNTER 5: FINAL STAND (ELITE SQUADRON) ────────────────────────────
+    # The ultimate test of the player's combat skills.
     {
-        'trigger_dist': 10000,
-        'origin': (0, 0, 55000),
-        'formation': 'boss',
+        'trigger_dist': 12000,
+        'origin': (0, 0, 75000),
+        'formation': 'final_stand',
         'enemies': [
-            ('fighter', (   0,   0,    0)),
-            ('fighter', (-600, 200, -800)),
-            ('fighter', ( 600, 200, -800)),
-            ('minelayer',  (-1200, 400, -1200)),
-            ('fighter',  ( 1200, 400, -1200)),
+            # Command Centers
+            ('carrier',  (-2500, 200, -1000)),
+            ('carrier',  ( 2500, 200, -1000)),
+            # Vanguard
+            ('corvette', (-1200, -500, 500)),
+            ('corvette', ( 1200, -500, 500)),
+            ('corvette', (-3500, -500, 500)),
+            ('corvette', ( 3500, -500, 500)),
+            # Hunters
+            ('stealth',  (-2000, 1000, 800)),
+            ('stealth',  ( 2000, 1000, 800)),
+            ('stealth',  (    0, 1500, 1200)),
+            ('stealth',  (-1000, -1000, 1500)),
+            ('stealth',  ( 1000, -1000, 1500)),
+            ('stealth',  (    0, -1500, 1800)),
         ],
         'filler': False,
     },

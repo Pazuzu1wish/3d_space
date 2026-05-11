@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import pygame
 import math
 from src.camera import Camera
@@ -60,8 +61,8 @@ class Game:
         self.renderer = RenderPipeline(self.camera) # Init RenderPipeline class
 
         # Initialize entities
-        self.stars = [Star(self.player.pos) for _ in range(250)] # Init Star class
-        self.nebulae = NebulaSystem(count=6, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
+        self.stars = [Star(self.player.pos) for _ in range(220)] # Init Star class
+        self.nebulae = NebulaSystem(count=5, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
         self.enemies = [] # Init Enemy class
         self.enemy_projectiles = [] # Init EnemyProjectiles class
         self.asteroids = [] # Init Asteroid class
@@ -69,7 +70,7 @@ class Game:
         # Spawn some initial asteroid fields near encounter points 
         # TODO: Refactor asteroid field creation logic 
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=0, radius=30000)
+            field = AsteroidField(enc['origin'], count=16, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))

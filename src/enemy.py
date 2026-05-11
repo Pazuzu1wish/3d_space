@@ -1556,7 +1556,7 @@ class Carrier(Enemy):
                 dot = (dx_p/dist_f)*self.forward[0] + (dy_p/dist_f)*self.forward[1] + (dz_p/dist_f)*self.forward[2]
                 
                 if player is not None and dot > 0 and perp_dist < PLAYER_COLLISION_RADIUS:
-                    player.take_damage(40)
+                    player.take_damage(20)
                 
                 if global_projectiles is not None:
                     global_projectiles.append(SniperBeam(self.x, self.y, self.z, self.forward[0]*32000, self.forward[1]*32000, self.forward[2]*32000))
