@@ -11,6 +11,7 @@ from src.math_engine import (
 
 # ── Palette (R, G, B, Alpha) ──────────────────
 from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
+from src.cockpit_geometry import draw_cockpit_frame
 
 # ──────────────────────────────────────────────
 #  COCKPIT HUD
@@ -745,16 +746,27 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      enemies=None, player_hp=100, active_target=None,
                      dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0,
                      shield_charge=1.0, shield_recharging=False,
-                     shake_offset=(0.0, 0.0)):
+                     shake_offset=(0.0, 0.0),
+                     hit_flash_ratio=0.0, explosion_glow=0.0,
+                     missile_lock=False, alert_active=False):
 
     global _HUD_OVERLAY, _LAST_SIZE
 
-    # Create it only once, or if the screen size changes
+    # ── 1. Draw pre-baked cockpit geometry directly onto the game surface ──
+    ticks = pygame.time.get_ticks()
+    draw_cockpit_frame(
+        surface, ticks,
+        alert_active=alert_active,
+        missile_lock=missile_lock,
+        hit_flash=hit_flash_ratio,
+        explosion_glow=explosion_glow,
+    )
+
+    # ── 2. Build / clear the transparent HUD overlay ────────────────────────
     if _HUD_OVERLAY is None or _LAST_SIZE != (W, H):
         _HUD_OVERLAY = pygame.Surface((W, H), pygame.SRCALPHA)
         _LAST_SIZE = (W, H)
     else:
-        # Clear the overlay with fully transparent pixels
         _HUD_OVERLAY.fill((0, 0, 0, 0))
 
     cx, cy = W // 2, H // 2
@@ -772,7 +784,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     draw_hull_bar(_HUD_OVERLAY, W, H, player_hp,
                   shield_charge=shield_charge,
                   shield_recharging=shield_recharging)
-    
+
     if orientation is not None:
         # Compute basis vectors ONCE, pass to all sub-functions
         basis = get_basis_from_quat(orientation)
@@ -796,6 +808,6 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                 W, H
             )
 
-    # Stamp the finished semi-transparent HUD onto the game screen
+    # ── 3. Stamp the finished semi-transparent HUD overlay on top ───────────
     surface.blit(_HUD_OVERLAY, shake_offset)
 
