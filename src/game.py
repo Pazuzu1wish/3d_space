@@ -16,7 +16,8 @@ from src.constants import (
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
     ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE,
-    AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_WINDOW_SIZE, AIM_WINDOW_POS,
+    AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_MAGNIFICATION_MIN, AIM_MAGNIFICATION_MAX,
+    AIM_WINDOW_SIZE, AIM_WINDOW_POS,
     AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR, PLAYER_LASER_SPEED
 )
 from src.utils import draw_damage_overlay
@@ -58,7 +59,7 @@ class Game:
 
         # Initialize entities
         self.stars = [Star(self.player.pos) for _ in range(250)] # Init Star class
-        self.nebulae = NebulaSystem(count=8, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
+        self.nebulae = NebulaSystem(count=6, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
         self.enemies = [] # Init Enemy class
         self.enemy_projectiles = [] # Init EnemyProjectiles class
         self.asteroids = [] # Init Asteroid class
@@ -66,7 +67,7 @@ class Game:
         # Spawn some initial asteroid fields near encounter points 
         # TODO: Refactor asteroid field creation logic 
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=50, radius=3000)
+            field = AsteroidField(enc['origin'], count=0, radius=30000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
@@ -82,6 +83,7 @@ class Game:
         self.magnify_surf = pygame.Surface((AIM_WINDOW_SIZE, AIM_WINDOW_SIZE), pygame.SRCALPHA) # Initialize magnification surface
         self.magnify_camera = Camera(AIM_WINDOW_SIZE, AIM_WINDOW_SIZE) # Initialize magnification camera
         self.magnify_renderer = RenderPipeline(self.magnify_camera) # Initialize magnification renderer
+        self.current_magnification = 1.0 # Current smoothed magnification level
 
 # -------------------------------------------------------------------------
 # Game Loop Methods
@@ -262,8 +264,22 @@ class Game:
         # ── MAGNIFIED AIM WINDOW (L2) ──────────────────────────
         l2_val = self.handler.trigger_left()
         keys = pygame.key.get_pressed()
-        if l2_val > AIM_MODE_THRESHOLD or keys[pygame.K_LSHIFT]:
-            self._render_magnified_window(screen, self.player, visible_entities, stars, dt)
+        
+        # Calculate target magnification
+        if l2_val > AIM_MODE_THRESHOLD:
+            t = (l2_val - AIM_MODE_THRESHOLD) / (1.0 - AIM_MODE_THRESHOLD)
+            target_mag = AIM_MAGNIFICATION_MIN + t * (AIM_MAGNIFICATION_MAX - AIM_MAGNIFICATION_MIN)
+        elif keys[pygame.K_LSHIFT]:
+            target_mag = AIM_MAGNIFICATION
+        else:
+            target_mag = 1.0 # Return to base
+            
+        # Smoothly lerp magnification (0.15 for responsive but premium feel)
+        self.current_magnification += (target_mag - self.current_magnification) * 0.15
+        
+        # Render window if significantly zoomed in
+        if self.current_magnification > 1.05:
+            self._render_magnified_window(screen, self.player, visible_entities, stars, dt, self.current_magnification)
 
         draw_damage_overlay(screen, W, H, player.hit_flash / HIT_FLASH_DURATION)
 
@@ -271,12 +287,12 @@ class Game:
         #     pause_text = self.pause_font.render("PAUSE", True, (255, 0, 0))
         #     screen.blit(pause_text, (W // 2 - pause_text.get_width() // 2, H // 2 - pause_text.get_height() // 2))
 
-    def _render_magnified_window(self, screen, player, visible_entities, stars, dt):
+    def _render_magnified_window(self, screen, player, visible_entities, stars, dt, magnification):
         """Render a secondary pass for the magnified aim window."""
         self.magnify_surf.fill((5, 5, 25, 200)) # Darker, slightly blue tint
         
-        # Update magnify camera to match player but with higher FOV
-        self.magnify_camera.fov = self.camera.fov * AIM_MAGNIFICATION
+        # Update magnify camera to match player but with dynamic FOV
+        self.magnify_camera.fov = self.camera.fov * magnification
         self.magnify_camera.update(player.pos, player.orientation)
         self.magnify_renderer.clear()
 

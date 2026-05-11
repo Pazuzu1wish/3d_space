@@ -98,7 +98,9 @@ ASTEROID_PARTICLES_ON_DESTROY = 40
 # ──────────────────────────────────────────────
 
 AIM_MODE_THRESHOLD = 0.5            # L2 trigger threshold to activate
-AIM_MAGNIFICATION = 5.0             # 5x magnification
+AIM_MAGNIFICATION_MIN = 1.5         # Minimum magnification (light trigger pull)
+AIM_MAGNIFICATION_MAX = 8.0         # Maximum magnification (full trigger pull)
+AIM_MAGNIFICATION = 5.0             # Default magnification for keyboard (LShift)
 AIM_WINDOW_SIZE = 420               # Size of the zoom window (increased 1.5x)
 AIM_WINDOW_POS = (1280 // 2 - 210, 760 // 2 - 210) # Position on screen
 AIM_WINDOW_BORDER_COLOR = (0, 200, 255, 180)

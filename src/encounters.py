@@ -10,7 +10,7 @@ ENCOUNTER_SCRIPT = [
             ('fighter', (100 , 0, 0)),
             ('fighter',   (-200,   0,    0)),
             ('fighter',   (   0,   0,    0)),
-            ('fighter',    (   100, 200, 100))
+            ('carrier',    (   100, 200, 100))
             ],
         'filler': False,
     },
