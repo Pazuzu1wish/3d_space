@@ -1,5 +1,10 @@
 import math
-from src.math_engine import quat_conjugate
+import numpy as np
+from src.math_engine import (
+    quat_conjugate, 
+    world_to_camera_batch, 
+    project_to_screen_batch
+)
 
 class Camera:
     def __init__(self, W, H, fov=400.0, near_clip=0.1):
@@ -22,6 +27,9 @@ class Camera:
         self._r10 = 0.0; self._r11 = 1.0; self._r12 = 0.0
         self._r20 = 0.0; self._r21 = 0.0; self._r22 = 1.0
         
+        # Flattened coefficients for Numba
+        self._r_coeffs = np.array([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0], dtype=np.float64)
+        
     def update(self, pos, orientation):
         self.pos = pos
         self.orientation = orientation
@@ -31,9 +39,15 @@ class Camera:
         xx = qx*qx; yy = qy*qy; zz = qz*qz
         xy = qx*qy; xz = qx*qz; yz = qy*qz
         wx = w*qx;  wy = w*qy;  wz = w*qz
+        
         self._r00 = 1.0 - 2.0*(yy+zz); self._r01 = 2.0*(xy-wz);       self._r02 = 2.0*(xz+wy)
         self._r10 = 2.0*(xy+wz);       self._r11 = 1.0 - 2.0*(xx+zz); self._r12 = 2.0*(yz-wx)
         self._r20 = 2.0*(xz-wy);       self._r21 = 2.0*(yz+wx);       self._r22 = 1.0 - 2.0*(xx+yy)
+        
+        # Update flattened coeffs for Numba
+        self._r_coeffs[0] = self._r00; self._r_coeffs[1] = self._r01; self._r_coeffs[2] = self._r02
+        self._r_coeffs[3] = self._r10; self._r_coeffs[4] = self._r11; self._r_coeffs[5] = self._r12
+        self._r_coeffs[6] = self._r20; self._r_coeffs[7] = self._r21; self._r_coeffs[8] = self._r22
         
     def world_to_camera(self, x, y, z):
         """Transform world point to camera space using pre-computed rotation matrix."""
@@ -45,6 +59,11 @@ class Camera:
             dx*self._r20 + dy*self._r21 + dz*self._r22,
         )
         
+    def world_to_camera_batch(self, verts_array):
+        """Transform batch of world points to camera space using Numba."""
+        px, py, pz = self.pos
+        return world_to_camera_batch(verts_array, px, py, pz, self._r_coeffs)
+        
     def project(self, cx, cy, cz):
         if cz <= self.near_clip:
             return None
@@ -52,6 +71,18 @@ class Camera:
         sx = int(cx * scale + self.cx + self.shake_offset[0])
         sy = int(cy * scale + self.cy + self.shake_offset[1])
         return sx, sy, scale
+        
+    def project_batch(self, cam_verts_array):
+        """Project batch of camera-space points to screen space using Numba."""
+        return project_to_screen_batch(
+            cam_verts_array, 
+            self.fov, 
+            self.cx, 
+            self.cy, 
+            self.shake_offset[0], 
+            self.shake_offset[1], 
+            self.near_clip
+        )
 
     def trigger_shake(self, intensity):
         from src.constants import SCREEN_SHAKE_MAX

@@ -1,4 +1,6 @@
 import math
+import numpy as np
+from numba import njit
 
 # ──────────────────────────────────────────────
 #  QUATERNION MATH ENGINE
@@ -164,6 +166,32 @@ def world_to_camera(x, y, z, px, py, pz, q):
         dx * 2.0*(xz - wy) + dy * 2.0*(yz + wx) + dz * (1.0 - 2.0*(xx + yy)),
     )
 
+@njit
+def world_to_camera_batch(verts, px, py, pz, r_coeffs):
+    """
+    Numba-optimized batch world-to-camera transformation.
+    verts: (N, 3) float64 array
+    px, py, pz: camera position
+    r_coeffs: (9,) array of rotation matrix coefficients [r00, r01, r02, r10, r11, r12, r20, r21, r22]
+    """
+    N = verts.shape[0]
+    out = np.empty_like(verts)
+    
+    r00 = r_coeffs[0]; r01 = r_coeffs[1]; r02 = r_coeffs[2]
+    r10 = r_coeffs[3]; r11 = r_coeffs[4]; r12 = r_coeffs[5]
+    r20 = r_coeffs[6]; r21 = r_coeffs[7]; r22 = r_coeffs[8]
+    
+    for i in range(N):
+        dx = verts[i, 0] - px
+        dy = verts[i, 1] - py
+        dz = verts[i, 2] - pz
+        
+        out[i, 0] = dx*r00 + dy*r01 + dz*r02
+        out[i, 1] = dx*r10 + dy*r11 + dz*r12
+        out[i, 2] = dx*r20 + dy*r21 + dz*r22
+        
+    return out
+
 
 # ── Projection ────────────────────────────────
 
@@ -174,6 +202,34 @@ def project_to_screen(x, y, z, fov=400, cx=640, cy=370):
     sx = int(x * scale + cx)
     sy = int(y * scale + cy)
     return sx, sy, scale
+
+@njit
+def project_to_screen_batch(cam_verts, fov, cx, cy, ox, oy, near_clip):
+    """
+    Numba-optimized batch projection.
+    cam_verts: (N, 3) float64 array
+    returns: (N, 3) array [sx, sy, scale]. sx, sy are floats (must be cast to int later).
+    """
+    N = cam_verts.shape[0]
+    out = np.empty((N, 3))
+    
+    for i in range(N):
+        x = cam_verts[i, 0]
+        y = cam_verts[i, 1]
+        z = cam_verts[i, 2]
+        
+        if z <= near_clip:
+            out[i, 0] = -1000000.0 # Sentinel for clipped
+            out[i, 1] = -1000000.0
+            out[i, 2] = 0.0
+            continue
+            
+        scale = fov / z
+        out[i, 0] = x * scale + cx + ox
+        out[i, 1] = y * scale + cy + oy
+        out[i, 2] = scale
+        
+    return out
 
 # ── Targeting math ────────────────────────────
 

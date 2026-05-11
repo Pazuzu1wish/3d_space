@@ -1,5 +1,6 @@
 import pygame
 import math
+import numpy as np
 
 class RenderPipeline:
     def __init__(self, camera):
@@ -43,55 +44,65 @@ class RenderPipeline:
     def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None):
         """
         Submit a whole mesh for optimized rendering.
-        pos: (x, y, z)
-        right, up, forward: basis vectors
-        verts: dict or list of local (x, y, z)
-        faces: list of {'v': [indices], 'color': (r,g,b)}
-        layer: target layer (background, opaque, alpha, overlay)
-        radius: bounding radius for fast frustum culling
+        Uses Numba-optimized batch transformations.
         """
         # Fast frustum culling
         if radius is not None:
             if not self.camera.sphere_in_frustum(pos[0], pos[1], pos[2], radius):
                 return
 
-        px, py, pz = pos
-        rx, ry, rz = right
-        ux, uy, uz = up
-        fx, fy, fz = forward
+        # 1. Transform all vertices once using NumPy and Numba
+        if isinstance(verts, dict):
+            v_ids = list(verts.keys())
+            v_data = np.array([verts[vid] for vid in v_ids], dtype=np.float64)
+        else:
+            v_data = np.asanyarray(verts, dtype=np.float64)
+            v_ids = None # Use indices directly
+
+        # Local to World (Vectorized)
+        basis = np.array([right, up, forward], dtype=np.float64)
+        world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
         
-        # 1. Transform all vertices once
-        cam_verts = {}
-        projected_verts = {}
+        # World to Camera (Batch Numba)
+        cam_verts = self.camera.world_to_camera_batch(world_verts)
         
-        # Check if verts is a dict or list
-        items = verts.items() if isinstance(verts, dict) else enumerate(verts)
+        # Project (Batch Numba)
+        projected = self.camera.project_batch(cam_verts)
         
-        for v_id, (vx, vy, vz) in items:
-            # Local to World
-            wx = px + vx * rx + vy * ux + vz * fx
-            wy = py + vx * ry + vy * uy + vz * fy
-            wz = pz + vx * rz + vy * uz + vz * fz
-            
-            # World to Camera
-            cx, cy, cz = self.camera.world_to_camera(wx, wy, wz)
-            cam_verts[v_id] = (cx, cy, cz)
-            
-            # Project
-            proj = self.camera.project(cx, cy, cz)
-            if proj:
-                projected_verts[v_id] = proj
+        # Mapping for face processing
+        if v_ids is not None:
+            cam_verts_map = {vid: cam_verts[i] for i, vid in enumerate(v_ids)}
+            projected_map = {}
+            for i, vid in enumerate(v_ids):
+                if projected[i, 0] > -900000.0:
+                    projected_map[vid] = projected[i]
+        else:
+            # If verts was a list/array, v_ids are just indices
+            cam_verts_map = cam_verts
+            projected_map = projected
         
         # 2. Process faces
         for f in faces:
-            v_ids = f['v']
-            # Basic frustum culling: if any vertex is not projected, skip face for simplicity
-            if any(vid not in projected_verts for vid in v_ids):
-                continue
-                
-            pts = [projected_verts[vid] for vid in v_ids]
-            c_pts = [cam_verts[vid] for vid in v_ids]
+            v_indices = f['v']
             
+            # Check projection and cull
+            skip = False
+            pts = []
+            c_pts = []
+            for vid in v_indices:
+                if v_ids is not None:
+                    if vid not in projected_map:
+                        skip = True; break
+                    pts.append(projected_map[vid])
+                    c_pts.append(cam_verts_map[vid])
+                else:
+                    if projected_map[vid, 0] <= -900000.0:
+                        skip = True; break
+                    pts.append(projected_map[vid])
+                    c_pts.append(cam_verts_map[vid])
+            
+            if skip: continue
+                
             # Backface culling in camera space
             v1, v2, v3 = c_pts[0], c_pts[1], c_pts[2]
             ux_f, uy_f, uz_f = v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]
@@ -113,7 +124,6 @@ class RenderPipeline:
             
             avg_z = sum(cv[2] for cv in c_pts) / len(c_pts)
             
-            # Tuple for performance: (depth, type, data...)
             self._layers[layer].append((
                 avg_z, 'poly', [(p[0], p[1]) for p in pts], (r, g, b)
             ))
@@ -123,10 +133,8 @@ class RenderPipeline:
         if len(world_verts) < 3:
             return
             
-        cam_verts = []
-        for vx, vy, vz in world_verts:
-            cx, cy, cz = self.camera.world_to_camera(vx, vy, vz)
-            cam_verts.append((cx, cy, cz))
+        v_data = np.array(world_verts, dtype=np.float64)
+        cam_verts = self.camera.world_to_camera_batch(v_data)
             
         # Backface culling
         v1, v2, v3 = cam_verts[0], cam_verts[1], cam_verts[2]
@@ -137,14 +145,15 @@ class RenderPipeline:
         if fnz >= 0: 
             return 
             
-        projected = []
+        projected = self.camera.project_batch(cam_verts)
+        
+        pts = []
         avg_z = 0.0
-        for cx, cy, cz in cam_verts:
-            proj = self.camera.project(cx, cy, cz)
-            if not proj:
+        for i in range(len(cam_verts)):
+            if projected[i, 0] <= -900000.0:
                 return 
-            projected.append((proj[0], proj[1]))
-            avg_z += cz
+            pts.append((projected[i, 0], projected[i, 1]))
+            avg_z += cam_verts[i, 2]
             
         avg_z /= len(cam_verts)
         
@@ -156,14 +165,11 @@ class RenderPipeline:
         b = int(color[2] * (shade / 255))
         
         self._layers[layer].append((
-            avg_z, 'poly', projected, (r, g, b)
+            avg_z, 'poly', pts, (r, g, b)
         ))
         
     def submit_sprite(self, x, y, z, color, size, is_glow=False, layer='alpha', cam_pos=None):
-        """
-        Submit a 2D circle sprite.
-        cam_pos: Optional pre-calculated (cx, cy, cz) to avoid redundant transform.
-        """
+        """Submit a 2D circle sprite."""
         if cam_pos:
             cx, cy, cz = cam_pos
         else:
@@ -180,7 +186,6 @@ class RenderPipeline:
     def submit_nebula(self, x, y, z, color, size, alpha=40, layer='alpha'):
         """Submit a soft, semi-transparent nebula puff."""
         cx, cy, cz = self.camera.world_to_camera(x, y, z)
-        # Cull nebulae that are behind or too far
         if cz < 10 or cz > 50000:
             return
 
@@ -208,32 +213,27 @@ class RenderPipeline:
 
     def render(self, surface):
         """Sort and render all submitted primitives by layer."""
-        # Pre-bind draw functions for speed
         draw_poly = pygame.draw.polygon
         draw_circle = pygame.draw.circle
         draw_line = pygame.draw.line
         
-        # 1. Background (skip sort if you want, but simple sort is fine)
+        # 1. Background
         self._layers['background'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['background']:
-            # index 1 is type: 0=depth, 1=type, 2=pos, 3=size, 4=color, 5=is_glow
             draw_circle(surface, p[4], p[2], p[3])
             
-        # 2. Opaque (Back-to-front)
+        # 2. Opaque
         self._layers['opaque'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['opaque']:
-            # depth, 'poly', pts, color
             draw_poly(surface, p[3], p[2])
             
-        # 3. Alpha (Back-to-front)
+        # 3. Alpha
         self._layers['alpha'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['alpha']:
             t = p[1]
             if t == 'sprite':
-                # depth, 'sprite', pos, size, color, is_glow
                 draw_circle(surface, p[4], p[2], p[3])
             elif t == 'nebula':
-                # depth, 'nebula', pos, size, color, alpha
                 s = p[3] * 2
                 if s < 2 or s > 2000: continue
                 s = (s // 4) * 4
@@ -254,11 +254,4 @@ class RenderPipeline:
                 puff = self._scaled_nebulae[scaled_key]
                 surface.blit(puff, (p[2][0] - s//2, p[2][1] - s//2))
             elif t == 'line':
-                # depth, 'line', p1, p2, color, thickness
                 draw_line(surface, p[4], p[2], p[3], p[5])
-                
-        # 4. Overlay (No sort)
-        for p in self._layers['overlay']:
-            # Handle any overlay primitives if needed
-            pass
-
