@@ -107,3 +107,12 @@ AIM_WINDOW_BORDER_COLOR = (0, 200, 255, 180)
 AIM_WINDOW_CROSSHAIR_COLOR = (255, 50, 50, 200)
 
 PLAYER_LASER_SPEED = 16000.0        # Projectile speed for lead calculation
+
+# ──────────────────────────────────────────────
+# DISPLAY CONSTANTS
+# ──────────────────────────────────────────────
+
+FULLSCREEN = True
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 760
+

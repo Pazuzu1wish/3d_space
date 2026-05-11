@@ -18,7 +18,8 @@ from src.constants import (
     ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE,
     AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_MAGNIFICATION_MIN, AIM_MAGNIFICATION_MAX,
     AIM_WINDOW_SIZE, AIM_WINDOW_POS,
-    AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR, PLAYER_LASER_SPEED
+    AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR, PLAYER_LASER_SPEED,
+    FULLSCREEN, SCREEN_WIDTH, SCREEN_HEIGHT
 )
 from src.utils import draw_damage_overlay
 from src.director import WaveDirector
@@ -33,8 +34,9 @@ class Game:
     def __init__(self):
         # Initialize Pygame screen and clock
         pygame.init() # Init Pygame
-        self.W, self.H = 1280, 760 # Set Screen size
-        self.screen = pygame.display.set_mode((self.W, self.H)) # Set display mode with screen size variables
+        self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT # Set Screen size
+        flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
+        self.screen = pygame.display.set_mode((self.W, self.H), flags) # Set display mode with screen size variables
         pygame.display.set_caption("🚀 3D Cockpit Dogfighter") # Set Window title
         self.clock = pygame.time.Clock() # Init clock for controlling FPS
 
