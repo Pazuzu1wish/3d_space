@@ -10,7 +10,7 @@ from src.math_engine import (
 )
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, DODGE_FLASH_DURATION
+from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION
 from src.cockpit_geometry import draw_cockpit_frame
 
 # ──────────────────────────────────────────────
@@ -637,6 +637,85 @@ def print_kph(surface, x, y):
     surface.blit(lbl, (x, y))
 
 # ──────────────────────────────────────────────
+#  WAYPOINTS / OBJECTIVES
+# ──────────────────────────────────────────────
+
+def draw_waypoints(surface, player_pos, player_orientation, waypoints, W, H):
+    if not waypoints:
+        return
+
+    cx_scr, cy_scr = W // 2, H // 2
+    font = custom_font(12)
+
+    for wp in waypoints:
+        if not wp.get('active', True):
+            continue
+
+        col = wp.get('color', HUD_WAYPOINT)
+
+        wx, wy, wz = wp['pos']
+        # Project to camera space
+        cx, cy, cz = world_to_camera(wx, wy, wz, player_pos[0], player_pos[1], player_pos[2], player_orientation)
+        
+        # Distance calculation
+        dist = math.sqrt((wx - player_pos[0])**2 + (wy - player_pos[1])**2 + (wz - player_pos[2])**2)
+        dist_str = f"{dist/1000.0:.1f}KM" if dist > 1000 else f"{int(dist)}M"
+        
+        is_behind = cz <= 0.1
+        proj = project_to_screen(cx, cy, cz)
+        
+        # Edge indicator logic
+        margin = 40
+        if is_behind or proj is None or not (margin < proj[0] < W - margin and margin < proj[1] < H - margin):
+            # Objective is off-screen or behind — draw edge marker
+            # For points behind, we invert the screen projection logic to get the correct direction
+            target_cx, target_cy = cx, cy
+            if is_behind:
+                target_cx = -cx
+                target_cy = -cy
+            
+            angle = math.atan2(target_cy, target_cx)
+            
+            # Intersection with screen edge
+            # This is a simple approximation by extending the vector from center
+            edge_x = cx_scr + math.cos(angle) * (W * 0.4)
+            edge_y = cy_scr + math.sin(angle) * (H * 0.4)
+            
+            # Draw chevron pointing toward objective
+            pts = [
+                (edge_x + math.cos(angle) * 15, edge_y + math.sin(angle) * 15),
+                (edge_x + math.cos(angle + 2.5) * 12, edge_y + math.sin(angle + 2.5) * 12),
+                (edge_x + math.cos(angle - 2.5) * 12, edge_y + math.sin(angle - 2.5) * 12)
+            ]
+            pygame.draw.polygon(surface, col, pts, 2)
+            
+            # Label near edge
+            lbl_txt = f"{wp['label']} ({dist_str})"
+            lbl = font.render(lbl_txt, True, col)
+            # Offset label slightly so it doesn't overlap the arrow
+            lx = edge_x + math.cos(angle) * 40 - lbl.get_width() // 2
+            ly = edge_y + math.sin(angle) * 40 - lbl.get_height() // 2
+            surface.blit(lbl, (max(10, min(W-lbl.get_width()-10, lx)), max(10, min(H-lbl.get_height()-10, ly))))
+            
+        else:
+            # Objective is on-screen
+            sx, sy, _ = proj
+            
+            # Diamond marker
+            size = 14
+            pygame.draw.lines(surface, col, True, [
+                (sx, sy - size), (sx + size, sy), (sx, sy + size), (sx - size, sy)
+            ], 2)
+            pygame.draw.circle(surface, col, (sx, sy), 2)
+            
+            # Label and distance
+            lbl = font.render(wp['label'], True, col)
+            dist_lbl = font.render(dist_str, True, col)
+            
+            surface.blit(lbl, (sx - lbl.get_width() // 2, sy + size + 5))
+            surface.blit(dist_lbl, (sx - dist_lbl.get_width() // 2, sy + size + 19))
+
+# ──────────────────────────────────────────────
 #  TEMP METER (Laser Heat)
 # ──────────────────────────────────────────────
 
@@ -792,6 +871,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0,
                      shield_charge=1.0, shield_recharging=False,
                      laser_heat=0.0, laser_overheated=False,
+                     waypoints=None,
                      shake_offset=(0.0, 0.0),
                      hit_flash_ratio=0.0, explosion_glow=0.0,
                      missile_lock=False, alert_active=False):
@@ -827,8 +907,9 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     draw_speed(_HUD_OVERLAY, W - 120, H - 100, current_speed)
     print_kph(_HUD_OVERLAY, W - 110, H - 80)
 
-    # TEMP Meter (below throttle or nearby)
     draw_temp_meter(_HUD_OVERLAY, W - 100, H - 240, laser_heat, laser_overheated)
+
+    draw_waypoints(_HUD_OVERLAY, player_pos or [0,0,0], orientation or (1,0,0,0), waypoints, W, H)
 
     draw_hull_bar(_HUD_OVERLAY, W, H, player_hp,
                   shield_charge=shield_charge,

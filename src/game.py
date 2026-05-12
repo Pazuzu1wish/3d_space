@@ -88,6 +88,14 @@ class Game:
         self.magnify_renderer = RenderPipeline(self.magnify_camera) # Initialize magnification renderer
         self.current_magnification = 1.0 # Current smoothed magnification level
 
+        # --- HUD WAYPOINTS ---
+        # List of {'pos': (x,y,z), 'label': str, 'active': bool, 'color': (R,G,B,A)}
+        self.waypoints = [
+            {'pos': (4000, 2000, 8000), 'label': 'SECTOR ALPHA', 'active': True, 'color': (0, 255, 100, 200)},
+            {'pos': (-6000, -1500, 3000), 'label': 'COMM RELAY', 'active': True, 'color': (255, 200, 0, 200)},
+            {'pos': (0, -2000, -5000), 'label': 'HOME BASE', 'active': True, 'color': (0, 200, 255, 200)}
+        ]
+
 # -------------------------------------------------------------------------
 # Game Loop Methods
 # -------------------------------------------------------------------------
@@ -263,6 +271,7 @@ class Game:
             shield_recharging=player.shield_recharging,
             laser_heat=player.laser_heat,
             laser_overheated=player.overheated,
+            waypoints=self.waypoints,
             shake_offset=shake_offset,
         )
 

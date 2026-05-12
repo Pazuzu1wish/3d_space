@@ -77,6 +77,7 @@ HUD_GREEN = (0, 255, 140, 80)    # Main glowing lines/text
 HUD_DIM = (0, 160, 90, 80)       # Dimmed elements
 HUD_AMBER = (255, 180, 30, 160)  # Warnings / not ready
 HUD_RED = (255, 60, 60, 160)     # Critical / close enemies
+HUD_WAYPOINT = (0, 200, 255, 180) # Objectives
 
 # ──────────────────────────────────────────────
 # SUICIDE DRONE MECHANICS
