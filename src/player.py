@@ -1,12 +1,14 @@
 import pygame
 import math
+import random
 from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
 from src.constants import (
     PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
     TARGETING_FOV, PLAYER_LASER_SPEED,
-    PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE
+    PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE,
+    PLAYER_LASER_BASE_SPREAD, PLAYER_LASER_MAX_SPREAD
 )
 
 SHIELD_MAX       = 100
@@ -173,13 +175,32 @@ class Player:
             rrx, rry, rrz = right
             LASER_SPEED = PLAYER_LASER_SPEED
             offset = 40
+            
+            # Calculate current spread based on heat
+            current_spread = PLAYER_LASER_BASE_SPREAD + (self.laser_heat * PLAYER_LASER_MAX_SPREAD)
+            
             for side in (-1, 1):
-                wx = self.pos[0] + rrx * offset * side + rfx * 20 + rfx * 50
-                wy = self.pos[1] + rry * offset * side + rfy * 20 + rfy * 50
-                wz = self.pos[2] + rrz * offset * side + rfz * 20 + rfz * 50
+                # Apply random jitter to the forward vector
+                jx = (random.random() * 2 - 1) * current_spread
+                jy = (random.random() * 2 - 1) * current_spread
+                
+                # Perturb the forward vector
+                _, _, up = get_basis_from_quat(self.orientation)
+                pfx = rfx + rrx * jx + up[0] * jy
+                pfy = rfy + rry * jx + up[1] * jy
+                pfz = rfz + rrz * jx + up[2] * jy
+                
+                # Re-normalize direction
+                mag = math.sqrt(pfx*pfx + pfy*pfy + pfz*pfz)
+                pfx, pfy, pfz = pfx/mag, pfy/mag, pfz/mag
+                
+                wx = self.pos[0] + rrx * offset * side + rfx * 70
+                wy = self.pos[1] + rry * offset * side + rfy * 70
+                wz = self.pos[2] + rrz * offset * side + rfz * 70
+                
                 lasers.fire(
                     wx, wy, wz,
-                    rfx * LASER_SPEED, rfy * LASER_SPEED, rfz * LASER_SPEED
+                    pfx * LASER_SPEED, pfy * LASER_SPEED, pfz * LASER_SPEED
                 )
             
             # Update cooldown, heat and shake
