@@ -637,6 +637,51 @@ def print_kph(surface, x, y):
     surface.blit(lbl, (x, y))
 
 # ──────────────────────────────────────────────
+#  TEMP METER (Laser Heat)
+# ──────────────────────────────────────────────
+
+def draw_temp_meter(surface, x, y, heat, overheated):
+    """
+    Draws the "TEMP" word and a small heat bar.
+    Colors transition from Green to Yellow to Red.
+    Flashes Red when overheated.
+    """
+    f = custom_font(12)
+    
+    # Determine base color based on heat
+    if overheated:
+        # Flashing Red
+        pulse = int((math.sin(pygame.time.get_ticks() * 0.015) + 1) * 127)
+        col = (255, pulse, pulse, 200)
+    elif heat > 0.8:
+        col = HUD_RED
+    elif heat > 0.5:
+        col = HUD_AMBER
+    else:
+        col = HUD_GREEN
+
+    # Draw label
+    lbl = f.render("TEMP", True, col)
+    surface.blit(lbl, (x, y))
+
+    # Draw small bar
+    bar_w = 60
+    bar_h = 6
+    bx = x
+    by = y + 16
+    
+    pygame.draw.rect(surface, HUD_DIM, (bx, by, bar_w, bar_h), 1)
+    if heat > 0:
+        fill_w = int(bar_w * heat)
+        pygame.draw.rect(surface, col, (bx, by, fill_w, bar_h))
+    
+    if overheated:
+        # Extra warning text
+        f_warn = custom_font(10)
+        warn_lbl = f_warn.render("OVERHEAT", True, col)
+        surface.blit(warn_lbl, (bx + bar_w + 10, by - 2))
+
+# ──────────────────────────────────────────────
 #  HULL INTEGRITY BAR  (center-bottom)
 # ──────────────────────────────────────────────
 
@@ -746,6 +791,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      enemies=None, player_hp=100, active_target=None,
                      dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0,
                      shield_charge=1.0, shield_recharging=False,
+                     laser_heat=0.0, laser_overheated=False,
                      shake_offset=(0.0, 0.0),
                      hit_flash_ratio=0.0, explosion_glow=0.0,
                      missile_lock=False, alert_active=False):
@@ -780,6 +826,9 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     print_spd(_HUD_OVERLAY, W - 130, H - 120)
     draw_speed(_HUD_OVERLAY, W - 120, H - 100, current_speed)
     print_kph(_HUD_OVERLAY, W - 110, H - 80)
+
+    # TEMP Meter (below throttle or nearby)
+    draw_temp_meter(_HUD_OVERLAY, W - 100, H - 240, laser_heat, laser_overheated)
 
     draw_hull_bar(_HUD_OVERLAY, W, H, player_hp,
                   shield_charge=shield_charge,

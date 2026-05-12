@@ -62,6 +62,10 @@ TARGETING_FOV = 100.0               # field of view for target lock in degrees
 SCREEN_SHAKE_DECAY = 30.0           # shake intensity decay per second
 SCREEN_SHAKE_MAX = 45.0             # maximum pixels of displacement
 
+PLAYER_LASER_HEAT_PER_SHOT = 0.06    # heat added per dual-shot (0.0 to 1.0 scale)
+PLAYER_LASER_COOL_RATE = 0.25       # heat dissipated per second
+PLAYER_LASER_FIRE_SHAKE = 3.5    # screen shake intensity when firing
+
 # ──────────────────────────────────────────────
 # UI CONSTANTS
 # ──────────────────────────────────────────────

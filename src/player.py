@@ -5,7 +5,8 @@ from src.constants import (
     PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
-    TARGETING_FOV, PLAYER_LASER_SPEED
+    TARGETING_FOV, PLAYER_LASER_SPEED,
+    PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE
 )
 
 SHIELD_MAX       = 100
@@ -38,6 +39,10 @@ class Player:
         self.shield_flash = 0.0
         self.shake_queued = 0.0
         self.rumble_queued = 0.0
+
+        # Laser Heat System
+        self.laser_heat = 0.0
+        self.overheated = False
 
     @property
     def shield_charge(self):
@@ -128,6 +133,11 @@ class Player:
         self.hit_flash        = max(0.0, self.hit_flash - dt)
         self._target_key_cd   = max(0.0, self._target_key_cd  - dt)
 
+        # ── HEAT MANAGEMENT ────────────────────────
+        self.laser_heat = max(0.0, self.laser_heat - PLAYER_LASER_COOL_RATE * dt)
+        if self.overheated and self.laser_heat <= 0:
+            self.overheated = False
+
         # ── MOVEMENT ──────────────────────────────
         fx, fy, fz = get_forward_from_quat(self.orientation)
         
@@ -157,7 +167,7 @@ class Player:
         self.pos[2] += self.vel[2] * dt
         
         # ── WEAPONS ───────────────────────────────
-        if fire_pressed and self.weapons_cooldown <= 0:
+        if fire_pressed and self.weapons_cooldown <= 0 and not self.overheated:
             forward, right, _ = get_basis_from_quat(self.orientation)
             rfx, rfy, rfz = forward
             rrx, rry, rrz = right
@@ -171,7 +181,14 @@ class Player:
                     wx, wy, wz,
                     rfx * LASER_SPEED, rfy * LASER_SPEED, rfz * LASER_SPEED
                 )
+            
+            # Update cooldown, heat and shake
             self.weapons_cooldown = 0.15
+            self.laser_heat = min(1.0, self.laser_heat + PLAYER_LASER_HEAT_PER_SHOT)
+            if self.laser_heat >= 1.0:
+                self.overheated = True
+            
+            self.shake_queued += PLAYER_LASER_FIRE_SHAKE
             handler.rumble(0.0, 0.12, 50)
             
         # ── RUMBLE FEEDBACK ───────────────────────────

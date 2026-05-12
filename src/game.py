@@ -261,6 +261,8 @@ class Game:
             dodge_flash=player.dodge_flash,
             shield_charge=player.shield_charge,
             shield_recharging=player.shield_recharging,
+            laser_heat=player.laser_heat,
+            laser_overheated=player.overheated,
             shake_offset=shake_offset,
         )
 
