@@ -850,7 +850,7 @@ class Sniper(Enemy):
 
             if self.timer <= 0:
                 # --- LIGHT-SPEED RAYCAST HIT CHECK ---
-                from src.constants import PLAYER_COLLISION_RADIUS
+                from src.constants import PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY
                 
                 dx_p, dy_p, dz_p = px - self.x, py - self.y, pz - self.z
                 dist_f = math.sqrt(dx_p*dx_p + dy_p*dy_p + dz_p*dz_p) or 1.0
@@ -865,7 +865,9 @@ class Sniper(Enemy):
                 dot = (dx_p/dist_f)*self.forward[0] + (dy_p/dist_f)*self.forward[1] + (dz_p/dist_f)*self.forward[2]
                 
                 if player is not None and dot > 0 and perp_dist < PLAYER_COLLISION_RADIUS:
-                    player.take_damage(50)
+                    # Roll for hit success based on tunable constant
+                    if random.random() < SNIPER_ACCURACY:
+                        player.take_damage(50)
                 
                 # spawn visual beam regardless of hit
                 if global_projectiles is not None:
