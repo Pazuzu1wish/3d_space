@@ -12,11 +12,13 @@ from numba import njit
 
 # ── Quaternion primitives ──────────────────────
 
+@njit(fastmath=True, cache=True)
 def quat_identity():
     """w, x, y, z"""
     return (1.0, 0.0, 0.0, 0.0)
 
 
+@njit(fastmath=True, cache=True)
 def quat_from_axis_angle(ax, ay, az, angle):
     """Create a unit quaternion representing a rotation of `angle` radians
     around the axis (ax, ay, az).  The axis must already be normalised."""
@@ -25,6 +27,7 @@ def quat_from_axis_angle(ax, ay, az, angle):
     return (math.cos(half), ax * s, ay * s, az * s)
 
 
+@njit(fastmath=True, cache=True)
 def quat_mul(a, b):
     """Hamilton product of two quaternions."""
     aw, ax, ay, az = a
@@ -37,17 +40,20 @@ def quat_mul(a, b):
     )
 
 
+@njit(fastmath=True, cache=True)
 def quat_normalise(q):
     w, x, y, z = q
     mag = math.sqrt(w*w + x*x + y*y + z*z) or 1.0
     return (w/mag, x/mag, y/mag, z/mag)
 
 
+@njit(fastmath=True, cache=True)
 def quat_conjugate(q):
     w, x, y, z = q
     return (w, -x, -y, -z)
 
 
+@njit(fastmath=True, cache=True)
 def quat_rotate_vec(q, v):
     """Rotate vector v = (vx, vy, vz) by unit quaternion q.
     Uses direct rotation matrix formula instead of q*p*q* (3x faster)."""
@@ -70,6 +76,7 @@ def quat_rotate_vec(q, v):
 # Each rotation is applied around the ship's OWN axes,
 # so gimbal lock and world-relative weirdness disappear.
 
+@njit(fastmath=True, cache=True)
 def rotate_pitch(q, delta):
     """Pitch: rotate around the ship's local X (right) axis."""
     # local right = q rotated (1,0,0)
@@ -78,6 +85,7 @@ def rotate_pitch(q, delta):
     return quat_normalise(quat_mul(dq, q))
 
 
+@njit(fastmath=True, cache=True)
 def rotate_yaw(q, delta):
     """Yaw: rotate around the ship's local Y (up) axis."""
     local_up = quat_rotate_vec(q, (0.0, 1.0, 0.0))
@@ -85,6 +93,7 @@ def rotate_yaw(q, delta):
     return quat_normalise(quat_mul(dq, q))
 
 
+@njit(fastmath=True, cache=True)
 def rotate_roll(q, delta):
     """Roll: rotate around the ship's local Z (forward) axis."""
     local_fwd = quat_rotate_vec(q, (0.0, 0.0, 1.0))
@@ -94,6 +103,7 @@ def rotate_roll(q, delta):
 
 # ── Derived basis vectors ──────────────────────
 
+@njit(fastmath=True, cache=True)
 def get_basis_from_quat(q):
     """Return (forward, right, up) unit vectors from orientation quaternion.
     Builds the rotation matrix once and extracts all 3 columns directly."""
@@ -122,6 +132,7 @@ def get_basis_from_quat(q):
     return forward, right, up
 
 
+@njit(fastmath=True, cache=True)
 def get_forward_from_quat(q):
     """Extract just the forward (Z) vector from a quaternion — avoids full basis build."""
     w, qx, qy, qz = q
@@ -132,6 +143,7 @@ def get_forward_from_quat(q):
     )
 
 
+@njit(fastmath=True, cache=True)
 def get_right_from_quat(q):
     """Extract just the right (X) vector from a quaternion."""
     w, qx, qy, qz = q
@@ -144,6 +156,7 @@ def get_right_from_quat(q):
 
 # ── World → Camera transform ───────────────────
 
+@njit(fastmath=True, cache=True)
 def world_to_camera(x, y, z, px, py, pz, q):
     """Transform world-space point (x,y,z) into camera space.
 
@@ -233,6 +246,7 @@ def project_to_screen_batch(cam_verts, fov, cx, cy, ox, oy, near_clip):
 
 # ── Targeting math ────────────────────────────
 
+@njit(fastmath=True, cache=True)
 def calculate_lead_position(player_pos, player_vel, target_pos, target_vel,
                             projectile_speed):
 
@@ -282,6 +296,7 @@ def calculate_lead_position(player_pos, player_vel, target_pos, target_vel,
 
     return (intercept_x, intercept_y, intercept_z)
 
+@njit(fastmath=True, cache=True)
 def is_in_front_of_camera(world_pos, player_pos, player_orientation):
     """
     Returns True if world_pos is in the positive-Z half of camera space
@@ -298,6 +313,7 @@ def is_in_front_of_camera(world_pos, player_pos, player_orientation):
 # ── Legacy shims (kept so other modules don't break) ──────────────────────────
 #  These are thin wrappers; prefer the quat versions for new code.
 
+@njit(fastmath=True, cache=True)
 def get_forward_vector(pitch, yaw):
     """Legacy: forward from Euler pitch/yaw (no roll)."""
     fx = math.sin(yaw) * math.cos(pitch)
@@ -306,6 +322,7 @@ def get_forward_vector(pitch, yaw):
     return fx, fy, fz
 
 
+@njit(fastmath=True, cache=True)
 def get_right_vector(pitch, yaw):
     """Legacy: right from Euler pitch/yaw."""
     fx, fy, fz = get_forward_vector(pitch, yaw)
@@ -314,6 +331,7 @@ def get_right_vector(pitch, yaw):
     return rx/length, ry/length, rz/length
 
 
+@njit(fastmath=True, cache=True)
 def get_basis_vectors(pitch, yaw, roll):
     """Legacy Euler basis — prefer get_basis_from_quat."""
     cp, sp = math.cos(pitch), math.sin(pitch)
@@ -328,6 +346,7 @@ def get_basis_vectors(pitch, yaw, roll):
     uz = sy*sr + cy*sp*cr
     return (fx,fy,fz), (rx,ry,rz), (ux,uy,uz)
 
+@njit(fastmath=True, cache=True)
 def basis_from_forward(forward):
     fx, fy, fz = forward
     flen = math.sqrt(fx*fx + fy*fy + fz*fz) or 1.0

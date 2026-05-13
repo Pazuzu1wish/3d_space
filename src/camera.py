@@ -5,6 +5,7 @@ from src.math_engine import (
     world_to_camera_batch, 
     project_to_screen_batch
 )
+from numba import njit
 
 class Camera:
     def __init__(self, W, H, fov=400.0, near_clip=0.1):
@@ -133,3 +134,55 @@ class Camera:
             return False
             
         return True
+
+    def sphere_in_frustum_batch_call(self, centers, radii):
+        px, py, pz = self.pos
+        return sphere_in_frustum_batch(
+            centers, radii, px, py, pz, self._r_coeffs, self.near_clip, self.fov, self.cx, self.cy, self.W, self.H
+        )
+
+@njit(fastmath=True, cache=True)
+def sphere_in_frustum_batch(centers, radii, px, py, pz, r_coeffs, near_clip, fov, cx, cy, W, H):
+    N = centers.shape[0]
+    out = np.empty(N, dtype=np.bool_)
+    
+    r00 = r_coeffs[0]; r01 = r_coeffs[1]; r02 = r_coeffs[2]
+    r10 = r_coeffs[3]; r11 = r_coeffs[4]; r12 = r_coeffs[5]
+    r20 = r_coeffs[6]; r21 = r_coeffs[7]; r22 = r_coeffs[8]
+    
+    for i in range(N):
+        dx = centers[i, 0] - px
+        dy = centers[i, 1] - py
+        dz = centers[i, 2] - pz
+        
+        cz = dx*r20 + dy*r21 + dz*r22
+        radius = radii[i]
+        
+        if cz + radius < near_clip:
+            out[i] = False
+            continue
+            
+        if cz < near_clip + radius:
+            out[i] = True
+            continue
+            
+        # Camera X, Y
+        c_x = dx*r00 + dy*r01 + dz*r02
+        c_y = dx*r10 + dy*r11 + dz*r12
+        
+        scale = fov / cz
+        screen_radius = radius * scale
+        
+        sx = c_x * scale + cx
+        sy = c_y * scale + cy
+        
+        if sx + screen_radius < 0 or sx - screen_radius > W:
+            out[i] = False
+            continue
+        if sy + screen_radius < 0 or sy - screen_radius > H:
+            out[i] = False
+            continue
+            
+        out[i] = True
+        
+    return out

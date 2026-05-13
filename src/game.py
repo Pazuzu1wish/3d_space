@@ -71,7 +71,7 @@ class Game:
         # Spawn some initial asteroid fields near encounter points 
         # TODO: Refactor asteroid field creation logic 
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=56, radius=25000)
+            field = AsteroidField(enc['origin'], count=6, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
@@ -95,7 +95,7 @@ class Game:
         self.waypoints = [
             {'pos': (4000, 2000, 8000), 'label': 'SECTOR ALPHA', 'active': True, 'color': (0, 255, 100, 200)},
             {'pos': (-6000, -1500, 3000), 'label': 'COMM RELAY', 'active': True, 'color': (255, 200, 0, 200)},
-            {'pos': (0, -2000, -5000), 'label': 'HOME BASE', 'active': True, 'color': (0, 200, 255, 200)}
+            {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)}
         ]
 
 # -------------------------------------------------------------------------

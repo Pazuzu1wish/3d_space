@@ -1,6 +1,53 @@
 import pygame
 import math
 import numpy as np
+from numba import njit
+
+@njit(fastmath=True, cache=True)
+def process_faces_batch_numba(cam_verts, projected, face_indices):
+    N_faces = face_indices.shape[0]
+    valid = np.zeros(N_faces, dtype=np.bool_)
+    shades = np.zeros(N_faces, dtype=np.int32)
+    avg_zs = np.zeros(N_faces, dtype=np.float64)
+    
+    for i in range(N_faces):
+        idx0 = face_indices[i, 0]
+        idx1 = face_indices[i, 1]
+        idx2 = face_indices[i, 2]
+        
+        if projected[idx0, 0] <= -900000.0 or projected[idx1, 0] <= -900000.0 or projected[idx2, 0] <= -900000.0:
+            continue
+            
+        v1x = cam_verts[idx0, 0]; v1y = cam_verts[idx0, 1]; v1z = cam_verts[idx0, 2]
+        v2x = cam_verts[idx1, 0]; v2y = cam_verts[idx1, 1]; v2z = cam_verts[idx1, 2]
+        v3x = cam_verts[idx2, 0]; v3y = cam_verts[idx2, 1]; v3z = cam_verts[idx2, 2]
+        
+        ux = v2x - v1x; uy = v2y - v1y; uz = v2z - v1z
+        vx = v3x - v1x; vy = v3y - v1y; vz = v3z - v1z
+        
+        fnz = ux * vy - uy * vx
+        if fnz >= 0:
+            continue
+            
+        nx = uy * vz - uz * vy
+        ny = uz * vx - ux * vz
+        
+        length = math.sqrt(nx*nx + ny*ny + fnz*fnz)
+        if length > 0.0001:
+            normalized_z = fnz / length
+        else:
+            normalized_z = 0.0
+            
+        shade = 255.0 * max(0.2, -normalized_z)
+        if shade < 0: shade = 0
+        elif shade > 255: shade = 255
+            
+        valid[i] = True
+        shades[i] = int(shade)
+        avg_zs[i] = (v1z + v2z + v3z) / 3.0
+        
+    return valid, shades, avg_zs
+
 
 class RenderPipeline:
     def __init__(self, camera):
@@ -22,6 +69,7 @@ class RenderPipeline:
         
         # Scale cache for nebulae to avoid expensive transform.scale every frame
         self._scaled_nebulae = {} # (cache_key, size) -> surface
+        self._mesh_cache = {}
 
     def _create_puff_texture(self, size):
         """Create a soft, radial gradient puff texture for nebulae."""
@@ -40,6 +88,8 @@ class RenderPipeline:
             self._tinted_puffs.clear()
         if len(self._scaled_nebulae) > 200:
             self._scaled_nebulae.clear()
+        if len(self._mesh_cache) > 2000:
+            self._mesh_cache.clear()
         
     def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None):
         """
@@ -69,64 +119,43 @@ class RenderPipeline:
         # Project (Batch Numba)
         projected = self.camera.project_batch(cam_verts)
         
-        # Mapping for face processing
-        if v_ids is not None:
-            cam_verts_map = {vid: cam_verts[i] for i, vid in enumerate(v_ids)}
-            projected_map = {}
-            for i, vid in enumerate(v_ids):
-                if projected[i, 0] > -900000.0:
-                    projected_map[vid] = projected[i]
-        else:
-            # If verts was a list/array, v_ids are just indices
-            cam_verts_map = cam_verts
-            projected_map = projected
+        mesh_id = id(faces)
+        if mesh_id not in self._mesh_cache:
+            if v_ids is not None:
+                vid_map = {vid: i for i, vid in enumerate(v_ids)}
+            else:
+                vid_map = None
+            f_idx = []
+            f_col = []
+            for f in faces:
+                if len(f['v']) == 3:
+                    if vid_map:
+                        f_idx.append([vid_map[f['v'][0]], vid_map[f['v'][1]], vid_map[f['v'][2]]])
+                    else:
+                        f_idx.append([f['v'][0], f['v'][1], f['v'][2]])
+                    f_col.append(f['color'])
+            self._mesh_cache[mesh_id] = (np.array(f_idx, dtype=np.int32), np.array(f_col, dtype=np.int32))
+            
+        face_indices, face_colors = self._mesh_cache[mesh_id]
         
-        # 2. Process faces
-        for f in faces:
-            v_indices = f['v']
-            
-            # Check projection and cull
-            skip = False
-            pts = []
-            c_pts = []
-            for vid in v_indices:
-                if v_ids is not None:
-                    if vid not in projected_map:
-                        skip = True; break
-                    pts.append(projected_map[vid])
-                    c_pts.append(cam_verts_map[vid])
-                else:
-                    if projected_map[vid, 0] <= -900000.0:
-                        skip = True; break
-                    pts.append(projected_map[vid])
-                    c_pts.append(cam_verts_map[vid])
-            
-            if skip: continue
-                
-            # Backface culling in camera space
-            v1, v2, v3 = c_pts[0], c_pts[1], c_pts[2]
-            ux_f, uy_f, uz_f = v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]
-            vx_f, vy_f, vz_f = v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]
-            fnz = ux_f * vy_f - uy_f * vx_f
-            
-            if fnz >= 0:
-                continue
-                
-            # Shading
-            length = math.sqrt(fnz ** 2 + (ux_f*vz_f - uz_f*vx_f)**2 + (uy_f*vz_f - uz_f*vy_f)**2)
-            normalized_z = fnz / length if length > 0.0001 else 0
-            shade = max(0, min(255, int(255 * max(0.2, -normalized_z))))
-            
-            color = f['color']
-            r = int(color[0] * (shade / 255))
-            g = int(color[1] * (shade / 255))
-            b = int(color[2] * (shade / 255))
-            
-            avg_z = sum(cv[2] for cv in c_pts) / len(c_pts)
-            
-            self._layers[layer].append((
-                avg_z, 'poly', [(p[0], p[1]) for p in pts], (r, g, b)
-            ))
+        valid_mask, shades, avg_zs = process_faces_batch_numba(cam_verts, projected, face_indices)
+        
+        layer_list = self._layers[layer]
+        for i in range(len(face_indices)):
+            if valid_mask[i]:
+                shade = shades[i]
+                r = int(face_colors[i, 0] * (shade / 255.0))
+                g = int(face_colors[i, 1] * (shade / 255.0))
+                b = int(face_colors[i, 2] * (shade / 255.0))
+                idx0 = face_indices[i, 0]
+                idx1 = face_indices[i, 1]
+                idx2 = face_indices[i, 2]
+                pts = [
+                    (projected[idx0, 0], projected[idx0, 1]),
+                    (projected[idx1, 0], projected[idx1, 1]),
+                    (projected[idx2, 0], projected[idx2, 1])
+                ]
+                layer_list.append((avg_zs[i], 'poly', pts, (r, g, b)))
 
     def submit_polygon(self, world_verts, color, layer='opaque'):
         """Submit a single polygon."""

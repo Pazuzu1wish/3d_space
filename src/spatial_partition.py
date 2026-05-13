@@ -130,21 +130,30 @@ class SpatialPartition:
         Uses cell-level frustum culling.
         """
         visible_entities = []
+        if not self.spatial_hash.grid:
+            return visible_entities
+            
         cell_size = self.cell_size
         half_cell = cell_size * 0.5
         # Sphere radius that encompasses a cell (diagonal / 2)
         cell_radius = math.sqrt(3 * (half_cell**2))
         
-        for cell_coords, entities in self.spatial_hash.grid.items():
-            # Calculate world center of this cell
-            cx = cell_coords[0] * cell_size + half_cell
-            cy = cell_coords[1] * cell_size + half_cell
-            cz = cell_coords[2] * cell_size + half_cell
+        import numpy as np
+        cells = list(self.spatial_hash.grid.keys())
+        centers = np.empty((len(cells), 3), dtype=np.float64)
+        for i, cell_coords in enumerate(cells):
+            centers[i, 0] = cell_coords[0] * cell_size + half_cell
+            centers[i, 1] = cell_coords[1] * cell_size + half_cell
+            centers[i, 2] = cell_coords[2] * cell_size + half_cell
             
-            # Check if this cell's bounding sphere is in frustum
-            if camera.sphere_in_frustum(cx, cy, cz, cell_radius):
-                visible_entities.extend(entities)
+        radii = np.full(len(cells), cell_radius, dtype=np.float64)
         
+        visible_mask = camera.sphere_in_frustum_batch_call(centers, radii)
+        
+        for i, cell_coords in enumerate(cells):
+            if visible_mask[i]:
+                visible_entities.extend(self.spatial_hash.grid[cell_coords])
+                
         return visible_entities
 
     def clear(self) -> None:
