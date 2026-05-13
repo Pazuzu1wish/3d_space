@@ -12,7 +12,8 @@ BUTTON_NAMES = [
     'X', 'Circle', 'Triangle', 'Square',
     'L1', 'R1', 'L2', 'R2',
     'Share', 'Options', 'PS', 'L3',
-    'R3', 'Touchpad'
+    'R3', 'Touchpad',
+    'DPad Up', 'DPad Down', 'DPad Left', 'DPad Right'
 ]
 
 # Real DS4 axis order via SDL/pygame:
@@ -179,7 +180,31 @@ class DS4Input:
             return True
 
         if event.type == pygame.JOYHATMOTION:
+            old_hat = self._hat
             self._hat = event.value
+            
+            # Synthesize button-like events for D-Pad directions
+            for dx, dy, name in [
+                (0, 1, 'DPad Up'), (0, -1, 'DPad Down'),
+                (-1, 0, 'DPad Left'), (1, 0, 'DPad Right')
+            ]:
+                # Check vertical
+                if dy != 0:
+                    if self._hat[1] == dy and old_hat[1] != dy:
+                        self._just_pressed.add(name)
+                    if self._hat[1] != dy and old_hat[1] == dy:
+                        self._just_released.add(name)
+                    if self._hat[1] == dy: self._held.add(name)
+                    else: self._held.discard(name)
+                # Check horizontal
+                if dx != 0:
+                    if self._hat[0] == dx and old_hat[0] != dx:
+                        self._just_pressed.add(name)
+                    if self._hat[0] != dx and old_hat[0] == dx:
+                        self._just_released.add(name)
+                    if self._hat[0] == dx: self._held.add(name)
+                    else: self._held.discard(name)
+
             if self.on_hat:
                 self.on_hat(event.value)
             return True

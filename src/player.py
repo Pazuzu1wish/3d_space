@@ -29,7 +29,6 @@ class Player:
         # Targeting
         self.active_target = None          # the currently locked enemy object
         self._target_key_cd = 0.0         # prevents key repeat on T/Y
-        self._prev_dpad = (0, 0)          # track previous dpad state for just_pressed detection
 
         # Dodge system
         self.dodge_cooldown = 0.0
@@ -80,16 +79,13 @@ class Player:
         # ── TARGETING KEYS ────────────────────────
         # Resolved later via target_closest() / cycle_targets()
         # (called from game.py after enemies list is available)
-        current_dpad = handler.dpad()
-        dpad_up_pressed = current_dpad[1] == 1 and self._prev_dpad[1] != 1
+        dpad_up_pressed = handler.just_pressed('DPad Up')
 
         self._key_target_closest = keys[pygame.K_t] and self._target_key_cd <= 0
         self._key_cycle_target   = (keys[pygame.K_y] or dpad_up_pressed) and self._target_key_cd <= 0
         if keys[pygame.K_t] or keys[pygame.K_y] or dpad_up_pressed:
             if self._target_key_cd <= 0:
                 self._target_key_cd = 0.25   # 250 ms debounce
-
-        self._prev_dpad = current_dpad
 
         if handler.held('R1'): self.throttle = min(1.0, self.throttle + dt * 2.8)
         if handler.held('L1'): self.throttle = max(-1.0, self.throttle - dt * 2.8)

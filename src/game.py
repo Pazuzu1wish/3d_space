@@ -89,6 +89,7 @@ class Game:
         self.current_magnification = 1.0 # Current smoothed magnification level
 
         # --- HUD WAYPOINTS ---
+        self.show_waypoints = True
         # List of {'pos': (x,y,z), 'label': str, 'active': bool, 'color': (R,G,B,A)}
         self.waypoints = [
             {'pos': (4000, 2000, 8000), 'label': 'SECTOR ALPHA', 'active': True, 'color': (0, 255, 100, 200)},
@@ -271,7 +272,7 @@ class Game:
             shield_recharging=player.shield_recharging,
             laser_heat=player.laser_heat,
             laser_overheated=player.overheated,
-            waypoints=self.waypoints,
+            waypoints=self.waypoints if self.show_waypoints else None,
             shake_offset=shake_offset,
         )
 
@@ -429,6 +430,9 @@ class Game:
 
             if self.handler.just_pressed('Options'):
                 self.paused = not self.paused
+
+            if self.handler.just_pressed('DPad Left'):
+                self.show_waypoints = not self.show_waypoints
 
             keys = pygame.key.get_pressed()
 
