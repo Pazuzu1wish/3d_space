@@ -30,22 +30,33 @@ class PlayerMissile:
         self.life -= dt
 
     def submit_to_renderer(self, renderer):
-        # Draw trail
-        renderer.submit_line((self.px, self.py, self.pz), (self.x, self.y, self.z), self.color, int(self.size_mult * 4))
-        # Draw missile core
-        renderer.submit_sprite(self.x, self.y, self.z, (255, 255, 255), self.size_mult * 2)
+        # Pulsing glow effect for better visual presence
+        pulse = (math.sin(pygame.time.get_ticks() * 0.015) + 1.0) * 0.5  # 0.0 to 1.0
+        glow_size = self.size_mult * (5.0 + pulse * 3.0)
+        
+        # Draw engine glow (distinct color based on type)
+        glow_color = (255, 120, 30) if self.homing else (100, 180, 255)
+        renderer.submit_sprite(self.x, self.y, self.z, glow_color, glow_size)
+        
+        # Draw thicker engine trail
+        renderer.submit_line((self.px, self.py, self.pz), (self.x, self.y, self.z), self.color, int(self.size_mult * 8))
+        
+        # Draw missile core (intense white)
+        renderer.submit_sprite(self.x, self.y, self.z, (255, 255, 255), self.size_mult * 3.0)
 
-    def check_enemy_collision(self, enemies, spatial, particle_pool):
-        nearby = spatial.query_nearby((self.x, self.y, self.z), 500.0)
+    def check_collisions(self, enemies, asteroids, spatial, particle_pool):
+        # Increased query radius for better reliability with larger objects
+        nearby = spatial.query_nearby((self.x, self.y, self.z), 800.0)
         for obj in nearby:
-            if obj in enemies:
+            if obj in enemies or obj in asteroids:
                 dist_sq = (self.x - obj.x)**2 + (self.y - obj.y)**2 + (self.z - obj.z)**2
                 rad = getattr(obj, 'hit_radius', 80)
-                if dist_sq < (rad + 20)**2:
+                # Slightly larger collision buffer for missiles
+                if dist_sq < (rad + 50)**2:
                     if hasattr(obj, 'on_hit'):
                         obj.on_hit(self.damage)
                     self.life = 0
-                    for _ in range(25):
+                    for _ in range(35):
                         particle_pool.spawn(self.x, self.y, self.z)
                     return True
         return False

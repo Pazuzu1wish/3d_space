@@ -112,7 +112,7 @@ class Game:
         # ── UPDATE PLAYER MISSILES ────────────────────
         for m in self.player_missiles[:]:
             m.update(dt)
-            if m.check_enemy_collision(enemies, self.spatial, self.particle_pool):
+            if m.check_collisions(enemies, self.asteroids, self.spatial, self.particle_pool):
                 if m in self.player_missiles:
                     self.player_missiles.remove(m)
             elif m.life <= 0:
