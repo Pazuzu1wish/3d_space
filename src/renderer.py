@@ -119,7 +119,8 @@ class RenderPipeline:
         # Project (Batch Numba)
         projected = self.camera.project_batch(cam_verts)
         
-        mesh_id = id(faces)
+        n_verts = len(v_ids) if v_ids is not None else len(v_data)
+        mesh_id = (id(faces), n_verts)
         if mesh_id not in self._mesh_cache:
             if v_ids is not None:
                 vid_map = {vid: i for i, vid in enumerate(v_ids)}
