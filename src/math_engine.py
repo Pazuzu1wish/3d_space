@@ -368,3 +368,36 @@ def basis_from_forward(forward):
     uz = rx * fy - ry * fx
 
     return (fx, fy, fz), (rx, ry, rz), (ux, uy, uz)
+
+@njit(fastmath=True, cache=True)
+def ray_sphere_intersection(ro, rd, sc, sr):
+    """
+    Ray-Sphere intersection test.
+    ro: Ray origin (x, y, z)
+    rd: Ray direction (normalized) (dx, dy, dz)
+    sc: Sphere center (x, y, z)
+    sr: Sphere radius
+    Returns distance to hit, or -1.0 if no hit.
+    """
+    ocx, ocy, ocz = ro[0] - sc[0], ro[1] - sc[1], ro[2] - sc[2]
+    
+    # Quadratic coefficients: At^2 + Bt + C = 0
+    # Since rd is normalized, A = rd.rd = 1
+    b = 2.0 * (ocx * rd[0] + ocy * rd[1] + ocz * rd[2])
+    c = (ocx*ocx + ocy*ocy + ocz*ocz) - sr*sr
+    
+    discriminant = b*b - 4.0*c
+    
+    if discriminant < 0:
+        return -1.0
+    
+    sqrt_d = math.sqrt(discriminant)
+    t1 = (-b - sqrt_d) / 2.0
+    t2 = (-b + sqrt_d) / 2.0
+    
+    if t1 >= 0:
+        return t1
+    if t2 >= 0:
+        return t2
+        
+    return -1.0
