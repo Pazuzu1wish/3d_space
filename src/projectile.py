@@ -1,7 +1,7 @@
 import math
 import pygame
 from src.math_engine import world_to_camera, project_to_screen
-from src.constants import HOMING_TURN_RATE
+from src.constants import HOMING_TURN_RATE, PARTICLES_ON_HIT
 
 class EnemyProjectile:
     def __init__(self, x, y, z, vx, vy, vz, life, damage, color, size_mult, homing=False):
@@ -42,6 +42,21 @@ class EnemyProjectile:
             return True
         return False
 
+    def check_asteroid_collision(self, spatial, particles):
+        """Check if this projectile hits an asteroid. Returns True if collision occurred."""
+        # Using a fixed radius to check for asteroid proximity
+        nearby = spatial.query_nearby((self.x, self.y, self.z), 500.0)
+        
+        for obj in nearby:
+            if hasattr(obj, 'is_hit') and obj.is_hit(self.x, self.y, self.z):
+                if hasattr(obj, 'on_hit'):
+                    obj.on_hit(1) # Damage the asteroid
+                
+                self.life = 0
+                for _ in range(PARTICLES_ON_HIT):
+                    particles.spawn(self.x, self.y, self.z)
+                return True
+        return False
 
 class MachineGunBolt(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):

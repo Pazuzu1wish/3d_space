@@ -71,7 +71,7 @@ class Game:
         # Spawn some initial asteroid fields near encounter points 
         # TODO: Refactor asteroid field creation logic 
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=6, radius=25000)
+            field = AsteroidField(enc['origin'], count=30, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
@@ -121,7 +121,7 @@ class Game:
 
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
-            e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies, player)
+            e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies, player, spatial=self.spatial)
             self.spatial.update_entity(e, (e.x, e.y, e.z))
 
             # Drone destroyed
@@ -210,8 +210,22 @@ class Game:
         # ── UPDATE PROJECTILES ────────────────────────
         for bolt in enemy_projectiles[:]:
             bolt.update(dt, player.pos)
+            
+            # Check asteroid collision
+            if bolt.check_asteroid_collision(self.spatial, self.particle_pool):
+                if bolt in enemy_projectiles:
+                    enemy_projectiles.remove(bolt)
+                continue
+
+            # Check player collision (moved from player.py for consistency)
+            if bolt.check_player_collision(player, self.particle_pool):
+                if bolt in enemy_projectiles:
+                    enemy_projectiles.remove(bolt)
+                continue
+
             if bolt.life <= 0:
-                enemy_projectiles.remove(bolt)
+                if bolt in enemy_projectiles:
+                    enemy_projectiles.remove(bolt)
 
     def draw_game(self, screen, W, H, player, stars, enemies, enemy_projectiles, dt):
         screen.fill((5, 5, 15))

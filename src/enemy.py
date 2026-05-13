@@ -3,6 +3,7 @@ import random
 import pygame
 
 from src.math_engine import (
+    ray_sphere_intersection,
     world_to_camera,
     project_to_screen,
     basis_from_forward,
@@ -399,7 +400,7 @@ class SuicideDrone(Enemy):
         if pattern_name in PATTERN_MAP:
             self.pattern = PATTERN_MAP[pattern_name]
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.t += dt
         self.engine_time += dt
         self._pattern_check_timer += dt
@@ -583,7 +584,7 @@ class Dogfighter(Enemy):
     def _player_forward(self, orientation):
         return get_forward_from_quat(orientation)
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.t += dt
         self.engine_time += dt
         self.mg_timer -= dt
@@ -820,7 +821,7 @@ class Sniper(Enemy):
         ]
 
     
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.timer -= dt
         self.engine_time += dt
         px, py, pz = player_pos
@@ -845,42 +846,62 @@ class Sniper(Enemy):
             self.timer = 1.5
 
         if self.state == 'charging':
-            flash = int((math.sin(self.timer * 20) + 1) * 127)
-            self.base_color = (255, flash, flash)
-
-            if self.timer <= 0:
-                # --- LIGHT-SPEED RAYCAST HIT CHECK ---
-                from src.constants import PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY
-                
-                dx_p, dy_p, dz_p = px - self.x, py - self.y, pz - self.z
-                dist_f = math.sqrt(dx_p*dx_p + dy_p*dy_p + dz_p*dz_p) or 1.0
-                
-                # closest approach of beam line to player center
-                # cross product magnitude gives perpendicular distance
-                cx = (dy_p/dist_f)*self.forward[2] - (dz_p/dist_f)*self.forward[1]
-                cy = (dz_p/dist_f)*self.forward[0] - (dx_p/dist_f)*self.forward[2]
-                cz = (dx_p/dist_f)*self.forward[1] - (dy_p/dist_f)*self.forward[0]
-                perp_dist = math.sqrt(cx*cx + cy*cy + cz*cz) * dist_f
-                
-                dot = (dx_p/dist_f)*self.forward[0] + (dy_p/dist_f)*self.forward[1] + (dz_p/dist_f)*self.forward[2]
-                
-                if player is not None and dot > 0 and perp_dist < PLAYER_COLLISION_RADIUS:
-                    # Roll for hit success based on tunable constant
-                    if random.random() < SNIPER_ACCURACY:
-                        player.take_damage(50)
-                
-                # spawn visual beam regardless of hit
-                if global_projectiles is not None:
-                    global_projectiles.append(SniperBeam(
-                        self.x, self.y, self.z,
-                        self.forward[0] * 32000,
-                        self.forward[1] * 32000,
-                        self.forward[2] * 32000
-                    ))
-                
+            # --- LIGHT-SPEED RAYCAST LOS CHECK ---
+            dx_p, dy_p, dz_p = px - self.x, py - self.y, pz - self.z
+            dist_f = math.sqrt(dx_p*dx_p + dy_p*dy_p + dz_p*dz_p) or 1.0
+            
+            blocked = False
+            hit_dist = dist_f
+            hit_obj = None
+            if spatial is not None:
+                mid_x, mid_y, mid_z = self.x + dx_p * 0.5, self.y + dy_p * 0.5, self.z + dz_p * 0.5
+                nearby = spatial.query_nearby((mid_x, mid_y, mid_z), dist_f * 0.5 + 500)
+                for obj in nearby:
+                    if obj is self or obj is player: continue
+                    if hasattr(obj, 'hit_radius'):
+                        t = ray_sphere_intersection((self.x, self.y, self.z), self.forward, (obj.x, obj.y, obj.z), obj.hit_radius)
+                        if 0 < t < hit_dist:
+                            blocked = True
+                            hit_dist = t
+                            hit_obj = obj
+            
+            if blocked:
+                # Cancel charge-up
                 self.state = 'aiming'
-                self.timer = random.uniform(4.0, 6.0)
+                self.timer = 1.5
                 self.base_color = (210, 165, 45)
+            else:
+                flash = int((math.sin(self.timer * 20) + 1) * 127)
+                self.base_color = (255, flash, flash)
+
+                if self.timer <= 0:
+                    from src.constants import PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY
+                    
+                    # closest approach of beam line to player center
+                    cx = (dy_p/dist_f)*self.forward[2] - (dz_p/dist_f)*self.forward[1]
+                    cy = (dz_p/dist_f)*self.forward[0] - (dx_p/dist_f)*self.forward[2]
+                    cz = (dx_p/dist_f)*self.forward[1] - (dy_p/dist_f)*self.forward[0]
+                    perp_dist = math.sqrt(cx*cx + cy*cy + cz*cz) * dist_f
+                    
+                    dot = (dx_p/dist_f)*self.forward[0] + (dy_p/dist_f)*self.forward[1] + (dz_p/dist_f)*self.forward[2]
+                    
+                    if player is not None and dot > 0 and perp_dist < PLAYER_COLLISION_RADIUS:
+                        # Roll for hit success based on tunable constant
+                        if random.random() < SNIPER_ACCURACY:
+                            player.take_damage(50)
+                    
+                    # spawn visual beam regardless of hit
+                    if global_projectiles is not None:
+                        global_projectiles.append(SniperBeam(
+                            self.x, self.y, self.z,
+                            self.forward[0] * 32000,
+                            self.forward[1] * 32000,
+                            self.forward[2] * 32000
+                        ))
+                    
+                    self.state = 'aiming'
+                    self.timer = random.uniform(4.0, 6.0)
+                    self.base_color = (210, 165, 45)
 
         if self.state == 'fleeing':
             # Rotate away from player and thrust
@@ -1040,7 +1061,7 @@ class Corvette(Enemy):
             {'v': ['v24', 'v29', 'v25'], 'color': C_STEEL}, # 44 nacelle R bot
             {'v': ['v24', 'v28', 'v29'], 'color': C_STEEL}, # 45 nacelle R bot
         ]
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.t += dt
         self.engine_time += dt
         self.turret_timer -= dt
@@ -1171,7 +1192,7 @@ class Minelayer(Enemy):
             
         self.flank_offset = (rx * dist, ry * dist, rz * dist)
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.engine_time += dt
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
@@ -1349,7 +1370,7 @@ class StealthInterceptor(Enemy):
             self.flank_offset = (-p_fwd[0] * dist, -p_fwd[1] * dist, -p_fwd[2] * dist)
         self.reached_flank = False
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.engine_time += dt
         px, py, pz = player_pos
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
@@ -1517,7 +1538,7 @@ class Carrier(Enemy):
         hit_z = -500 <= local_z <= 800
         return hit_x and hit_y and hit_z
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.spawn_timer -= dt
         self.sniper_timer -= dt
         self.bolt_timer -= dt

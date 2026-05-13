@@ -266,12 +266,6 @@ class Player:
             handler.rumble(intensity, intensity * 0.5, 200)
             self.rumble_queued = 0.0
 
-        # ── CHECK PROJECTILE HITS ─────────────────────
-        for bolt in enemy_projectiles[:]:
-            if bolt.check_player_collision(self, particles):
-                if bolt in enemy_projectiles:
-                    enemy_projectiles.remove(bolt)
-
     def take_damage(self, amount):
         self.shield_regen_timer = SHIELD_DELAY
         self.hit_flash = HIT_FLASH_DURATION
