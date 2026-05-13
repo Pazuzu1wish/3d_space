@@ -76,8 +76,8 @@ SNIPER_ACCURACY = 0.8              # 80% chance for a perfect hit check
 PLAYER_MISSILE_MAX_AMMO = 10
 PLAYER_MISSILE_LOCK_TIME = 2.0      # seconds to lock
 PLAYER_MISSILE_LOCK_FOV = 0.98      # dot product threshold for crosshair lock
-PLAYER_MISSILE_SPEED = 14000.0
-PLAYER_MISSILE_DAMAGE = 100.0
+PLAYER_MISSILE_SPEED = 10000.0
+PLAYER_MISSILE_DAMAGE = 50.0
 PLAYER_MISSILE_TURN_RATE = 2.5      # homing turn rate per second
 PLAYER_MISSILE_LIFE = 8.0           # seconds before expiring
 
