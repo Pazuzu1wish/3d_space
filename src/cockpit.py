@@ -531,7 +531,8 @@ def _draw_active_bracket(surface, sx, sy, half=18):
 
 def draw_target_brackets(
         surface, player_pos, player_vel, player_orientation,
-        enemies, active_target, W, H):
+        enemies, active_target, W, H,
+        missile_lock_timer=0.0, missile_locked=False):
     """
     Draw HUD brackets for every visible enemy:
       - Untargeted: dim [ ] bracket
@@ -580,6 +581,23 @@ def draw_target_brackets(
             hull_lbl = font.render(f"HULL {hull_pct}%", True, _HUD_ACT_BRACKET)
             surface.blit(dist_lbl, (sx - dist_lbl.get_width() // 2, sy + 22))
             surface.blit(hull_lbl, (sx - hull_lbl.get_width() // 2, sy + 22 + 14))
+
+            # ── MISSILE LOCK-ON HUD ────────────────────────
+            from src.constants import PLAYER_MISSILE_LOCK_TIME
+            if missile_locked:
+                pulse = int((math.sin(pygame.time.get_ticks() * 0.015) + 1) * 60)
+                col = (255, min(100 + pulse, 255), 50)
+                pygame.draw.circle(surface, col, (sx, sy), 30, 2)
+                pygame.draw.line(surface, col, (sx - 40, sy), (sx - 20, sy), 2)
+                pygame.draw.line(surface, col, (sx + 40, sy), (sx + 20, sy), 2)
+                pygame.draw.line(surface, col, (sx, sy - 40), (sx, sy - 20), 2)
+                pygame.draw.line(surface, col, (sx, sy + 40), (sx, sy + 20), 2)
+                lock_lbl = font.render("LOCKED", True, col)
+                surface.blit(lock_lbl, (sx - lock_lbl.get_width() // 2, sy - 45))
+            elif missile_lock_timer > 0:
+                progress = missile_lock_timer / PLAYER_MISSILE_LOCK_TIME
+                radius = 100 - (70 * progress)
+                pygame.draw.circle(surface, HUD_AMBER, (sx, sy), int(radius), 1)
 
         else:
             _draw_dim_bracket(surface, sx, sy)
@@ -714,6 +732,26 @@ def draw_waypoints(surface, player_pos, player_orientation, waypoints, W, H):
             
             surface.blit(lbl, (sx - lbl.get_width() // 2, sy + size + 5))
             surface.blit(dist_lbl, (sx - dist_lbl.get_width() // 2, sy + size + 19))
+
+# ──────────────────────────────────────────────
+#  MISSILE AMMO
+# ──────────────────────────────────────────────
+
+def draw_missile_ammo(surface, x, y, ammo, max_ammo):
+    f = custom_font(12)
+    lbl = f.render("MSL", True, HUD_GREEN)
+    surface.blit(lbl, (x, y))
+
+    val_col = HUD_GREEN if ammo > 2 else HUD_RED if ammo == 0 else HUD_AMBER
+    val = f.render(f"{ammo:02d}", True, val_col)
+    surface.blit(val, (x + 35, y))
+
+    for i in range(max_ammo):
+        mx = x + i * 8
+        my = y + 20
+        col = HUD_GREEN if i < ammo else HUD_DIM
+        pygame.draw.rect(surface, col, (mx, my, 4, 10))
+        pygame.draw.polygon(surface, col, [(mx, my), (mx+4, my), (mx+2, my-4)])
 
 # ──────────────────────────────────────────────
 #  TEMP METER (Laser Heat)
@@ -874,7 +912,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      waypoints=None,
                      shake_offset=(0.0, 0.0),
                      hit_flash_ratio=0.0, explosion_glow=0.0,
-                     missile_lock=False, alert_active=False):
+                     missile_lock=False, alert_active=False,
+                     missile_ammo=0, missile_lock_timer=0.0, missile_locked=False):
 
     global _HUD_OVERLAY, _LAST_SIZE
 
@@ -909,6 +948,9 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
 
     draw_temp_meter(_HUD_OVERLAY, W - 100, H - 240, laser_heat, laser_overheated)
 
+    from src.constants import PLAYER_MISSILE_MAX_AMMO
+    draw_missile_ammo(_HUD_OVERLAY, W - 100, H - 190, missile_ammo, PLAYER_MISSILE_MAX_AMMO)
+
     draw_waypoints(_HUD_OVERLAY, player_pos or [0,0,0], orientation or (1,0,0,0), waypoints, W, H)
 
     draw_hull_bar(_HUD_OVERLAY, W, H, player_hp,
@@ -935,7 +977,9 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                 orientation,
                 enemies,
                 active_target,
-                W, H
+                W, H,
+                missile_lock_timer,
+                missile_locked
             )
 
     # ── 3. Stamp the finished semi-transparent HUD overlay on top ───────────

@@ -45,6 +45,12 @@ class Player:
         self.laser_heat = 0.0
         self.overheated = False
 
+        # Missile System
+        from src.constants import PLAYER_MISSILE_MAX_AMMO
+        self.missile_ammo = PLAYER_MISSILE_MAX_AMMO
+        self.missile_lock_timer = 0.0
+        self.missile_locked = False
+
     @property
     def shield_charge(self):
         """0.0 = depleted, 1.0 = full."""
@@ -58,7 +64,7 @@ class Player:
     def current_speed(self):
         return math.sqrt(self.vel[0]**2 + self.vel[1]**2 + self.vel[2]**2)
 
-    def update(self, dt, handler, keys, lasers, particles, enemy_projectiles):
+    def update(self, dt, handler, keys, lasers, particles, enemy_projectiles, player_missiles):
         # ── INPUT ─────────────────────────────────
         lx, ly = handler.stick_left()
         rx, _  = handler.stick_right()
@@ -75,6 +81,7 @@ class Player:
         if keys[pygame.K_UP]:    self.throttle = min(1.0, self.throttle + dt)
         if keys[pygame.K_DOWN]:  self.throttle = max(-1.0, self.throttle - dt)
         if keys[pygame.K_SPACE]: fire_pressed = True
+        missile_fire_pressed = handler.just_pressed('Square') or keys[pygame.K_x]
 
         # ── TARGETING KEYS ────────────────────────
         # Resolved later via target_closest() / cycle_targets()
@@ -131,6 +138,28 @@ class Player:
         self.hit_flash        = max(0.0, self.hit_flash - dt)
         self._target_key_cd   = max(0.0, self._target_key_cd  - dt)
 
+        # ── MISSILE LOCK-ON LOGIC ──────────────────
+        from src.constants import PLAYER_MISSILE_LOCK_TIME, PLAYER_MISSILE_LOCK_FOV
+        if self.active_target and getattr(self.active_target, 'hp', 0) > 0 and not getattr(self.active_target, 'stealthed', False):
+            fx, fy, fz = get_forward_from_quat(self.orientation)
+            dx = self.active_target.x - self.pos[0]
+            dy = self.active_target.y - self.pos[1]
+            dz = self.active_target.z - self.pos[2]
+            dist = math.sqrt(dx*dx + dy*dy + dz*dz)
+            if dist > 0:
+                dx, dy, dz = dx/dist, dy/dist, dz/dist
+                dot = fx*dx + fy*dy + fz*dz
+                if dot >= PLAYER_MISSILE_LOCK_FOV:
+                    self.missile_lock_timer += dt
+                    if self.missile_lock_timer >= PLAYER_MISSILE_LOCK_TIME:
+                        self.missile_locked = True
+                else:
+                    self.missile_lock_timer = 0.0
+                    self.missile_locked = False
+        else:
+            self.missile_lock_timer = 0.0
+            self.missile_locked = False
+
         # ── HEAT MANAGEMENT ────────────────────────
         self.laser_heat = max(0.0, self.laser_heat - PLAYER_LASER_COOL_RATE * dt)
         if self.overheated and self.laser_heat <= 0:
@@ -165,6 +194,29 @@ class Player:
         self.pos[2] += self.vel[2] * dt
         
         # ── WEAPONS ───────────────────────────────
+        if missile_fire_pressed and self.missile_ammo > 0:
+            from src.constants import PLAYER_MISSILE_SPEED, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE
+            self.missile_ammo -= 1
+            forward, right, _ = get_basis_from_quat(self.orientation)
+            rfx, rfy, rfz = forward
+            wx = self.pos[0] + rfx * 50
+            wy = self.pos[1] + rfy * 50
+            wz = self.pos[2] + rfz * 50
+            vx, vy, vz = rfx * PLAYER_MISSILE_SPEED, rfy * PLAYER_MISSILE_SPEED, rfz * PLAYER_MISSILE_SPEED
+            
+            if self.missile_locked and self.active_target:
+                from src.missile import HomingMissile
+                m = HomingMissile(wx, wy, wz, vx, vy, vz, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE, self.active_target)
+                player_missiles.append(m)
+            else:
+                from src.missile import PlayerMissile
+                m = PlayerMissile(wx, wy, wz, vx, vy, vz, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE, homing=False)
+                player_missiles.append(m)
+            
+            self.missile_lock_timer = 0.0
+            self.missile_locked = False
+            handler.rumble(0.2, 0.2, 100)
+
         if fire_pressed and self.weapons_cooldown <= 0 and not self.overheated:
             forward, right, _ = get_basis_from_quat(self.orientation)
             rfx, rfy, rfz = forward

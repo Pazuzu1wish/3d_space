@@ -65,6 +65,7 @@ class Game:
         self.nebulae = NebulaSystem(count=12, area_radius=30000) # Init NebulaSystem class TODO: refactor this intolevel script
         self.enemies = [] # Init Enemy class
         self.enemy_projectiles = [] # Init EnemyProjectiles class
+        self.player_missiles = [] # Init PlayerMissile list
         self.asteroids = [] # Init Asteroid class
 
         # Spawn some initial asteroid fields near encounter points 
@@ -107,6 +108,16 @@ class Game:
         
         # ── UPDATE PARTICLES (using pool) ──────────────────────
         self.particle_pool.update(dt)
+
+        # ── UPDATE PLAYER MISSILES ────────────────────
+        for m in self.player_missiles[:]:
+            m.update(dt)
+            if m.check_enemy_collision(enemies, self.spatial, self.particle_pool):
+                if m in self.player_missiles:
+                    self.player_missiles.remove(m)
+            elif m.life <= 0:
+                if m in self.player_missiles:
+                    self.player_missiles.remove(m)
 
         # ── UPDATE ENEMIES ────────────────────────
         for e in enemies[:]:
@@ -233,6 +244,10 @@ class Game:
             if self.camera.sphere_in_frustum(l.x, l.y, l.z, 200):
                 l.submit_to_renderer(self.renderer)
 
+        for m in self.player_missiles:
+            if self.camera.sphere_in_frustum(m.x, m.y, m.z, 200):
+                m.submit_to_renderer(self.renderer)
+
         # 5. Optimized Particle Submission
         self.particle_pool.submit_to_renderer(self.renderer, self.camera)
 
@@ -274,6 +289,9 @@ class Game:
             laser_overheated=player.overheated,
             waypoints=self.waypoints if self.show_waypoints else None,
             shake_offset=shake_offset,
+            missile_ammo=player.missile_ammo,
+            missile_lock_timer=player.missile_lock_timer,
+            missile_locked=player.missile_locked,
         )
 
         # ── MAGNIFIED AIM WINDOW (L2) ──────────────────────────
@@ -438,7 +456,7 @@ class Game:
 
             if not self.paused:
                 # ── UPDATE ────────────────────────────────
-                self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles)
+                self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles, self.player_missiles)
                 self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
                 self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
 
