@@ -20,7 +20,7 @@ class Laser:
             self.y = ppos[1] + fy * 50
             self.z = ppos[2] + fz * 50
             
-            speed = 20000
+            speed = 16000
             self.vx, self.vy, self.vz = fx * speed, fy * speed, fz * speed
             self.life = life
         else:
@@ -53,4 +53,4 @@ class Laser:
         self.life -= dt
 
     def submit_to_renderer(self, renderer):
-        renderer.submit_line((self.px, self.py, self.pz), (self.x, self.y, self.z), (100, 255, 100), 4)
+        renderer.submit_line((self.px, self.py, self.pz), (self.x, self.y, self.z), (255, 100, 0), 4)
