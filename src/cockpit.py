@@ -365,7 +365,7 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
 #  THROTTLE BAR
 # ──────────────────────────────────────────────
 
-def draw_throttle_bar(surface, x, y, h, throttle):
+def draw_throttle_bg(surface, x, y, h):
     w = 14
     half_h = h // 2
     center_y = y + half_h
@@ -376,6 +376,19 @@ def draw_throttle_bar(surface, x, y, h, throttle):
     # Center line
     pygame.draw.line(surface, HUD_DIM, (x - 4, center_y), (x + w, center_y), 2)
     
+    for pct in (0.25, 0.5, 0.75):
+        ty_up = int(center_y - half_h * pct)
+        ty_down = int(center_y + half_h * pct)
+        pygame.draw.line(surface, HUD_DIM, (x - 2, ty_up), (x, ty_up), 1)
+        pygame.draw.line(surface, HUD_DIM, (x - 2, ty_down), (x, ty_down), 1)
+
+    surface.blit(_cached_label(10, "THR", HUD_GREEN), (x - 8, y - 14))
+
+def draw_throttle_fill(surface, x, y, h, throttle):
+    w = 14
+    half_h = h // 2
+    center_y = y + half_h
+    
     if throttle > 0:
         fill_h = int(half_h * throttle)
         col = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
@@ -385,15 +398,7 @@ def draw_throttle_bar(surface, x, y, h, throttle):
         col = (0, 200, 255, 160) # Cyan for retro
         pygame.draw.rect(surface, col, (x, center_y, w, fill_h))
 
-    for pct in (0.25, 0.5, 0.75):
-        ty_up = int(center_y - half_h * pct)
-        ty_down = int(center_y + half_h * pct)
-        pygame.draw.line(surface, HUD_DIM, (x - 2, ty_up), (x, ty_up), 1)
-        pygame.draw.line(surface, HUD_DIM, (x - 2, ty_down), (x, ty_down), 1)
-
     f = custom_font(10)
-    surface.blit(_cached_label(10, "THR", HUD_GREEN), (x - 8, y - 14))
-    
     if throttle >= 0:
         col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
         txt = f"{int(throttle * 100):3d}%"
@@ -401,24 +406,27 @@ def draw_throttle_bar(surface, x, y, h, throttle):
         col_throttle_per = (0, 200, 255, 160)
         txt = f"{int(abs(throttle) * 100):3d}%"
         
-    surface.blit(f.render(txt, True, col_throttle_per),
+    surface.blit(_cached_label(10, txt, col_throttle_per),
                  (x - 10, y + h + 10))
 
 # ──────────────────────────────────────────────
 #  DODGE BAR
 # ──────────────────────────────────────────────
 
-def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
-    """
-    Vertical bar mirroring the throttle bar on the left side.
-    Drains on dodge, refills over cooldown.
-    Flashes white-green on fire.
-    """
+def draw_dodge_bg(surface, x, y, h):
     w = 14
-
     # Track outline
     pygame.draw.rect(surface, HUD_DIM, (x, y, w, h), 1)
 
+    # Tick marks at 25 / 50 / 75 %
+    for pct in (0.25, 0.5, 0.75):
+        ty = int(y + h * (1.0 - pct))
+        pygame.draw.line(surface, HUD_DIM, (x + w, ty), (x + w + 2, ty), 1)
+
+    surface.blit(_cached_label(10, "DCH", HUD_GREEN), (x - 8, y - 14))
+
+def draw_dodge_fill(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
+    w = 14
     # Fill colour — flash takes priority
     if dodge_flash > 0:
         flash_t = dodge_flash / DODGE_FLASH_DURATION  # normalise to 0..1
@@ -436,14 +444,6 @@ def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
         # Bar fills from bottom up
         pygame.draw.rect(surface, col, (x, y + h - fill_h, w, fill_h))
 
-    # Tick marks at 25 / 50 / 75 %
-    for pct in (0.25, 0.5, 0.75):
-        ty = int(y + h * (1.0 - pct))
-        pygame.draw.line(surface, HUD_DIM, (x + w, ty), (x + w + 2, ty), 1)
-
-    f = custom_font(10)
-    surface.blit(_cached_label(10, "DCH", HUD_GREEN), (x - 8, y - 14))
-
     # Ready / charging label
     if dodge_ready:
         status = "RDY"
@@ -453,7 +453,7 @@ def draw_dodge_bar(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
         status = f"{pct:3d}%"
         scol   = HUD_AMBER
 
-    surface.blit(f.render(status, True, scol), (x - 10, y + h + 10))
+    surface.blit(_cached_label(10, status, scol), (x - 10, y + h + 10))
 
 
 # ──────────────────────────────────────────────
@@ -644,9 +644,8 @@ def print_spd(surface, x, y):
 
 def draw_speed(surface, x, y, current_speed):
     spd = int(current_speed)
-    f = custom_font(14)
     col_speed = HUD_GREEN
-    lbl = f.render(f"{spd:4d}", True, col_speed)
+    lbl = _cached_label(14, f"{spd:4d}", col_speed)
     surface.blit(lbl, (x, y))
 
 
@@ -802,7 +801,30 @@ def draw_temp_meter(surface, x, y, heat, overheated):
 #  HULL INTEGRITY BAR  (center-bottom)
 # ──────────────────────────────────────────────
 
-def draw_hull_bar(surface, W, H, player_hp, max_hp=100,
+def draw_hull_bg(surface, W, H):
+    bar_w = 260
+    bar_h = 10
+    bar_x = W // 2 - bar_w // 2
+    bar_y = H - 28
+
+    # Track
+    pygame.draw.rect(surface, (20, 40, 20), (bar_x, bar_y, bar_w, bar_h),
+                     border_radius=3)
+    pygame.draw.rect(surface, HUD_DIM, (bar_x, bar_y, bar_w, bar_h),
+                     1, border_radius=3)
+
+    # Hull tick marks
+    for pct in (0.25, 0.50, 0.75):
+        tx = bar_x + int(bar_w * pct)
+        pygame.draw.line(surface, (5, 5, 15),
+                         (tx, bar_y + 1), (tx, bar_y + bar_h - 1), 1)
+
+    # Labels
+    lbl = _cached_label(11, "HULL", HUD_DIM)
+    surface.blit(lbl, (bar_x - lbl.get_width() - 8,
+                       bar_y + bar_h // 2 - lbl.get_height() // 2))
+
+def draw_hull_fill(surface, W, H, player_hp, max_hp=100,
                   shield_charge=1.0, shield_recharging=False):
     ratio = max(0.0, player_hp / max_hp)
     bar_w = 260
@@ -818,31 +840,13 @@ def draw_hull_bar(surface, W, H, player_hp, max_hp=100,
     else:
         col = HUD_RED
 
-    # Track
-    pygame.draw.rect(surface, (20, 40, 20), (bar_x, bar_y, bar_w, bar_h),
-                     border_radius=3)
-    pygame.draw.rect(surface, HUD_DIM, (bar_x, bar_y, bar_w, bar_h),
-                     1, border_radius=3)
-
     # Hull fill
     fill_w = int(bar_w * ratio)
     if fill_w > 0:
         pygame.draw.rect(surface, col, (bar_x, bar_y, fill_w, bar_h),
                          border_radius=3)
 
-    # Hull tick marks
-    for pct in (0.25, 0.50, 0.75):
-        tx = bar_x + int(bar_w * pct)
-        pygame.draw.line(surface, (5, 5, 15),
-                         (tx, bar_y + 1), (tx, bar_y + bar_h - 1), 1)
-
-    # Labels
-    f_lbl = custom_font(11)
-    f_val = custom_font(11)
-    lbl = _cached_label(11, "HULL", HUD_DIM)
-    val = f_val.render(f"{int(ratio * 100):3d}%", True, col)
-    surface.blit(lbl, (bar_x - lbl.get_width() - 8,
-                       bar_y + bar_h // 2 - lbl.get_height() // 2))
+    val = _cached_label(11, f"{int(ratio * 100):3d}%", col)
     surface.blit(val, (bar_x + bar_w + 8,
                        bar_y + bar_h // 2 - val.get_height() // 2))
 
@@ -891,7 +895,7 @@ def draw_hull_bar(surface, W, H, player_hp, max_hp=100,
 
     # Shield percentage — only show when not full
     if shield_charge < 1.0:
-        shld_val = custom_font(10).render(f"SHD {int(shield_charge * 100):3d}%", True, s_col)
+        shld_val = _cached_label(10, f"SHD {int(shield_charge * 100):3d}%", s_col)
         surface.blit(shld_val, (bar_x + bar_w // 2 - shld_val.get_width() // 2,
                                 bar_y - shld_val.get_height() - 4))
 
@@ -901,11 +905,12 @@ def draw_hull_bar(surface, W, H, player_hp, max_hp=100,
 
 # Cache the overlay so we don't recreate it every frame
 _HUD_OVERLAY = None
+_HUD_STATIC_GLASS = None
 _LAST_SIZE = (0, 0)
 
 def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      orientation=None, player_pos=None, player_vel=None,
-                     enemies=None, player_hp=100, active_target=None,
+                     enemies=None, radar_enemies=None, player_hp=100, active_target=None,
                      dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0,
                      shield_charge=1.0, shield_recharging=False,
                      laser_heat=0.0, laser_overheated=False,
@@ -915,7 +920,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      missile_lock=False, alert_active=False,
                      missile_ammo=0, missile_lock_timer=0.0, missile_locked=False):
 
-    global _HUD_OVERLAY, _LAST_SIZE
+    global _HUD_OVERLAY, _HUD_STATIC_GLASS, _LAST_SIZE
 
     # ── 1. Draw pre-baked cockpit geometry directly onto the game surface ──
     ticks = pygame.time.get_ticks()
@@ -927,8 +932,18 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         explosion_glow=explosion_glow,
     )
 
-    # ── 2. Build / clear the transparent HUD overlay ────────────────────────
-    if _HUD_OVERLAY is None or _LAST_SIZE != (W, H):
+    # ── 2. Build / clear the transparent HUD overlays ───────────────────────
+    if _HUD_STATIC_GLASS is None or _HUD_OVERLAY is None or _LAST_SIZE != (W, H):
+        _HUD_STATIC_GLASS = pygame.Surface((W, H), pygame.SRCALPHA)
+        _HUD_STATIC_GLASS.fill((0, 0, 0, 0))
+        
+        # Draw all static elements once
+        draw_throttle_bg(_HUD_STATIC_GLASS, W - 40, H - 180, 140)
+        draw_dodge_bg(_HUD_STATIC_GLASS, 20, H - 180, 140)
+        draw_hull_bg(_HUD_STATIC_GLASS, W, H)
+        print_spd(_HUD_STATIC_GLASS, W - 130, H - 120)
+        print_kph(_HUD_STATIC_GLASS, W - 110, H - 80)
+        
         _HUD_OVERLAY = pygame.Surface((W, H), pygame.SRCALPHA)
         _LAST_SIZE = (W, H)
     else:
@@ -936,15 +951,13 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
 
     cx, cy = W // 2, H // 2
 
-    # Draw everything onto the cached transparent overlay
+    # Draw dynamic fills and crosshair onto the cached transparent overlay
     draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
-    draw_throttle_bar(_HUD_OVERLAY, W - 40, H - 180, 140, throttle)
-    draw_dodge_bar(_HUD_OVERLAY, 20, H - 180, 140,
-                   dodge_charge, dodge_ready, dodge_flash)
-    print_spd(_HUD_OVERLAY, W - 130, H - 120)
+    draw_throttle_fill(_HUD_OVERLAY, W - 40, H - 180, 140, throttle)
+    draw_dodge_fill(_HUD_OVERLAY, 20, H - 180, 140,
+                    dodge_charge, dodge_ready, dodge_flash)
     draw_speed(_HUD_OVERLAY, W - 120, H - 100, current_speed)
-    print_kph(_HUD_OVERLAY, W - 110, H - 80)
 
     draw_temp_meter(_HUD_OVERLAY, W - 100, H - 240, laser_heat, laser_overheated)
 
@@ -953,7 +966,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
 
     draw_waypoints(_HUD_OVERLAY, player_pos or [0,0,0], orientation or (1,0,0,0), waypoints, W, H)
 
-    draw_hull_bar(_HUD_OVERLAY, W, H, player_hp,
+    draw_hull_fill(_HUD_OVERLAY, W, H, player_hp,
                   shield_charge=shield_charge,
                   shield_recharging=shield_recharging)
 
@@ -966,7 +979,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         r_cx, r_cy, r_r = 90, H - 95, 75
         draw_radar(_HUD_OVERLAY, r_cx, r_cy, r_r, orientation,
                    player_pos or [0, 0, 0],
-                   enemies or [], basis=basis)
+                   radar_enemies if radar_enemies is not None else (enemies or []), basis=basis)
 
         # ── Target brackets and lead indicator
         if enemies and player_pos is not None:
@@ -983,5 +996,6 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
             )
 
     # ── 3. Stamp the finished semi-transparent HUD overlay on top ───────────
+    surface.blit(_HUD_STATIC_GLASS, shake_offset)
     surface.blit(_HUD_OVERLAY, shake_offset)
 

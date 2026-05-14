@@ -317,6 +317,15 @@ def _draw_ship_silhouette(surf: pygame.Surface, cx: int, cy: int):
     _p(surf, col, wing_R, 1)
 
 
+# ── Static surface cache ───────────────────────────────────────────────────────
+_LABEL_CACHE = {}
+
+def _cached_label(font, text, color):
+    key = (text, color)
+    if key not in _LABEL_CACHE:
+        _LABEL_CACHE[key] = font.render(text, True, color)
+    return _LABEL_CACHE[key]
+
 # ── Public draw function ───────────────────────────────────────────────────────
 def draw_cockpit_frame(
     surface: pygame.Surface,
@@ -377,7 +386,7 @@ def draw_cockpit_frame(
     label_col = _BRIGHT
     f10 = pygame.font.Font(None, 14)
     for txt, bx in [("SYSTEMS", 48), ("NML", 100), ("WPN", 155)]:
-        lbl = f10.render(txt, True, label_col)
+        lbl = _cached_label(f10, txt, label_col)
         surface.blit(lbl, (bx - lbl.get_width() // 2, 13))
 
     # ── Animated: ALERT button labels ─────────────────────────────────────────
@@ -395,14 +404,14 @@ def draw_cockpit_frame(
                           ("WARN",     W - 68,  warn_col if alert_active else _AMBER)]:
         lines = txt.split("\n")
         for li, line in enumerate(lines):
-            lbl = f10.render(line, True, col)
+            lbl = _cached_label(f10, line, col)
             y_off = 10 + li * 12
             surface.blit(lbl, (bx - lbl.get_width() // 2, y_off))
 
     # ── Animated: PWR/ENG/WEP/SHD system label column ────────────────────────
     for i, txt in enumerate(["PWR", "ENG", "WEP", "SHD"]):
         ry = 588 + i * 32
-        lbl = f10.render(txt, True, _BRIGHT)
+        lbl = _cached_label(f10, txt, _BRIGHT)
         surface.blit(lbl, (194, ry + 4))
         # Small status bar next to each label
         bar_x = 220
@@ -412,7 +421,7 @@ def draw_cockpit_frame(
     # ── Animated: FUEL/TEMP/OXY/ELEC column ──────────────────────────────────
     for i, txt in enumerate(["FUEL", "TEMP", "OXY", "ELEC"]):
         ry = 588 + i * 32
-        lbl = f10.render(txt, True, _BRIGHT)
+        lbl = _cached_label(f10, txt, _BRIGHT)
         surface.blit(lbl, (W - 256, ry + 4))
         bar_x = W - 222
         _r(surface, _DIM, (bar_x, ry + 6, 32, 8), 0, 1)
@@ -420,12 +429,12 @@ def draw_cockpit_frame(
 
     # ── Animated: bottom-right control buttons ────────────────────────────────
     for txt, bx in [("LIGHTS", W - 165), ("HUD+", W - 122), ("SCAN", W - 79), ("CMDS", W - 36)]:
-        lbl = f10.render(txt, True, _DIM)
+        lbl = _cached_label(f10, txt, _DIM)
         surface.blit(lbl, (bx - lbl.get_width() // 2, 739))
 
     # ── Animated: THRUST/BOOST/MANVR bottom-left labels ──────────────────────
     for i, txt in enumerate(["THRUST", "BOOST", "MANVR"]):
-        lbl = f10.render(txt, True, _DIM)
+        lbl = _cached_label(f10, txt, _DIM)
         surface.blit(lbl, (8, H - 46 + i * 14))
 
     # ── Ship silhouette ───────────────────────────────────────────────────────
@@ -446,13 +455,13 @@ def draw_cockpit_frame(
         surface.blit(glow_surf, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
     # ── RDR label under radar housing ────────────────────────────────────────
-    rdr_lbl = f10.render("RDR", True, _BRIGHT)
+    rdr_lbl = _cached_label(f10, "RDR", _BRIGHT)
     surface.blit(rdr_lbl, (90 - rdr_lbl.get_width() // 2, H - 28))
 
     # ── DCH label above dodge bar ─────────────────────────────────────────────
-    dch_lbl = f10.render("DCH", True, _BRIGHT)
+    dch_lbl = _cached_label(f10, "DCH", _BRIGHT)
     surface.blit(dch_lbl, (8, 480))
 
     # ── THR label above throttle bar ──────────────────────────────────────────
-    thr_lbl = f10.render("THR", True, _BRIGHT)
+    thr_lbl = _cached_label(f10, "THR", _BRIGHT)
     surface.blit(thr_lbl, (W - 70, 480))

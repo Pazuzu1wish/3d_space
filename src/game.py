@@ -292,6 +292,7 @@ class Game:
             player_pos=player.pos,
             player_vel=tuple(player.vel),
             enemies=enemies,
+            radar_enemies=self.spatial.query_nearby(player.pos, 6000.0) if hasattr(self, 'spatial') else None,
             player_hp=player.hp,
             active_target=player.active_target,
             dodge_charge=player.dodge_charge,
