@@ -650,7 +650,7 @@ def draw_speed(surface, x, y, current_speed):
 
 
 def print_kph(surface, x, y):
-    lbl = _cached_label(10, "K.P.H.", HUD_GREEN)
+    lbl = _cached_label(10, "M.P.S.", HUD_GREEN)
     surface.blit(lbl, (x, y))
 
 # ──────────────────────────────────────────────

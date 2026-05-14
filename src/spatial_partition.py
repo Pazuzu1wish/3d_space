@@ -56,7 +56,7 @@ class SpatialHash:
             self.insert(entity, new_pos)
     
     def query_radius(self, center: Tuple[float, float, float],
-                      radius: float) -> List[object]:
+                    radius: float) -> List[object]:
         """Query all entities within a sphere."""
         results = []
         
@@ -69,13 +69,12 @@ class SpatialHash:
             for dy in range(-cells_radius, cells_radius + 1):
                 gy = cy + dy
                 for dz in range(-cells_radius, cells_radius + 1):
-                    cell = (gx, gy, cz + dz)
+                    gz = cz + dz
+                    cell = (gx, gy, gz)
                     if cell in self.grid:
-                        # Append all entities in this cell
                         results.extend(self.grid[cell])
         
-        return results
-    
+        return results    
     def clear(self) -> None:
         """Clear all entities from the hash."""
         self.grid.clear()
