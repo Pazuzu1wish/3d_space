@@ -32,7 +32,7 @@ class Laser:
         # Track previous position to draw as a line (blaster bolt)
         self.px, self.py, self.pz = self.x, self.y, self.z
     
-    def init(self, x, y, z, vx, vy, vz, life=1.5):
+    def init(self, x, y, z, vx, vy, vz, life=2.5):
         """Reinitialize laser with new values (for object pooling)."""
         self.x, self.y, self.z = float(x), float(y), float(z)
         self.vx, self.vy, self.vz = float(vx), float(vy), float(vz)
