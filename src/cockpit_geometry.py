@@ -645,7 +645,8 @@ def draw_cockpit_frame(
     alert_active=False,
     missile_lock=False,
     hit_flash=0.0,
-    explosion_glow=0.0
+    explosion_glow=0.0,
+    shield_charge=1.0
 ):
     """Main entry point to draw the cockpit and HUD overlays.
     
@@ -752,18 +753,28 @@ def draw_cockpit_frame(
             1
         )
 
-    # Left Console Indicator Lights (Pulsing Red)
-    # Creates a "Warning/Alert" heartbeat look
-    ind_color = (
-        min(255, 180 + int(70 * abs(math.sin(t * 5)))),
-        20,
-        10
-    )
-
+    # Left Console Indicator Lights (Status Indicators)
+    # They stay steady green when shields are healthy, and turn pulsing red
+    # progressively as the shield is depleted (one per 33% loss).
     for i in range(3):
         y = 500 + i * 24
+        
+        # Determine if this specific bar should be Red (warning) or Green (okay)
+        # Thresholds: Top bar (0) turns red at <66%, Mid (1) at <33%, Bottom (2) at 0%
+        if shield_charge <= (1.0 - (i + 1) * 0.333):
+            # Pulsing Red Warning
+            bar_color = (
+                min(255, 180 + int(70 * abs(math.sin(t * 5)))),
+                20,
+                10
+            )
+        else:
+            # Steady Green Status (with a subtle life pulse)
+            g_pulse = int(140 + 40 * math.sin(t * 2.0))
+            bar_color = (20, g_pulse, 60)
+
         # Small indicator rectangles next to the radar
-        _r(surface, ind_color, (50, y + 3, 20, 8), br=2)
+        _r(surface, bar_color, (50, y + 3, 20, 8), br=2)
 
     # hit flash
     if hit_flash > 0.01:
