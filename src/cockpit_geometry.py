@@ -361,8 +361,8 @@ def _build_static(W, H):
 
     _inset_panel(s, inner_plate, 5, _LIGHT, _MID, _EDGE_DIM)
 
-    # Asymmetrical hex plate on the left strut
-    _hex_plate(s, 70, 230, 32)
+    # Asymmetrical hex plate on the left strut (moved down to clear HUD bars)
+    _hex_plate(s, 70, 390, 32)
 
     groove = [
         (250, 72),
@@ -410,8 +410,8 @@ def _build_static(W, H):
     _inset_panel(s, outer_plate_r, 7, _LIGHT, _MID, _EDGE_DIM)
     _poly(s, _EDGE_DIM, outer_plate_r + [outer_plate_r[0]], 1)
 
-    # asymmetrical detail
-    _hex_plate(s, W - 70, 230, 32)
+    # asymmetrical detail (moved down to clear HUD bars)
+    _hex_plate(s, W - 70, 390, 32)
 
     groove_r = [
         (W - 250, 72),
@@ -540,13 +540,13 @@ def _build_static(W, H):
         (W - 8, 640)
     ], 5)
 
-    # asymmetric venting
-    _vent(s, W - 95, 585, 70, 60)
+    # asymmetric venting (Moved down and left to clear space for speed readout)
+    _vent(s, W - 155, 665, 50, 40)
 
-    # throttle trench
+    # throttle trench (Shrunk vertically to clear space for GUN TEMP / MSL box)
     trench = [
-        (W - 165, 560),
-        (W - 25, 560),
+        (W - 165, 640),
+        (W - 25, 640),
 
         (W - 35, 720),
         (W - 155, 720)

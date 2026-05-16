@@ -738,19 +738,19 @@ def draw_waypoints(surface, player_pos, player_orientation, waypoints, W, H):
 
 def draw_missile_ammo(surface, x, y, ammo, max_ammo):
     f = custom_font(12)
-    lbl = f.render("MSL", True, HUD_GREEN)
-    surface.blit(lbl, (x, y))
+    lbl = f.render("MISSILE", True, HUD_GREEN)
+    surface.blit(lbl, (x + 10, y))
 
     val_col = HUD_GREEN if ammo > 2 else HUD_RED if ammo == 0 else HUD_AMBER
     val = f.render(f"{ammo:02d}", True, val_col)
-    surface.blit(val, (x + 35, y))
+    surface.blit(val, (x + 45, y + 35))
 
     for i in range(max_ammo):
         mx = x + i * 8
         my = y + 20
         col = HUD_GREEN if i < ammo else HUD_DIM
-        pygame.draw.rect(surface, col, (mx, my, 4, 10))
-        pygame.draw.polygon(surface, col, [(mx, my), (mx+4, my), (mx+2, my-4)])
+        pygame.draw.rect(surface, col, (mx + 15, my, 4, 10))
+        pygame.draw.polygon(surface, col, [(mx + 15, my), (mx+19, my), (mx+17, my-4)])
 
 # ──────────────────────────────────────────────
 #  TEMP METER (Laser Heat)
@@ -758,11 +758,11 @@ def draw_missile_ammo(surface, x, y, ammo, max_ammo):
 
 def draw_temp_meter(surface, x, y, heat, overheated):
     """
-    Draws the "TEMP" word and a small heat bar.
+    Draws the "GUN TEMP" word and a small heat bar.
     Colors transition from Green to Yellow to Red.
     Flashes Red when overheated.
     """
-    f = custom_font(12)
+    f = custom_font(11)
     
     # Determine base color based on heat
     if overheated:
@@ -777,14 +777,14 @@ def draw_temp_meter(surface, x, y, heat, overheated):
         col = HUD_GREEN
 
     # Draw label
-    lbl = f.render("TEMP", True, col)
-    surface.blit(lbl, (x, y))
+    lbl = f.render("GUN TEMP", True, col)
+    surface.blit(lbl, (x + 7, y + 20))
 
     # Draw small bar
     bar_w = 60
     bar_h = 6
-    bx = x
-    by = y + 16
+    bx = x + 24
+    by = y + 38
     
     pygame.draw.rect(surface, HUD_DIM, (bx, by, bar_w, bar_h), 1)
     if heat > 0:
@@ -938,11 +938,14 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         _HUD_STATIC_GLASS.fill((0, 0, 0, 0))
         
         # Draw all static elements once
-        draw_throttle_bg(_HUD_STATIC_GLASS, W - 40, H - 180, 140)
-        draw_dodge_bg(_HUD_STATIC_GLASS, 20, H - 180, 140)
+        # Moved to upper strut panels (y=180) to avoid overlapping bottom console UI
+        draw_throttle_bg(_HUD_STATIC_GLASS, W - 60, 180, 160)
+        draw_dodge_bg(_HUD_STATIC_GLASS, 46, 180, 160)
         draw_hull_bg(_HUD_STATIC_GLASS, W, H)
-        print_spd(_HUD_STATIC_GLASS, W - 130, H - 120)
-        print_kph(_HUD_STATIC_GLASS, W - 110, H - 80)
+        
+        # Positioned within the lower speed trench (starts at y=640)
+        print_spd(_HUD_STATIC_GLASS, W - 145, 650)
+        print_kph(_HUD_STATIC_GLASS, W - 110, 705)
         
         _HUD_OVERLAY = pygame.Surface((W, H), pygame.SRCALPHA)
         _LAST_SIZE = (W, H)
@@ -951,18 +954,18 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
 
     cx, cy = W // 2, H // 2
 
-    # Draw dynamic fills and crosshair onto the cached transparent overlay
+    # Draw dynamic fills onto the cached transparent overlay
     draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
-    draw_throttle_fill(_HUD_OVERLAY, W - 40, H - 180, 140, throttle)
-    draw_dodge_fill(_HUD_OVERLAY, 20, H - 180, 140,
+    draw_throttle_fill(_HUD_OVERLAY, W - 60, 180, 160, throttle)
+    draw_dodge_fill(_HUD_OVERLAY, 46, 180, 160,
                     dodge_charge, dodge_ready, dodge_flash)
-    draw_speed(_HUD_OVERLAY, W - 120, H - 100, current_speed)
+    draw_speed(_HUD_OVERLAY, W - 130, 672, current_speed)
 
-    draw_temp_meter(_HUD_OVERLAY, W - 100, H - 240, laser_heat, laser_overheated)
+    draw_temp_meter(_HUD_OVERLAY, W - 122, 510, laser_heat, laser_overheated)
 
     from src.constants import PLAYER_MISSILE_MAX_AMMO
-    draw_missile_ammo(_HUD_OVERLAY, W - 100, H - 190, missile_ammo, PLAYER_MISSILE_MAX_AMMO)
+    draw_missile_ammo(_HUD_OVERLAY, W - 122, 565, missile_ammo, PLAYER_MISSILE_MAX_AMMO)
 
     draw_waypoints(_HUD_OVERLAY, player_pos or [0,0,0], orientation or (1,0,0,0), waypoints, W, H)
 
@@ -998,4 +1001,3 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     # ── 3. Stamp the finished semi-transparent HUD overlay on top ───────────
     surface.blit(_HUD_STATIC_GLASS, shake_offset)
     surface.blit(_HUD_OVERLAY, shake_offset)
-
