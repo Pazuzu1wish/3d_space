@@ -1,4 +1,5 @@
 from src.math_engine import *
+from src.constants import PLAYER_LASER_COLOR
 import pygame
 
 class Laser:
@@ -53,4 +54,4 @@ class Laser:
         self.life -= dt
 
     def submit_to_renderer(self, renderer):
-        renderer.submit_line((self.px, self.py, self.pz), (self.x, self.y, self.z), (255, 100, 0), 4)
+        renderer.submit_line((self.px, self.py, self.pz), (self.x, self.y, self.z), PLAYER_LASER_COLOR, 4)
