@@ -3,6 +3,8 @@
 Benchmark script to verify star batch processing optimization.
 Compares individual star submission vs. batch submission.
 """
+
+# Note: This is a synthetic benchmark focused on the star processing steps.
 import time
 import numpy as np
 from src.star import Star, wrap_star_positions_batch, compute_star_colors_batch
