@@ -89,6 +89,10 @@ class RenderPipeline:
         # Scale cache for nebulae to avoid expensive transform.scale every frame
         self._scaled_nebulae = {} # (cache_key, size) -> surface
         self._mesh_cache = {}
+        # Per-frame mesh submissions to be processed in a single batched numba call
+        self._mesh_submissions = []  # list of (face_indices, face_colors, cam_verts, projected, layer)
+        # Cache for static mesh camera-space results: (mesh_id, pos, right, up, forward) -> (cam_verts, projected)
+        self._static_mesh_cache = {}
 
     def _create_puff_texture(self, size):
         """Create a soft, radial gradient puff texture for nebulae."""
@@ -109,8 +113,10 @@ class RenderPipeline:
             self._scaled_nebulae.clear()
         if len(self._mesh_cache) > 2000:
             self._mesh_cache.clear()
+        if len(self._static_mesh_cache) > 1000:
+            self._static_mesh_cache.clear()
         
-    def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None):
+    def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None, static=False):
         """
         Submit a whole mesh for optimized rendering.
         Uses Numba-optimized batch transformations with pre-cached numpy data.
@@ -130,7 +136,17 @@ class RenderPipeline:
 
         # Local to World (Vectorized)
         basis = np.array([right, up, forward], dtype=np.float64)
-        world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
+        if static:
+            # Cache world_verts for static meshes keyed by mesh_id and transform
+            transform_key = (mesh_id, tuple(map(float, pos)), tuple(map(float, right)), tuple(map(float, up)), tuple(map(float, forward)))
+            if transform_key in self._static_mesh_cache:
+                world_verts = self._static_mesh_cache[transform_key]
+            else:
+                world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
+                # store a copy to avoid accidental mutation
+                self._static_mesh_cache[transform_key] = world_verts.copy()
+        else:
+            world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
         
         # World to Camera (Batch Numba)
         cam_verts = self.camera.world_to_camera_batch(world_verts)
@@ -157,24 +173,10 @@ class RenderPipeline:
             self._mesh_cache[mesh_id] = (np.array(f_idx, dtype=np.int32), np.array(f_col, dtype=np.int32))
             
         face_indices, face_colors = self._mesh_cache[mesh_id]
-        
-        # Call optimized numba function with colors
-        valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(cam_verts, projected, face_indices, face_colors)
-        
-        layer_list = self._layers[layer]
-        for i in range(len(face_indices)):
-            if valid_mask[i]:
-                idx0 = face_indices[i, 0]
-                idx1 = face_indices[i, 1]
-                idx2 = face_indices[i, 2]
-                pts = [
-                    (projected[idx0, 0], projected[idx0, 1]),
-                    (projected[idx1, 0], projected[idx1, 1]),
-                    (projected[idx2, 0], projected[idx2, 1])
-                ]
-                # Colors are already shaded from numba
-                color = tuple(shaded_colors[i])
-                layer_list.append((avg_zs[i], 'poly', pts, color))
+        # Enqueue submission for batched processing later in render
+        # We store the cam_verts/projected so the heavy work (face culling/shading)
+        # can be done once for all submitted meshes in a single numba call.
+        self._mesh_submissions.append((face_indices, face_colors, cam_verts, projected, layer))
 
     def submit_polygon(self, world_verts, color, layer='opaque'):
         """Submit a single polygon."""
@@ -261,6 +263,8 @@ class RenderPipeline:
 
     def render(self, surface):
         """Sort and render all submitted primitives by layer."""
+        # Process all mesh submissions in a single batched numba call before drawing
+        self._flush_mesh_submissions()
         draw_poly = pygame.draw.polygon
         draw_circle = pygame.draw.circle
         draw_line = pygame.draw.line
@@ -303,3 +307,67 @@ class RenderPipeline:
                 surface.blit(puff, (p[2][0] - s//2, p[2][1] - s//2))
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
+
+    def _flush_mesh_submissions(self):
+        """Batch all mesh submissions into a single numba call by concatenating
+        camera-space vertex arrays and projected arrays, offsetting indices.
+        This reduces numba call overhead and allows the shading to run once
+        for all faces.
+        """
+        if not self._mesh_submissions:
+            return
+
+        # Concatenate cam_verts and projected arrays, track offsets
+        cam_list = []
+        proj_list = []
+        face_idx_list = []
+        face_col_list = []
+        layer_list = []
+        offsets = []
+
+        vert_offset = 0
+        for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
+            n_verts = cam_verts.shape[0]
+            cam_list.append(cam_verts)
+            proj_list.append(projected)
+            # offset indices
+            if f_idx.size > 0:
+                face_idx_list.append(f_idx + vert_offset)
+                face_col_list.append(f_col)
+                layer_list.extend([layer] * f_idx.shape[0])
+            offsets.append((vert_offset, n_verts))
+            vert_offset += n_verts
+
+        # Build concatenated arrays
+        big_cam = np.vstack(cam_list)
+        big_proj = np.vstack(proj_list)
+        if face_idx_list:
+            big_face_idx = np.vstack(face_idx_list).astype(np.int32)
+            big_face_col = np.vstack(face_col_list).astype(np.int32)
+        else:
+            big_face_idx = np.zeros((0,3), dtype=np.int32)
+            big_face_col = np.zeros((0,3), dtype=np.int32)
+
+        # Call numba once for all faces
+        valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(big_cam, big_proj, big_face_idx, big_face_col)
+
+        # Split results back per-face and append into layer buffers
+        layer_lists = self._layers
+        for i in range(big_face_idx.shape[0]):
+            if not valid_mask[i]:
+                continue
+            idx0 = big_face_idx[i, 0]
+            idx1 = big_face_idx[i, 1]
+            idx2 = big_face_idx[i, 2]
+            pts = [
+                (big_proj[idx0, 0], big_proj[idx0, 1]),
+                (big_proj[idx1, 0], big_proj[idx1, 1]),
+                (big_proj[idx2, 0], big_proj[idx2, 1])
+            ]
+            color = tuple(shaded_colors[i])
+            layer = layer_list[i]
+            layer_lists[layer].append((avg_zs[i], 'poly', pts, color))
+
+        # Clear submissions
+        self._mesh_submissions.clear()
+
