@@ -473,22 +473,25 @@ def _build_static(W, H):
     )
 
     # Deep Radar Recess (Circle stack for depth)
-    _c(s, _DARK, (95, 650), 76)
-    _c(s, _MID, (95, 650), 66)
+    # Centered at (90, H - 95) to match the 3D radar in cockpit.py
+    _c(s, _DARK, (90, H - 95), 80)
+    _c(s, _MID, (90, H - 95), 75)
 
     # Radar Grid / Groove Rings
-    for r in [60, 42, 24]:
-        _c(s, _EDGE_DIM, (95, 650), r, 1)
+    # Static rings to give the radar floor some depth
+    # Matches the 37.5 radius mid-ring in cockpit.py
+    for r in [37]:
+        _c(s, _EDGE_DIM, (90, H - 95), r, 1)
 
     # Radial "Clock" lines for radar orientation
     for a in range(0, 360, 45):
         rad = math.radians(a)
 
-        x1 = 95 + math.cos(rad) * 18
-        y1 = 650 + math.sin(rad) * 18
+        x1 = 90 + math.cos(rad) * 15
+        y1 = (H - 95) + math.sin(rad) * 15
 
-        x2 = 95 + math.cos(rad) * 58
-        y2 = 650 + math.sin(rad) * 58
+        x2 = 90 + math.cos(rad) * 70
+        y2 = (H - 95) + math.sin(rad) * 70
 
         _l(s, _EDGE_DIM, (x1, y1), (x2, y2), 1)
 
@@ -740,11 +743,11 @@ def draw_cockpit_frame(
     # Radar Sweep Rings (Expanding/contracting circle highlight)
     radar_pulse = int(70 + 50 * math.sin(t * 3.0))
 
-    for r in [60, 42]:
+    for r in [37]:
         _c(
             surface,
             (0, radar_pulse, 90),
-            (95, 650),
+            (90, H - 95),
             r,
             1
         )
