@@ -453,20 +453,20 @@ def _build_static(W, H):
 
     # radar housing
     radar_outer = [
-        (10, 560),
-        (170, 560),
+        (0, 570),
+        (170, 570),
 
-        (182, 580),
+        (182, 590),
         (182, 720),
 
-        (165, 735),
-        (10, 735)
+        (165, 755),
+        (5, 755)
     ]
 
     radar_inner = _inset_panel(
         s,
         radar_outer,
-        8,
+        4,
         _LIGHT,
         _MID,
         _CYAN
@@ -496,7 +496,7 @@ def _build_static(W, H):
         _l(s, _EDGE_DIM, (x1, y1), (x2, y2), 1)
 
     # indicator pockets
-    for i in range(4):
+    for i in range(3):
         y = 500 + i * 24
 
         _inset_panel(
@@ -760,7 +760,7 @@ def draw_cockpit_frame(
         10
     )
 
-    for i in range(4):
+    for i in range(3):
         y = 500 + i * 24
         # Small indicator rectangles next to the radar
         _r(surface, ind_color, (50, y + 3, 20, 8), br=2)
