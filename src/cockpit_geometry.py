@@ -1,467 +1,779 @@
 """
-cockpit_geometry.py
-Pre-baked low-poly retro-futurist cockpit geometry.
+enhanced_cockpit_geometry.py
 
-Inspired by Descent, Terminal Velocity, Elite — late DOS-era 3D space sim aesthetic.
-Renders as flat-shaded dark polygons with neon cyan/green emissive outlines.
-Designed to frame the 1280x760 viewport without obscuring the combat center.
+Retro-futurist low-poly cockpit frame implementation.
 
-Architecture:
-  _build_static(W, H) -> Surface   -- called once, bakes all dark fills + edges
-  draw_cockpit_frame(surface, ticks, alert_active, hit_flash) -- blit static + animate
+Features:
+- Recessed panel geometry for depth.
+- Layered armor plating aesthetics.
+- Inset bevels and emissive groove channels for a high-tech look.
+- Industrial surface segmentation.
+- Geometry-first visual language (no baked text labels).
+
+Aesthetics:
+- Inspired by Descent, Terminal Velocity, and Freespace.
+- Flat-shaded software-rendered polygon look.
+- Designed for integration with external live HUD/instrument rendering.
+
+This module is responsible ONLY for drawing the structural cockpit geometry and its 
+static/dynamic visual elements (indicators, pulses, flashes).
 """
 
 import pygame
 import math
 
-# ── Palette ───────────────────────────────────────────────────────────────────
-_DARK       = (5,   8,  18)    # deepest panel fill
-_MID        = (9,  15,  28)    # mid panel
-_LIGHT      = (13, 22,  40)    # inset face / lighter accent
-_STRUT      = (7,  12,  24)    # canopy strut body
+# ──────────────────────────────────────────────────────────────────────────────
+# Palette
+# ──────────────────────────────────────────────────────────────────────────────
+_DARK       = (4, 7, 15)
+_MID        = (9, 16, 28)
+_LIGHT      = (18, 28, 46)
+_EDGE       = (0, 180, 120)
+_EDGE_DIM   = (0, 75, 50)
+_CYAN       = (0, 170, 210)
+_CYAN_DIM   = (0, 60, 90)
+_AMBER      = (180, 90, 0)
 
-_BRIGHT     = (0,  210, 120)   # primary emissive edge (green)
-_DIM        = (0,   75,  45)   # secondary / interior edge
-_CYAN       = (0,  175, 215)   # instrument housing accent
-_AMBER      = (180, 90,   0)   # warning accent
-_RED_IND    = (220,  25,  10)  # indicator ON
-_RED_OFF    = ( 55,   8,   5)  # indicator OFF
+_RED_ON     = (220, 40, 20)
+_RED_OFF    = (55, 10, 8)
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+_SHADOW     = (0, 0, 0, 70)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Drawing Helpers (Short aliases for brevity in geometry definitions)
+# ──────────────────────────────────────────────────────────────────────────────
 def _p(surf, col, pts, width=0):
+    """Draws a filled or outlined polygon.
+    
+    Args:
+        surf (pygame.Surface): Target surface to draw on.
+        col (tuple): RGB or RGBA color tuple.
+        pts (list): List of (x, y) coordinate tuples.
+        width (int): Border width. If 0, fills the polygon.
+    """
     if len(pts) >= 3:
         pygame.draw.polygon(surf, col, pts, width)
 
 def _l(surf, col, a, b, w=1):
+    """Draws a single line.
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        col (tuple): RGB color.
+        a (tuple): Start (x, y) coordinates.
+        b (tuple): End (x, y) coordinates.
+        w (int): Line width.
+    """
     pygame.draw.line(surf, col, a, b, w)
 
+def _poly(surf, col, pts, w=1):
+    """Draws an open sequence of connected lines (a polyline).
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        col (tuple): RGB color.
+        pts (list): List of (x, y) coordinates.
+        w (int): Line width.
+    """
+    for i in range(len(pts) - 1):
+        _l(surf, col, pts[i], pts[i + 1], w)
+
 def _r(surf, col, rect, width=0, br=0):
+    """Draws a rectangle, optionally with rounded corners.
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        col (tuple): RGB color.
+        rect (tuple): (x, y, width, height) rectangle definition.
+        width (int): Border width. If 0, fills the rectangle.
+        br (int): Border radius for rounded corners.
+    """
     pygame.draw.rect(surf, col, rect, width, border_radius=br)
 
 def _c(surf, col, center, radius, width=0):
+    """Draws a circle.
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        col (tuple): RGB color.
+        center (tuple): (x, y) center coordinates.
+        radius (int): Circle radius.
+        width (int): Border width. If 0, fills the circle.
+    """
     pygame.draw.circle(surf, col, center, radius, width)
 
-def _polyline(surf, col, pts, w=1):
-    for i in range(len(pts) - 1):
-        _l(surf, col, pts[i], pts[i+1], w)
+# ──────────────────────────────────────────────────────────────────────────────
+# Geometry Generators
+# ──────────────────────────────────────────────────────────────────────────────
+def _inset_panel(surf, outer_pts, inset=6,
+                 outer_col=_MID,
+                 inner_col=_DARK,
+                 edge_col=_EDGE_DIM):
+    """Creates a recessed panel effect by drawing a smaller polygon inside another.
+    
+    Calculates the centroid of the outer points and moves each point toward it
+    by the 'inset' amount.
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        outer_pts (list): Vertices of the outer frame.
+        inset (int): How many pixels to shrink the inner panel by.
+        outer_col (tuple): Color of the outer frame.
+        inner_col (tuple): Color of the inner (recessed) area.
+        edge_col (tuple): Color of the outline for the inner panel.
+        
+    Returns:
+        list: The calculated points for the inner panel.
+    """
+    # Draw the base outer frame
+    _p(surf, outer_col, outer_pts)
 
-# ── Static surface cache ───────────────────────────────────────────────────────
-_STATIC: pygame.Surface | None = None
+    # Calculate centroid for inward scaling
+    cx = sum(x for x, y in outer_pts) / len(outer_pts)
+    cy = sum(y for x, y in outer_pts) / len(outer_pts)
+
+    inner = []
+
+    # Scale points toward centroid
+    for x, y in outer_pts:
+        dx = cx - x
+        dy = cy - y
+        mag = max(1, math.hypot(dx, dy))
+
+        inner.append((
+            x + dx / mag * inset,
+            y + dy / mag * inset
+        ))
+
+    # Draw the inner recessed area
+    _p(surf, inner_col, inner)
+    # Draw the bevel/edge highlight
+    _poly(surf, edge_col, inner + [inner[0]], 1)
+
+    return inner
+
+
+def _vent(surf, x, y, w, h, count=5):
+    """Draws an industrial vent with horizontal slats.
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        x, y (int): Top-left position.
+        w, h (int): Width and height of the vent housing.
+        count (int): Number of horizontal slats/slots.
+    """
+    # Vent background housing
+    _r(surf, _MID, (x, y, w, h))
+
+    pad = 4
+    slot_h = 2
+    spacing = (h - pad * 2) / count
+
+    # Draw individual recessed slots
+    for i in range(count):
+        sy = y + pad + i * spacing
+        _r(surf, _DARK, (x + 5, sy, w - 10, slot_h))
+
+
+def _hex_plate(surf, cx, cy, r):
+    """Draws a hexagonal armor plate with an inset recessed area.
+    
+    Args:
+        surf (pygame.Surface): Target surface.
+        cx, cy (int): Center coordinates.
+        r (int): Radius of the hexagon.
+        
+    Returns:
+        list: The inner points of the hexagon.
+    """
+    pts = []
+
+    # Generate 6 points for a regular hexagon
+    for i in range(6):
+        a = math.radians(i * 60)
+        pts.append((
+            cx + math.cos(a) * r,
+            cy + math.sin(a) * r
+        ))
+
+    # Apply the inset panel treatment for depth
+    inner = _inset_panel(surf, pts, 5, _MID, _DARK, _EDGE_DIM)
+    return inner
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Static Geometry Caching
+# ──────────────────────────────────────────────────────────────────────────────
+# We cache the heavy static geometry to a Surface to avoid re-calculating 
+# thousands of points every frame.
+_STATIC = None
 _STATIC_SIZE = (0, 0)
 
+def _build_static(W, H):
+    """Bakes the non-animated cockpit geometry into a static Surface.
+    
+    This includes the main frame, struts, console housings, and dash panels.
+    It respects 'safe zones' where HUD text (like heading or hull bars) is drawn.
+    
+    Args:
+        W, H (int): Dimensions of the screen/target surface.
+        
+    Returns:
+        pygame.Surface: A transparent surface containing the rendered static geometry.
+    """
 
-def _build_static(W: int, H: int) -> pygame.Surface:
     s = pygame.Surface((W, H), pygame.SRCALPHA)
-    s.fill((0, 0, 0, 0))
     cx = W // 2
 
-    # ── 1. TOP FRAME ──────────────────────────────────────────────────────────
-    # Dark bar along the top with a notch cut out over the heading tape area
-    top_pts = [
-        (0, 0), (W, 0), (W, 60),
-        (1060, 60), (990, 75),
-        (cx + 225, 75), (cx + 225, 66),
-        (cx - 225, 66), (cx - 225, 75),
-        (290, 75), (220, 60),
-        (0, 60),
+    # HUD safe zones — geometry lines must not cross into these
+    # heading tape lives at top ~0..28px, hull bar at bottom ~H-28..H
+    TOP_SAFE    = 28   # below this line: heading tape band — no geometry lines
+    BOTTOM_SAFE = H - 28  # above this line: hull bar band — no geometry lines
+
+    # =========================================================================
+    # TOP FRAME
+    # =========================================================================
+
+    # Main Top Frame Boundary
+    # Defines the overall silhouette of the top cockpit bar
+    top = [
+        (0, 0),
+        (W, 0),
+        (W, 72),      # Right edge drop
+
+        (1050, 72),   # Right notch start
+        (970, 96),    # Right notch corner
+
+        (cx + 240, 96), # Center-right indent
+        (cx + 240, 70), # Center-right rise
+
+        (cx - 240, 70), # Center-left rise
+        (cx - 240, 96), # Center-left indent
+
+        (310, 96),    # Left notch corner
+        (230, 72),    # Left notch start
+
+        (0, 72)       # Left edge drop
     ]
-    _p(s, _DARK, top_pts)
-    # bottom inner edge of top frame
-    _l(s, _BRIGHT, (0, 59), (220, 59), 1)
-    _l(s, _BRIGHT, (220, 59), (290, 74), 1)
-    _l(s, _DIM,    (290, 74), (cx - 225, 74), 1)
-    _l(s, _DIM,    (cx - 225, 74), (cx - 225, 65), 1)
-    _l(s, _DIM,    (cx - 225, 65), (cx + 225, 65), 1)
-    _l(s, _DIM,    (cx + 225, 65), (cx + 225, 74), 1)
-    _l(s, _DIM,    (cx + 225, 74), (990, 74), 1)
-    _l(s, _BRIGHT, (990, 74), (1060, 59), 1)
-    _l(s, _BRIGHT, (1060, 59), (W, 59), 1)
 
-    # SYSTEMS / NML / WPN strip (top-left corner panel)
-    sys_strip = [(0, 0), (240, 0), (240, 60), (0, 60)]
-    _p(s, (6, 14, 10), sys_strip)
-    _l(s, _BRIGHT, (240, 0), (240, 60), 1)
-    _l(s, _BRIGHT, (0, 60), (240, 60), 1)
-    # Button outlines
-    for bx in (48, 100, 155):
-        _r(s, (10, 25, 16), (bx - 22, 8, 44, 24), 1, 2)
-        _r(s, _DIM, (bx - 22, 8, 44, 24), 1, 2)
+    _p(s, _DARK, top)
 
-    # ALERT strip (top-right corner panel)
-    alert_strip = [(W - 240, 0), (W, 0), (W, 60), (W - 240, 60)]
-    _p(s, (16, 5, 5), alert_strip)
-    _l(s, _AMBER, (W - 240, 0), (W - 240, 60), 1)
-    _l(s, _AMBER, (W - 240, 60), (W, 60), 1)
-    # Alert button boxes: RDR LOCK, MISSILE, WARN
-    for bx in (W - 200, W - 140, W - 68):
-        _r(s, (28, 8, 6), (bx - 26, 7, 52, 26), 1, 2)
-        _r(s, _AMBER, (bx - 26, 7, 52, 26), 1, 2)
+    # Top Panel Layering (Recessed aesthetic)
+    # This creates the "plate on plate" look with a bright edge
+    top_inner_points = [
+        (12, TOP_SAFE + 4),
+        (W - 12, TOP_SAFE + 4),
+        (W - 12, 62),
 
-    # ── 2. LEFT CANOPY STRUT ──────────────────────────────────────────────────
+        (1040, 62),
+        (955, 86),
+
+        (cx + 220, 86),
+        (cx + 220, 62),
+
+        (cx - 220, 62),
+        (cx - 220, 86),
+
+        (325, 86),
+        (240, 62),
+
+        (12, 62)
+    ]
+    
+    top_inner = _inset_panel(
+        s,
+        top_inner_points,
+        inset=5,
+        outer_col=_MID,
+        inner_col=_DARK,
+        edge_col=_EDGE_DIM
+    )
+
+    # bright highlight on the full outer top inset
+    _poly(s, _EDGE, top_inner + [top_inner[0]], 1)
+
+    # secondary recessed sub-panels in the top bar — left and right of center gap
+    # left sub-panel
+    _inset_panel(s, [
+        (20, TOP_SAFE + 8),
+        (cx - 245, TOP_SAFE + 8),
+        (cx - 245, 60),
+        (20, 60),
+    ], 4, _LIGHT, _MID, _CYAN_DIM)
+
+    # right sub-panel
+    _inset_panel(s, [
+        (cx + 245, TOP_SAFE + 8),
+        (W - 20, TOP_SAFE + 8),
+        (W - 20, 60),
+        (cx + 245, 60),
+    ], 4, _LIGHT, _MID, _CYAN_DIM)
+
+    # =========================================================================
+    # LEFT STRUT (Vertical support on the left side)
+    # =========================================================================
+
     left_strut = [
-        (0, 0), (242, 0), (242, 60),
-        (196, 115), (160, 290),
-        (148, 420), (118, 450),
-        (0, 450),
+        (0, 0),
+        (250, 0),
+        (250, 72),      # Connects to top frame
+
+        (205, 132),     # First diagonal break
+        (170, 300),     # Long sweep
+        (155, 430),     # Bottom taper
+        (120, 470),     # Corner join
+
+        (0, 470)        # Edge join
     ]
-    _p(s, _STRUT, left_strut)
 
-    # Inward-facing bright edge (viewport boundary)
-    strut_L_edge = [(242, 60), (196, 115), (160, 290), (148, 420), (118, 450)]
-    _polyline(s, _BRIGHT, strut_L_edge, 2)
+    _p(s, _MID, left_strut)
 
-    # Strut surface panel lines
-    for fx in (42, 118, 192):
-        _l(s, _DIM, (fx, 0), (max(0, fx - 8), 60), 1)
+    # outer armor shell — recessed with CYAN highlight to match consoles
+    outer_plate = [
+        (8, TOP_SAFE + 4),
+        (232, TOP_SAFE + 4),
+        (232, 68),
 
-    # Horizontal cross-rib
-    rib_L = [(0, 195), (168, 170), (178, 145), (172, 195), (0, 220)]
-    _p(s, _MID, rib_L)
-    _l(s, _DIM, (0, 195), (168, 170), 1)
-    _l(s, _DIM, (0, 220), (172, 195), 1)
+        (188, 122),
+        (158, 290),
+        (143, 418),
+        (108, 450),
 
-    # ── 3. RIGHT CANOPY STRUT (mirror) ───────────────────────────────────────
+        (8, 450)
+    ]
+
+    _inset_panel(s, outer_plate, 7, _MID, _DARK, _CYAN_DIM)
+    _poly(s, _EDGE_DIM, outer_plate + [outer_plate[0]], 1)
+
+    # inner recessed armor panel — tighter inset, brighter edge
+    inner_plate = [
+        (22, TOP_SAFE + 12),
+        (218, TOP_SAFE + 12),
+        (218, 62),
+
+        (175, 116),
+        (145, 284),
+        (132, 410),
+        (97, 440),
+
+        (22, 440)
+    ]
+
+    _inset_panel(s, inner_plate, 5, _LIGHT, _MID, _EDGE_DIM)
+
+    # Asymmetrical hex plate on the left strut
+    _hex_plate(s, 70, 230, 32)
+
+    groove = [
+        (250, 72),
+        (205, 132),
+        (170, 300),
+        (155, 430),
+        (120, 470)
+    ]
+
+    _poly(s, _DARK, groove, 2)
+
+    # =========================================================================
+    # RIGHT STRUT
+    # =========================================================================
+
     right_strut = [
-        (W, 0), (W - 242, 0), (W - 242, 60),
-        (W - 196, 115), (W - 160, 290),
-        (W - 148, 420), (W - 118, 450),
-        (W, 450),
+        (W, 0),
+        (W - 250, 0),
+        (W - 250, 72),
+
+        (W - 205, 132),
+        (W - 170, 300),
+        (W - 155, 430),
+        (W - 120, 470),
+
+        (W, 470)
     ]
-    _p(s, _STRUT, right_strut)
 
-    strut_R_edge = [(W - 242, 60), (W - 196, 115), (W - 160, 290), (W - 148, 420), (W - 118, 450)]
-    _polyline(s, _BRIGHT, strut_R_edge, 2)
+    _p(s, _MID, right_strut)
 
-    for fx in (42, 118, 192):
-        _l(s, _DIM, (W - fx, 0), (W - max(0, fx - 8), 60), 1)
+    # outer armor shell — mirrored
+    outer_plate_r = [
+        (W - 8, TOP_SAFE + 4),
+        (W - 232, TOP_SAFE + 4),
+        (W - 232, 68),
 
-    rib_R = [(W, 195), (W - 168, 170), (W - 178, 145), (W - 172, 195), (W, 220)]
-    _p(s, _MID, rib_R)
-    _l(s, _DIM, (W, 195), (W - 168, 170), 1)
-    _l(s, _DIM, (W, 220), (W - 172, 195), 1)
+        (W - 188, 122),
+        (W - 158, 290),
+        (W - 143, 418),
+        (W - 108, 450),
 
-    # ── 4. LEFT LOWER CONSOLE ─────────────────────────────────────────────────
+        (W - 8, 450)
+    ]
+
+    _inset_panel(s, outer_plate_r, 7, _LIGHT, _MID, _EDGE_DIM)
+    _poly(s, _EDGE_DIM, outer_plate_r + [outer_plate_r[0]], 1)
+
+    # asymmetrical detail
+    _hex_plate(s, W - 70, 230, 32)
+
+    groove_r = [
+        (W - 250, 72),
+        (W - 205, 132),
+        (W - 170, 300),
+        (W - 155, 430),
+        (W - 120, 470)
+    ]
+
+    _poly(s, _EDGE, groove_r, 2)
+
+    # =========================================================================
+    # LOWER LEFT CONSOLE
+    # =========================================================================
+
     left_console = [
-        (0, 450), (118, 450),
-        (148, 490), (170, 548),
-        (182, 628), (185, 695), (182, H),
-        (0, H),
+        (0, 470),
+        (120, 470),
+
+        (150, 510),
+        (175, 580),
+
+        (190, 690),
+        (190, H),
+
+        (0, H)
     ]
+
     _p(s, _DARK, left_console)
 
-    lc_inner = [(118, 450), (148, 490), (170, 548), (182, 628), (185, 695)]
-    _polyline(s, _BRIGHT, lc_inner, 2)
+    # upper armor inset
+    _inset_panel(s, [
+        (8, 485),
+        (102, 485),
+        (128, 520),
+        (128, 640),
+        (8, 640)
+    ], 5)
 
-    # Top section bar
-    _p(s, _MID, [(2, 452), (116, 452), (144, 488), (2, 488)])
-    _l(s, _DIM, (2, 488), (144, 488), 1)
+    # radar housing
+    radar_outer = [
+        (10, 560),
+        (170, 560),
 
-    # Dodge bar housing panel
-    _p(s, _LIGHT, [(4, 492), (78, 492), (78, 564), (4, 564)])
-    _r(s, _DIM, (4, 492, 74, 72), 1)
+        (182, 580),
+        (182, 720),
 
-    # Radar housing (octagonal inset)
-    radar_panel = [
-        (4, 570), (170, 570),
-        (178, 585), (178, 715),
-        (170, 728), (4, 728),
+        (165, 735),
+        (10, 735)
     ]
-    _p(s, _MID, radar_panel)
-    _polyline(s, _CYAN, radar_panel + [radar_panel[0]], 1)
 
-    # Radar disc dark recess
-    _c(s, _DARK, (90, 650), 72)
-    _c(s, _DIM,  (90, 650), 72, 1)
+    radar_inner = _inset_panel(
+        s,
+        radar_outer,
+        8,
+        _LIGHT,
+        _MID,
+        _CYAN
+    )
 
-    # NSPA cardinal ring outline inside radar
-    _c(s, (0, 40, 25), (90, 650), 38, 1)
+    # Deep Radar Recess (Circle stack for depth)
+    _c(s, _DARK, (95, 650), 76)
+    _c(s, _MID, (95, 650), 66)
 
-    # System status panel (PWR/ENG/WEP/SHD labels column)
-    _p(s, _MID, [(188, 570), (258, 570), (262, 590), (262, 730), (188, 730)])
-    _l(s, _DIM, (188, 570), (258, 570), 1)
-    _l(s, _DIM, (258, 570), (262, 590), 1)
-    _l(s, _DIM, (262, 590), (262, 730), 1)
-    _l(s, _DIM, (262, 730), (188, 730), 1)
-    # Label row dividers
-    for ry in (602, 634, 666, 698):
-        _l(s, _DIM, (190, ry), (260, ry), 1)
+    # Radar Grid / Groove Rings
+    for r in [60, 42, 24]:
+        _c(s, _EDGE_DIM, (95, 650), r, 1)
 
-    # Thrust/boost/manvr bottom strip
-    _p(s, _MID, [(4, 732), (182, 732), (182, H - 2), (4, H - 2)])
-    _l(s, _DIM, (4, 732), (182, 732), 1)
+    # Radial "Clock" lines for radar orientation
+    for a in range(0, 360, 45):
+        rad = math.radians(a)
 
-    # Red indicator lights left
-    for iy in (498, 518, 538):
-        _r(s, _RED_OFF, (52, iy - 5, 18, 10), 0, 2)
-        _r(s, _DIM,    (52, iy - 5, 18, 10), 1, 2)
+        x1 = 95 + math.cos(rad) * 18
+        y1 = 650 + math.sin(rad) * 18
 
-    # ── 5. RIGHT LOWER CONSOLE (mirror) ──────────────────────────────────────
+        x2 = 95 + math.cos(rad) * 58
+        y2 = 650 + math.sin(rad) * 58
+
+        _l(s, _EDGE_DIM, (x1, y1), (x2, y2), 1)
+
+    # indicator pockets
+    for i in range(4):
+        y = 500 + i * 24
+
+        _inset_panel(
+            s,
+            [
+                (42, y),
+                (78, y),
+                (78, y + 16),
+                (42, y + 16)
+            ],
+            3,
+            _MID,
+            _DARK,
+            _EDGE_DIM
+        )
+
+    # =========================================================================
+    # LOWER RIGHT CONSOLE
+    # =========================================================================
+
     right_console = [
-        (W, 450), (W - 118, 450),
-        (W - 148, 490), (W - 170, 548),
-        (W - 182, 628), (W - 185, 695), (W - 182, H),
-        (W, H),
+        (W, 470),
+        (W - 120, 470),
+
+        (W - 150, 510),
+        (W - 175, 580),
+
+        (W - 190, 690),
+        (W - 190, H),
+
+        (W, H)
     ]
+
     _p(s, _DARK, right_console)
 
-    rc_inner = [(W - 118, 450), (W - 148, 490), (W - 170, 548), (W - 182, 628), (W - 185, 695)]
-    _polyline(s, _BRIGHT, rc_inner, 2)
+    _inset_panel(s, [
+        (W - 8, 485),
+        (W - 102, 485),
+        (W - 128, 520),
+        (W - 128, 640),
+        (W - 8, 640)
+    ], 5)
 
-    _p(s, _MID, [(W - 2, 452), (W - 116, 452), (W - 144, 488), (W - 2, 488)])
-    _l(s, _DIM, (W - 2, 488), (W - 144, 488), 1)
+    # asymmetric venting
+    _vent(s, W - 95, 585, 70, 60)
 
-    # Throttle housing panel
-    _p(s, _LIGHT, [(W - 4, 492), (W - 78, 492), (W - 78, 564), (W - 4, 564)])
-    _r(s, _DIM, (W - 78, 492, 74, 72), 1)
+    # throttle trench
+    trench = [
+        (W - 165, 560),
+        (W - 25, 560),
 
-    # Speed / status display housing
-    spd_panel = [
-        (W - 4, 570), (W - 170, 570),
-        (W - 178, 585), (W - 178, 715),
-        (W - 170, 728), (W - 4, 728),
+        (W - 35, 720),
+        (W - 155, 720)
     ]
-    _p(s, _MID, spd_panel)
-    _polyline(s, _CYAN, spd_panel + [spd_panel[0]], 1)
 
-    # FUEL/TEMP/OXY/ELEC labels column
-    _p(s, _MID, [(W - 258, 570), (W - 188, 570), (W - 188, 730), (W - 262, 730), (W - 262, 590)])
-    _l(s, _DIM, (W - 258, 570), (W - 188, 570), 1)
-    _l(s, _DIM, (W - 188, 570), (W - 188, 730), 1)
-    _l(s, _DIM, (W - 188, 730), (W - 262, 730), 1)
-    _l(s, _DIM, (W - 262, 730), (W - 262, 590), 1)
-    for ry in (602, 634, 666, 698):
-        _l(s, _DIM, (W - 260, ry), (W - 190, ry), 1)
+    _inset_panel(s, trench, 8, _LIGHT, _MID, _CYAN)
 
-    # Bottom right controls strip
-    _p(s, _MID, [(W - 182, 732), (W - 4, 732), (W - 4, H - 2), (W - 182, H - 2)])
-    _l(s, _DIM, (W - 182, 732), (W - 4, 732), 1)
-    # LIGHTS/HUD/SCAN/CMDS button row
-    for bx in (W - 165, W - 122, W - 79, W - 36):
-        _r(s, _DARK, (bx - 18, 736, 36, 18), 1, 2)
-        _r(s, _DIM,  (bx - 18, 736, 36, 18), 1, 2)
+    # =========================================================================
+    # CENTER DASH
+    # =========================================================================
 
-    # Red indicator lights right
-    for iy in (498, 518, 538):
-        _r(s, _RED_OFF, (W - 70, iy - 5, 18, 10), 0, 2)
-        _r(s, _DIM,    (W - 70, iy - 5, 18, 10), 1, 2)
+    # Center dash plate construction
+    center = [
+        (190, H),
+        (190, 710),
 
-    # ── 6. CENTER DASHBOARD ────────────────────────────────────────────────────
-    # Connecting panel between left & right consoles at the bottom
-    center_dash = [
-        (182, H), (182, 700), (188, 680), (200, 650),
-        (278, 610), (cx - 145, 590),
-        (cx - 145, 578), (cx + 145, 578), (cx + 145, 590),
-        (W - 278, 610), (W - 200, 650), (W - 188, 680), (W - 182, 700),
-        (W - 182, H),
+        (210, 660),
+        (290, 610),
+
+        (cx - 180, 585),
+        (cx + 180, 585),
+
+        (W - 290, 610),
+        (W - 210, 660),
+
+        (W - 190, 710),
+        (W - 190, H)
     ]
-    _p(s, _DARK, center_dash)
 
-    # Inner bright edge
-    cd_edge = [
-        (188, 680), (200, 650), (278, 610),
-        (cx - 145, 590), (cx - 145, 578),
-        (cx + 145, 578), (cx + 145, 590),
-        (W - 278, 610), (W - 200, 650), (W - 188, 680),
+    _p(s, _MID, center)
+
+    # Main structural plate on the center dash
+    main_plate = [
+        (260, H - 8),
+        (260, 690),
+
+        (320, 635),
+
+        (cx - 150, 610),
+        (cx + 150, 610),
+
+        (W - 320, 635),
+
+        (W - 260, 690),
+        (W - 260, H - 8)
     ]
-    _polyline(s, _BRIGHT, cd_edge, 2)
 
-    # Hull bar housing recess
-    _p(s, _LIGHT, [(cx - 155, 580), (cx + 155, 580), (cx + 155, 594), (cx - 155, 594)])
-    _l(s, _DIM, (cx - 155, 580), (cx + 155, 580), 1)
-    _l(s, _DIM, (cx - 155, 594), (cx + 155, 594), 1)
+    _inset_panel(s, main_plate, 10)
 
-    # Gravity / ship silhouette housing
-    sil_pts = [
-        (cx - 64, 610), (cx + 64, 610),
-        (cx + 74, 636), (cx + 64, 665),
-        (cx - 64, 665), (cx - 74, 636),
+    # The core central monitor/instrument recess
+    core = [
+        (cx - 90, 620),
+        (cx + 90, 620),
+
+        (cx + 120, 655),
+        (cx + 100, 700),
+
+        (cx - 100, 700),
+        (cx - 120, 655)
     ]
-    _p(s, _MID, sil_pts)
-    _polyline(s, _DIM, sil_pts + [sil_pts[0]], 1)
 
-    # Gravity readout inset panel
-    _p(s, _LIGHT, [(cx - 68, 668), (cx + 68, 668), (cx + 68, 686), (cx - 68, 686)])
-    _l(s, _DIM, (cx - 68, 668), (cx + 68, 668), 1)
-    _l(s, _DIM, (cx - 68, 686), (cx + 68, 686), 1)
+    _inset_panel(s, core, 8, _LIGHT, _DARK, _EDGE)
 
-    # ── 7. STRUCTURAL SEAMS & DETAIL LINES ───────────────────────────────────
-    # Horizontal panel seam on left console
-    _l(s, _DIM, (0, 450), (118, 450), 1)
-    # Horizontal panel seam on right console
-    _l(s, _DIM, (W, 450), (W - 118, 450), 1)
+    # Vertical detail seams in the center dash
+    for off in [-140, 140]:
+        y1 = 620
+        y2 = min(H, BOTTOM_SAFE - 2)
+        _l(
+            s,
+            _EDGE_DIM,
+            (cx + off, y1),
+            (cx + int(off * 1.2), y2),
+            1
+        )
 
-    # Left strut bottom horizontal seam
-    _l(s, _DIM, (0, 440), (118, 440), 1)
-    _l(s, _DIM, (W, 440), (W - 118, 440), 1)
-
-    # Panel corner brackets — left console upper area
-    for (x1, y1, x2, y2) in [(4, 455, 14, 455), (4, 455, 4, 465)]:
-        _l(s, _BRIGHT, (x1, y1), (x2, y2), 1)
-    for (x1, y1, x2, y2) in [(W - 4, 455, W - 14, 455), (W - 4, 455, W - 4, 465)]:
-        _l(s, _BRIGHT, (x1, y1), (x2, y2), 1)
+    # Thick support ribs at the base
+    for off in [-240, -180, 180, 240]:
+        y1 = 650
+        y2 = min(H, BOTTOM_SAFE - 2)
+        _l(
+            s,
+            _DARK,
+            (cx + off, y1),
+            (cx + int(off * 1.1), y2),
+            3
+        )
 
     return s
 
-
-# ── Ship silhouette (drawn separately for clarity) ────────────────────────────
-def _draw_ship_silhouette(surf: pygame.Surface, cx: int, cy: int):
-    """Draw a simple top-down ship silhouette glyph."""
-    col = _DIM
-    # Body
-    body = [(cx, cy - 18), (cx + 8, cy + 8), (cx, cy + 4), (cx - 8, cy + 8)]
-    _p(surf, col, body, 1)
-    # Wings
-    wing_L = [(cx - 8, cy + 2), (cx - 22, cy + 12), (cx - 14, cy + 14), (cx - 6, cy + 8)]
-    _p(surf, col, wing_L, 1)
-    wing_R = [(cx + 8, cy + 2), (cx + 22, cy + 12), (cx + 14, cy + 14), (cx + 6, cy + 8)]
-    _p(surf, col, wing_R, 1)
-
-
-# ── Static surface cache ───────────────────────────────────────────────────────
-_LABEL_CACHE = {}
-
-def _cached_label(font, text, color):
-    key = (text, color)
-    if key not in _LABEL_CACHE:
-        _LABEL_CACHE[key] = font.render(text, True, color)
-    return _LABEL_CACHE[key]
-
-# ── Public draw function ───────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+# Main Public Interface
+# ──────────────────────────────────────────────────────────────────────────────
 def draw_cockpit_frame(
-    surface: pygame.Surface,
-    ticks: int,
-    alert_active: bool = False,
-    missile_lock: bool = False,
-    hit_flash: float = 0.0,
-    explosion_glow: float = 0.0,
+    surface,
+    ticks,
+    alert_active=False,
+    missile_lock=False,
+    hit_flash=0.0,
+    explosion_glow=0.0
 ):
+    """Main entry point to draw the cockpit and HUD overlays.
+    
+    Handles static geometry caching, dynamic glows, indicator lights,
+    and screen-wide flash effects.
+    
+    Args:
+        surface (pygame.Surface): The main display surface.
+        ticks (int): Current millisecond count for animations.
+        alert_active (bool): Whether a general 'warning' state is active (e.g. low fuel).
+        missile_lock (bool): Whether an enemy has a lock on the player.
+        hit_flash (float): 0.0 to 1.0 value representing recent damage impact intensity.
+        explosion_glow (float): 0.0 to 1.0 value for external explosion light bleed.
     """
-    Blit the static cockpit geometry and render all animated elements.
 
-    Parameters
-    ----------
-    surface       : target pygame surface (game screen or hud overlay)
-    ticks         : pygame.time.get_ticks() — drives animations
-    alert_active  : lights the WARN indicator
-    missile_lock  : lights the RDR LOCK indicator
-    hit_flash     : 0.0-1.0 intensity of red damage flash
-    explosion_glow: 0.0-1.0 ambient glow intensity from nearby explosions
-    """
     global _STATIC, _STATIC_SIZE
-    W, H = surface.get_size()
-    cx = W // 2
 
-    # (Re)bake static surface if needed
+    # Check for resolution changes or first-time initialization
+    W, H = surface.get_size()
+
     if _STATIC is None or _STATIC_SIZE != (W, H):
         _STATIC = _build_static(W, H)
         _STATIC_SIZE = (W, H)
 
-    # Blit the fully-baked cockpit base
+    # Draw the cached static background first
     surface.blit(_STATIC, (0, 0))
 
-    t = ticks * 0.001  # seconds
+    # Time-based animation factor (seconds)
+    t = ticks * 0.001
 
-    # ── Animated: emissive edge glow pulse ────────────────────────────────────
-    glow_alpha = int(40 + 30 * math.sin(t * 1.2))
-    glow_col = (0, min(255, 210 + glow_alpha // 2), min(255, 120 + glow_alpha // 2))
+    # --- DYNAMIC GLOWS AND PULSES ---
 
-    # Pulse on the inner strut edges (just re-draw the key lines slightly brighter)
-    strut_L = [(242, 60), (196, 115), (160, 290), (148, 420), (118, 450)]
-    strut_R = [(W - 242, 60), (W - 196, 115), (W - 160, 290), (W - 148, 420), (W - 118, 450)]
-    _polyline(surface, glow_col, strut_L, 1)
-    _polyline(surface, glow_col, strut_R, 1)
+    # Main Emissive Groove Pulse (Cyan/Green)
+    # Sinusoidal breathing effect for the outer frame grooves
+    pulse = int(140 + 60 * math.sin(t * 1.7))
+    glow = (0, pulse, 120)
 
-    # ── Animated: instrument panel indicator lights ───────────────────────────
-    # Left console red indicators (static on for now — pulse slowly)
-    ind_pulse = int(128 + 100 * math.sin(t * 2.5))
-    ind_col = (min(255, 180 + ind_pulse // 5), 20, 10)
-    for iy in (498, 518, 538):
-        _r(surface, ind_col, (52, iy - 5, 18, 10), 0, 2)
+    # Coordinates for the emissive grooves on the struts
+    left_glow = [
+        (250, 72),
+        (205, 132),
+        (170, 300),
+        (155, 430),
+        (120, 470)
+    ]
 
-    # Right console indicators
-    for iy in (498, 518, 538):
-        _r(surface, ind_col, (W - 70, iy - 5, 18, 10), 0, 2)
+    right_glow = [
+        (W - 250, 72),
+        (W - 205, 132),
+        (W - 170, 300),
+        (W - 155, 430),
+        (W - 120, 470)
+    ]
 
-    # ── Animated: SYSTEMS / NML / WPN button labels ───────────────────────────
-    label_col = _BRIGHT
-    f10 = pygame.font.Font(None, 14)
-    for txt, bx in [("SYSTEMS", 48), ("NML", 100), ("WPN", 155)]:
-        lbl = _cached_label(f10, txt, label_col)
-        surface.blit(lbl, (bx - lbl.get_width() // 2, 13))
+    _poly(surface, glow, left_glow, 1)
+    _poly(surface, glow, right_glow, 1)
 
-    # ── Animated: ALERT button labels ─────────────────────────────────────────
-    warn_col = _AMBER
-    if alert_active:
-        pulse_a = int(180 + 75 * abs(math.sin(t * 4.0)))
-        warn_col = (min(255, pulse_a + 20), 90, 0)
-    if missile_lock:
-        lock_col = (min(255, int(160 + 95 * abs(math.sin(t * 5.0)))), 20, 10)
-    else:
-        lock_col = _AMBER
+    # Top Bar Edge Pulse (Cyberpunk blue/cyan)
+    top_pulse = int(60 + 30 * math.sin(t * 1.2))
+    _poly(surface, (0, top_pulse, top_pulse + 30), [
+        (22, 32),
+        (W - 22, 32),
+        (W - 22, 60),
+        (22, 60),
+        (22, 32),
+    ], 1)
 
-    for txt, bx, col in [("RDR\nLOCK", W - 200, lock_col),
-                          ("MISSILE",  W - 140, warn_col),
-                          ("WARN",     W - 68,  warn_col if alert_active else _AMBER)]:
-        lines = txt.split("\n")
-        for li, line in enumerate(lines):
-            lbl = _cached_label(f10, line, col)
-            y_off = 10 + li * 12
-            surface.blit(lbl, (bx - lbl.get_width() // 2, y_off))
+    # animated strut inner edge glow
+    strut_glow = (0, int(55 + 25 * math.sin(t * 1.4)), int(70 + 30 * math.sin(t * 1.4)))
 
-    # ── Animated: PWR/ENG/WEP/SHD system label column ────────────────────────
-    for i, txt in enumerate(["PWR", "ENG", "WEP", "SHD"]):
-        ry = 588 + i * 32
-        lbl = _cached_label(f10, txt, _BRIGHT)
-        surface.blit(lbl, (194, ry + 4))
-        # Small status bar next to each label
-        bar_x = 220
-        _r(surface, _DIM, (bar_x, ry + 6, 32, 8), 0, 1)
-        _r(surface, _BRIGHT, (bar_x, ry + 6, 32, 8), 1, 1)
+    left_inner_glow = [
+        (22, 32),
+        (218, 32),
+        (175, 116),
+        (145, 284),
+        (132, 410),
+        (97, 440),
+        (22, 440),
+        (22, 32),
+    ]
+    right_inner_glow = [
+        (W - 22, 32),
+        (W - 218, 32),
+        (W - 175, 116),
+        (W - 145, 284),
+        (W - 132, 410),
+        (W - 97, 440),
+        (W - 22, 440),
+        (W - 22, 32),
+    ]
 
-    # ── Animated: FUEL/TEMP/OXY/ELEC column ──────────────────────────────────
-    for i, txt in enumerate(["FUEL", "TEMP", "OXY", "ELEC"]):
-        ry = 588 + i * 32
-        lbl = _cached_label(f10, txt, _BRIGHT)
-        surface.blit(lbl, (W - 256, ry + 4))
-        bar_x = W - 222
-        _r(surface, _DIM, (bar_x, ry + 6, 32, 8), 0, 1)
-        _r(surface, _BRIGHT, (bar_x, ry + 6, 32, 8), 1, 1)
+    _poly(surface, strut_glow, left_inner_glow, 1)
+    _poly(surface, strut_glow, right_inner_glow, 1)
 
-    # ── Animated: bottom-right control buttons ────────────────────────────────
-    for txt, bx in [("LIGHTS", W - 165), ("HUD+", W - 122), ("SCAN", W - 79), ("CMDS", W - 36)]:
-        lbl = _cached_label(f10, txt, _DIM)
-        surface.blit(lbl, (bx - lbl.get_width() // 2, 739))
+    # Radar Sweep Rings (Expanding/contracting circle highlight)
+    radar_pulse = int(70 + 50 * math.sin(t * 3.0))
 
-    # ── Animated: THRUST/BOOST/MANVR bottom-left labels ──────────────────────
-    for i, txt in enumerate(["THRUST", "BOOST", "MANVR"]):
-        lbl = _cached_label(f10, txt, _DIM)
-        surface.blit(lbl, (8, H - 46 + i * 14))
+    for r in [60, 42]:
+        _c(
+            surface,
+            (0, radar_pulse, 90),
+            (95, 650),
+            r,
+            1
+        )
 
-    # ── Ship silhouette ───────────────────────────────────────────────────────
-    _draw_ship_silhouette(surface, cx, 640)
+    # Left Console Indicator Lights (Pulsing Red)
+    # Creates a "Warning/Alert" heartbeat look
+    ind_color = (
+        min(255, 180 + int(70 * abs(math.sin(t * 5)))),
+        20,
+        10
+    )
 
-    # ── Dynamic: hit flash tint on panels ────────────────────────────────────
+    for i in range(4):
+        y = 500 + i * 24
+        # Small indicator rectangles next to the radar
+        _r(surface, ind_color, (50, y + 3, 20, 8), br=2)
+
+    # hit flash
     if hit_flash > 0.01:
-        flash_surf = pygame.Surface((W, H), pygame.SRCALPHA)
-        alpha = int(hit_flash * 60)
-        flash_surf.fill((200, 0, 0, alpha))
-        surface.blit(flash_surf, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        fs = pygame.Surface((W, H), pygame.SRCALPHA)
+        fs.fill((255, 0, 0, int(hit_flash * 80)))
+        surface.blit(fs, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
 
-    # ── Dynamic: explosion ambient glow ──────────────────────────────────────
+    # explosion glow
     if explosion_glow > 0.01:
-        glow_surf = pygame.Surface((W, H), pygame.SRCALPHA)
-        ag = int(explosion_glow * 45)
-        glow_surf.fill((ag, ag // 3, 0, ag))
-        surface.blit(glow_surf, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
+        gs = pygame.Surface((W, H), pygame.SRCALPHA)
 
-    # ── RDR label under radar housing ────────────────────────────────────────
-    rdr_lbl = _cached_label(f10, "RDR", _BRIGHT)
-    surface.blit(rdr_lbl, (90 - rdr_lbl.get_width() // 2, H - 28))
+        a = int(explosion_glow * 60)
 
-    # ── DCH label above dodge bar ─────────────────────────────────────────────
-    dch_lbl = _cached_label(f10, "DCH", _BRIGHT)
-    surface.blit(dch_lbl, (8, 480))
+        gs.fill((a, a // 3, 0, a))
 
-    # ── THR label above throttle bar ──────────────────────────────────────────
-    thr_lbl = _cached_label(f10, "THR", _BRIGHT)
-    surface.blit(thr_lbl, (W - 70, 480))
+        surface.blit(gs, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
