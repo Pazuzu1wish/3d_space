@@ -230,7 +230,24 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
     # Blit the cached base holosphere directly to the HUD
     surface.blit(_RADAR_CACHE[cache_key], (cx - radius, cy - radius))
 
-    # ─── 2. PLOT THE ENTITIES ─────────────────────────────────────────────
+    # ─── 2. RADAR SWEEP ARM ───────────────────────────────────────────────
+    # A rotating line that "scans" the equatorial plane
+    sweep_t = pygame.time.get_ticks() * 0.003
+    sweep_angle = sweep_t % (2 * math.pi)
+    
+    # Draw a few trailing lines for a motion-blur effect
+    for i in range(15):
+        alpha = max(0, 180 - i * 12)
+        angle = sweep_angle - i * 0.03
+        
+        # End point projected onto the tilted equatorial plane
+        tx = cx + math.cos(angle) * radius
+        ty = cy + math.sin(angle) * radius * tilt_factor
+        
+        pygame.draw.line(surface, (HUD_GREEN[0], HUD_GREEN[1], HUD_GREEN[2], alpha), 
+                         (cx, cy), (tx, ty), 2 if i == 0 else 1)
+
+
     px, py, pz = player_pos
 
     # Math Optimization: Use squared distance to avoid math.sqrt in the loop
@@ -930,6 +947,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         missile_lock=missile_lock,
         hit_flash=hit_flash_ratio,
         explosion_glow=explosion_glow,
+        shield_charge=shield_charge,
     )
 
     # ── 2. Build / clear the transparent HUD overlays ───────────────────────
