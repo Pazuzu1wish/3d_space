@@ -237,9 +237,8 @@ class Game:
         # 1. Broad-phase Frustum Culling via Spatial Hash
         visible_entities = self.spatial.query_visible(self.camera)
         
-        # 2. Submit static/environment
-        for star in stars:
-            star.submit_to_renderer(self.renderer, player.pos)
+        # 2. Submit static/environment using optimized batch processing
+        Star.submit_batch_to_renderer(stars, self.renderer, player.pos)
         self.nebulae.submit_to_renderer(self.renderer)
 
         # 3. Submit visible entities
