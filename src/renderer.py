@@ -4,10 +4,14 @@ import numpy as np
 from numba import njit
 
 @njit(fastmath=True, cache=True)
-def process_faces_batch_numba(cam_verts, projected, face_indices):
+def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
+    """
+    Fast face processing: backface culling, lighting, and sorting.
+    Returns valid mask, shaded colors, and average Z for depth sorting.
+    """
     N_faces = face_indices.shape[0]
     valid = np.zeros(N_faces, dtype=np.bool_)
-    shades = np.zeros(N_faces, dtype=np.int32)
+    shaded_colors = np.zeros((N_faces, 3), dtype=np.int32)
     avg_zs = np.zeros(N_faces, dtype=np.float64)
     
     for i in range(N_faces):
@@ -15,6 +19,7 @@ def process_faces_batch_numba(cam_verts, projected, face_indices):
         idx1 = face_indices[i, 1]
         idx2 = face_indices[i, 2]
         
+        # Early skip if any vertex is out of frustum
         if projected[idx0, 0] <= -900000.0 or projected[idx1, 0] <= -900000.0 or projected[idx2, 0] <= -900000.0:
             continue
             
@@ -22,16 +27,20 @@ def process_faces_batch_numba(cam_verts, projected, face_indices):
         v2x = cam_verts[idx1, 0]; v2y = cam_verts[idx1, 1]; v2z = cam_verts[idx1, 2]
         v3x = cam_verts[idx2, 0]; v3y = cam_verts[idx2, 1]; v3z = cam_verts[idx2, 2]
         
+        # Edge vectors
         ux = v2x - v1x; uy = v2y - v1y; uz = v2z - v1z
         vx = v3x - v1x; vy = v3y - v1y; vz = v3z - v1z
         
+        # Cross product for normal (Z component determines facing)
         fnz = ux * vy - uy * vx
-        if fnz >= 0:
+        if fnz >= 0:  # Backfacing
             continue
             
+        # Normal vector
         nx = uy * vz - uz * vy
         ny = uz * vx - ux * vz
         
+        # Normalize and compute shade
         length = math.sqrt(nx*nx + ny*ny + fnz*fnz)
         if length > 0.0001:
             normalized_z = fnz / length
@@ -41,12 +50,22 @@ def process_faces_batch_numba(cam_verts, projected, face_indices):
         shade = 255.0 * max(0.2, -normalized_z)
         if shade < 0: shade = 0
         elif shade > 255: shade = 255
-            
+        
+        shade_int = int(shade)
+        
+        # Apply shade to base color
+        base_r = face_colors[i, 0]
+        base_g = face_colors[i, 1]
+        base_b = face_colors[i, 2]
+        
+        shaded_colors[i, 0] = int(base_r * (shade_int / 255.0))
+        shaded_colors[i, 1] = int(base_g * (shade_int / 255.0))
+        shaded_colors[i, 2] = int(base_b * (shade_int / 255.0))
+
         valid[i] = True
-        shades[i] = int(shade)
         avg_zs[i] = (v1z + v2z + v3z) / 3.0
         
-    return valid, shades, avg_zs
+    return valid, shaded_colors, avg_zs
 
 
 class RenderPipeline:
@@ -94,7 +113,7 @@ class RenderPipeline:
     def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None):
         """
         Submit a whole mesh for optimized rendering.
-        Uses Numba-optimized batch transformations.
+        Uses Numba-optimized batch transformations with pre-cached numpy data.
         """
         # Fast frustum culling
         if radius is not None:
@@ -139,15 +158,12 @@ class RenderPipeline:
             
         face_indices, face_colors = self._mesh_cache[mesh_id]
         
-        valid_mask, shades, avg_zs = process_faces_batch_numba(cam_verts, projected, face_indices)
+        # Call optimized numba function with colors
+        valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(cam_verts, projected, face_indices, face_colors)
         
         layer_list = self._layers[layer]
         for i in range(len(face_indices)):
             if valid_mask[i]:
-                shade = shades[i]
-                r = int(face_colors[i, 0] * (shade / 255.0))
-                g = int(face_colors[i, 1] * (shade / 255.0))
-                b = int(face_colors[i, 2] * (shade / 255.0))
                 idx0 = face_indices[i, 0]
                 idx1 = face_indices[i, 1]
                 idx2 = face_indices[i, 2]
@@ -156,7 +172,9 @@ class RenderPipeline:
                     (projected[idx1, 0], projected[idx1, 1]),
                     (projected[idx2, 0], projected[idx2, 1])
                 ]
-                layer_list.append((avg_zs[i], 'poly', pts, (r, g, b)))
+                # Colors are already shaded from numba
+                color = tuple(shaded_colors[i])
+                layer_list.append((avg_zs[i], 'poly', pts, color))
 
     def submit_polygon(self, world_verts, color, layer='opaque'):
         """Submit a single polygon."""
