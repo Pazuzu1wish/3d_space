@@ -270,6 +270,10 @@ class Player:
             handler.rumble(intensity, intensity * 0.5, 200)
             self.rumble_queued = 0.0
 
+        # ── DYNAMIC ENGINE HUM ────────────────────────
+        if sound and hasattr(sound, 'update_engine_hum'):
+            sound.update_engine_hum(self.throttle, rx, lx, ly)
+
     def take_damage(self, amount):
         self.shield_regen_timer = SHIELD_DELAY
         self.hit_flash = HIT_FLASH_DURATION

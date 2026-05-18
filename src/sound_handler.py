@@ -34,6 +34,8 @@ class SoundHandler:
         self.music_volume = .7
         self.sfx_volume = .7
         
+        self.engine_hum_channel = None
+        
         self._init_mixer()
 
     def _init_mixer(self):
@@ -185,3 +187,47 @@ class SoundHandler:
         self.music_volume = max(0.0, min(1.0, volume))
         if pygame.mixer.get_init():
             pygame.mixer.music.set_volume(self.music_volume)
+
+    def start_engine_hum(self):
+        """Starts the continuous engine hum on a dedicated channel."""
+        if not pygame.mixer.get_init() or "engine_hum" not in self.sounds:
+            return
+            
+        if not self.engine_hum_channel:
+            self.engine_hum_channel = pygame.mixer.find_channel()
+            if self.engine_hum_channel:
+                sound = self.sounds["engine_hum"]
+                self.engine_hum_channel.play(sound, loops=-1)
+                self.engine_hum_channel.set_volume(0.0) # start silent
+
+    def update_engine_hum(self, throttle, yaw_input, roll_input, pitch_input):
+        """
+        Dynamically adjusts the volume and panning of the engine hum based on ship movement.
+        Throttle controls base volume. Rotational inputs control stereo panning.
+        """
+        if not self.engine_hum_channel or not self.engine_hum_channel.get_busy():
+            return
+            
+        # Base engine hum: 10% volume when idle, up to 70% at max throttle
+        effort = abs(throttle)
+        
+        # Add rotational effort (thrusters working to turn)
+        rot_effort = min(1.0, (abs(yaw_input) + abs(roll_input) + abs(pitch_input)) / 2.0)
+        
+        total_effort = min(1.0, effort + rot_effort * 0.3)
+        base_vol = 0.1 + (0.6 * total_effort)
+        
+        # Apply master SFX volume
+        base_vol *= self.sfx_volume
+        
+        # Panning: If turning right (yaw > 0 or roll > 0), left thrusters work harder (pan left).
+        # We'll pan based on yaw and roll.
+        pan_amount = (yaw_input + roll_input) * 0.5
+        pan_amount = max(-1.0, min(1.0, pan_amount))
+        
+        # Left channel volume = base_vol * (1 - pan_amount/2) ... it's a rough approximation
+        # If pan_amount > 0 (turning right, pushing from left), left is louder.
+        left_vol = base_vol * (1.0 + pan_amount * 0.4)
+        right_vol = base_vol * (1.0 - pan_amount * 0.4)
+        
+        self.engine_hum_channel.set_volume(max(0.0, min(1.0, left_vol)), max(0.0, min(1.0, right_vol)))

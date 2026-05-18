@@ -232,6 +232,43 @@ def generate_music_drone(sample_rate=44100):
     # Scale overall volume down to suitable background level
     return drone_stereo * 0.6
 
+def generate_engine_hum(sample_rate=44100):
+    """
+    Continuous low-frequency hum for the player's ship engine.
+    Designed to be played in a loop, with its volume dynamically modulated by thrust state.
+    """
+    duration = 2.0  # 2 seconds loop
+    num_samples = int(sample_rate * duration)
+    t = np.linspace(0, duration, num_samples, endpoint=False)
+    
+    # Deep base sub-bass engine frequency: 45 Hz (90 cycles in 2s)
+    hum1 = np.sin(2 * np.pi * 45 * t)
+    
+    # Higher harmonic for character: 90 Hz (180 cycles in 2s)
+    hum2 = np.sin(2 * np.pi * 90 * t) * 0.4
+    
+    # Very low filtered structural rumble
+    noise = np.random.normal(0, 0.3, num_samples)
+    window_size = 48
+    rumble = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
+    
+    # Combine for a steady, continuous drone
+    mono_hum = (hum1 * 0.5 + hum2 * 0.3 + rumble * 0.2)
+    
+    # Make it a perfect loop: sine waves align perfectly, crossfade the noise rumble
+    fade_len = int(sample_rate * 0.05)
+    fade_in = np.linspace(0.0, 1.0, fade_len)
+    fade_out = np.linspace(1.0, 0.0, fade_len)
+    
+    loop_hum = mono_hum.copy()
+    loop_hum[:fade_len] *= fade_in
+    loop_hum[-fade_len:] *= fade_out
+    
+    loop_tail = mono_hum[-fade_len:].copy()
+    loop_hum[:fade_len] += loop_tail * fade_out
+    
+    return make_centered_stereo(loop_hum * 0.4)
+
 def main():
     print("Initializing procedural SFX generation...")
     
@@ -242,6 +279,7 @@ def main():
     shield_data = generate_shield_hit()
     armor_data = generate_armor_hit()
     bgm_data = generate_music_drone()
+    engine_hum_data = generate_engine_hum()
     
     # Save as WAV files in assets/sounds/
     save_wav("laser.wav", laser_data)
@@ -250,6 +288,7 @@ def main():
     save_wav("shield_hit.wav", shield_data)
     save_wav("armor_hit.wav", armor_data)
     save_wav("bgm_drone.wav", bgm_data)
+    save_wav("engine_hum.wav", engine_hum_data)
     
     print("All audio assets synthesized successfully!")
 

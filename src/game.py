@@ -46,6 +46,9 @@ class Game:
         self.sound.load_sfx("explosion", "assets/sounds/explosion.wav")
         self.sound.load_sfx("shield_hit", "assets/sounds/shield_hit.wav")
         self.sound.load_sfx("armor_hit", "assets/sounds/armor_hit.wav")
+        self.sound.load_sfx("engine_hum", "assets/sounds/engine_hum.wav")
+        
+        self.sound.start_engine_hum()
         
         # Stream seamless deep space ambient loop from disk (saves memory and CPU)
         #self.sound.play_music("assets/sounds/bgm_drone.wav", loops=-1, volume=0.35)
