@@ -1,0 +1,197 @@
+{
+  "/home/tony/antigravity/3d_space/main.py": {
+    "mtime": 1778519397.1588116,
+    "ast_hash": "17782fe899fefc706a9918959c7bd04a",
+    "semantic_hash": "17782fe899fefc706a9918959c7bd04a"
+  },
+  "/home/tony/antigravity/3d_space/tests/benchmark_realistic.py": {
+    "mtime": 1778960397.9212685,
+    "ast_hash": "2f5c84f21b1052b77c7b73256e776e72",
+    "semantic_hash": "2f5c84f21b1052b77c7b73256e776e72"
+  },
+  "/home/tony/antigravity/3d_space/tests/test_optimizations.py": {
+    "mtime": 1778519491.5465512,
+    "ast_hash": "54476962921a41e91a410e8ae770212c",
+    "semantic_hash": "54476962921a41e91a410e8ae770212c"
+  },
+  "/home/tony/antigravity/3d_space/tests/benchmark_star_optimization.py": {
+    "mtime": 1778960397.9212685,
+    "ast_hash": "0633adb2d80597d26bcf8594873430b9",
+    "semantic_hash": "0633adb2d80597d26bcf8594873430b9"
+  },
+  "/home/tony/antigravity/3d_space/scratch/verify_numba.py": {
+    "mtime": 1778519491.5402303,
+    "ast_hash": "b169bb6faae9e030d941d312f0fd0d8d",
+    "semantic_hash": "b169bb6faae9e030d941d312f0fd0d8d"
+  },
+  "/home/tony/antigravity/3d_space/src/__init__.py": {
+    "mtime": 1778519397.1588116,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/tony/antigravity/3d_space/src/projectile.py": {
+    "mtime": 1778716443.1927538,
+    "ast_hash": "acac26ab5cf1f0c328bc2286965d7368",
+    "semantic_hash": "acac26ab5cf1f0c328bc2286965d7368"
+  },
+  "/home/tony/antigravity/3d_space/src/missile.py": {
+    "mtime": 1778705519.224204,
+    "ast_hash": "a71eecaa9ce034db0e1c4467997c0167",
+    "semantic_hash": "a71eecaa9ce034db0e1c4467997c0167"
+  },
+  "/home/tony/antigravity/3d_space/src/math_engine.py": {
+    "mtime": 1778716443.1925395,
+    "ast_hash": "12d2be9fd1255f39bb490134473d3278",
+    "semantic_hash": "12d2be9fd1255f39bb490134473d3278"
+  },
+  "/home/tony/antigravity/3d_space/src/player.py": {
+    "mtime": 1778716443.1927538,
+    "ast_hash": "5f1cd2dabfcce36744e9ea26ee2f0f68",
+    "semantic_hash": "5f1cd2dabfcce36744e9ea26ee2f0f68"
+  },
+  "/home/tony/antigravity/3d_space/src/enemy.py": {
+    "mtime": 1778716443.1919076,
+    "ast_hash": "8e382a539d273629856491870e81bf9b",
+    "semantic_hash": "8e382a539d273629856491870e81bf9b"
+  },
+  "/home/tony/antigravity/3d_space/src/renderer.py": {
+    "mtime": 1778716429.7176168,
+    "ast_hash": "97079399b9d6a2e605a1cf80b6920e59",
+    "semantic_hash": "97079399b9d6a2e605a1cf80b6920e59"
+  },
+  "/home/tony/antigravity/3d_space/src/utils.py": {
+    "mtime": 1778519491.545551,
+    "ast_hash": "3efb94570816f891ca14744c88e30ad7",
+    "semantic_hash": "3efb94570816f891ca14744c88e30ad7"
+  },
+  "/home/tony/antigravity/3d_space/src/nebula.py": {
+    "mtime": 1778519491.5445511,
+    "ast_hash": "fc143e8516d31a9ccf0a4a6a746d2454",
+    "semantic_hash": "fc143e8516d31a9ccf0a4a6a746d2454"
+  },
+  "/home/tony/antigravity/3d_space/src/encounters.py": {
+    "mtime": 1778543930.316771,
+    "ast_hash": "a4a2dc3345b3c620010fbd9411264f46",
+    "semantic_hash": "a4a2dc3345b3c620010fbd9411264f46"
+  },
+  "/home/tony/antigravity/3d_space/src/particle.py": {
+    "mtime": 1778519491.5445511,
+    "ast_hash": "c186cb7ca7187f082cf2bc225b1288ba",
+    "semantic_hash": "c186cb7ca7187f082cf2bc225b1288ba"
+  },
+  "/home/tony/antigravity/3d_space/src/spatial_partition.py": {
+    "mtime": 1778720961.4680133,
+    "ast_hash": "3e93d0f1c8ee90cf00326fe092c559d4",
+    "semantic_hash": "3e93d0f1c8ee90cf00326fe092c559d4"
+  },
+  "/home/tony/antigravity/3d_space/src/cockpit_geometry.py": {
+    "mtime": 1778960397.919427,
+    "ast_hash": "4c9af7b8cd0d75e6f1509a4d3b950e72",
+    "semantic_hash": "4c9af7b8cd0d75e6f1509a4d3b950e72"
+  },
+  "/home/tony/antigravity/3d_space/src/object_pool.py": {
+    "mtime": 1778519491.5445511,
+    "ast_hash": "e2012ae468713c10ed4135f2b403ce56",
+    "semantic_hash": "e2012ae468713c10ed4135f2b403ce56"
+  },
+  "/home/tony/antigravity/3d_space/src/constants.py": {
+    "mtime": 1778960397.919427,
+    "ast_hash": "4c7a1686f392cb3ba6c63de4f10c5652",
+    "semantic_hash": "4c7a1686f392cb3ba6c63de4f10c5652"
+  },
+  "/home/tony/antigravity/3d_space/src/asteroid.py": {
+    "mtime": 1778519491.5402303,
+    "ast_hash": "51ba1121f1d9536f022cd0e55126ab61",
+    "semantic_hash": "51ba1121f1d9536f022cd0e55126ab61"
+  },
+  "/home/tony/antigravity/3d_space/src/controller.py": {
+    "mtime": 1778635744.4484186,
+    "ast_hash": "742057ec0f817ca334d45e3482af3b7d",
+    "semantic_hash": "742057ec0f817ca334d45e3482af3b7d"
+  },
+  "/home/tony/antigravity/3d_space/src/game.py": {
+    "mtime": 1778961340.477137,
+    "ast_hash": "bfb24df3a43504c7903b054cb963bb20",
+    "semantic_hash": "bfb24df3a43504c7903b054cb963bb20"
+  },
+  "/home/tony/antigravity/3d_space/src/camera.py": {
+    "mtime": 1778709962.9778278,
+    "ast_hash": "e431ec8b694e5b15f44ef92c17e7ad49",
+    "semantic_hash": "e431ec8b694e5b15f44ef92c17e7ad49"
+  },
+  "/home/tony/antigravity/3d_space/src/star.py": {
+    "mtime": 1778960397.9202685,
+    "ast_hash": "eddfc26ecbc713e39cbfb4cc6adcb53a",
+    "semantic_hash": "eddfc26ecbc713e39cbfb4cc6adcb53a"
+  },
+  "/home/tony/antigravity/3d_space/src/cockpit.py": {
+    "mtime": 1778960397.919427,
+    "ast_hash": "9b343118dd4cbf557372801a75dca530",
+    "semantic_hash": "9b343118dd4cbf557372801a75dca530"
+  },
+  "/home/tony/antigravity/3d_space/src/director.py": {
+    "mtime": 1778519491.542551,
+    "ast_hash": "8456581bd74268e98e7b96e513fbf051",
+    "semantic_hash": "8456581bd74268e98e7b96e513fbf051"
+  },
+  "/home/tony/antigravity/3d_space/src/laser.py": {
+    "mtime": 1778960397.9202685,
+    "ast_hash": "3cefc3c252160c0aafccbfac41666343",
+    "semantic_hash": "3cefc3c252160c0aafccbfac41666343"
+  },
+  "/home/tony/antigravity/3d_space/tools/2d_viewer.py": {
+    "mtime": 1778519397.1622682,
+    "ast_hash": "8f166baacdd07e4530630dfbb00f333e",
+    "semantic_hash": "8f166baacdd07e4530630dfbb00f333e"
+  },
+  "/home/tony/antigravity/3d_space/tools/3d_viewer.py": {
+    "mtime": 1778519491.5478032,
+    "ast_hash": "279d78cad8d86483de14b4822566043c",
+    "semantic_hash": "279d78cad8d86483de14b4822566043c"
+  },
+  "/home/tony/antigravity/3d_space/tools/3d_viewer_debug_claude.py": {
+    "mtime": 1778519491.5483532,
+    "ast_hash": "92890ebb7d793a2f74b88a500ca07667",
+    "semantic_hash": "92890ebb7d793a2f74b88a500ca07667"
+  },
+  "/home/tony/antigravity/3d_space/requirements.txt": {
+    "mtime": 1778519491.5398316,
+    "ast_hash": "9a17411ba63da00224cf2c0b0b5e343e",
+    "semantic_hash": "9a17411ba63da00224cf2c0b0b5e343e"
+  },
+  "/home/tony/antigravity/3d_space/.agents/workflows/graphify.md": {
+    "mtime": 1779056927.0306265,
+    "ast_hash": "afa1ffc01aa56ac681c7335686f44767",
+    "semantic_hash": "afa1ffc01aa56ac681c7335686f44767"
+  },
+  "/home/tony/antigravity/3d_space/.agents/rules/graphify.md": {
+    "mtime": 1779056927.0301907,
+    "ast_hash": "f1e53ecc9194573d3c28fc116c743a2e",
+    "semantic_hash": "f1e53ecc9194573d3c28fc116c743a2e"
+  },
+  "/home/tony/antigravity/3d_space/extra_docs/QUICK_REFERENCE.md": {
+    "mtime": 1778960397.9172685,
+    "ast_hash": "155a97a5f7b6a41a12ed178df46df674",
+    "semantic_hash": "155a97a5f7b6a41a12ed178df46df674"
+  },
+  "/home/tony/antigravity/3d_space/extra_docs/OPTIMIZATION_SUMMARY.md": {
+    "mtime": 1778519397.1588116,
+    "ast_hash": "44050f224019ab95d059b0cda08474e8",
+    "semantic_hash": "44050f224019ab95d059b0cda08474e8"
+  },
+  "/home/tony/antigravity/3d_space/extra_docs/STAR_OPTIMIZATION_SUMMARY.md": {
+    "mtime": 1778960397.9172685,
+    "ast_hash": "14f5a8f70ffa2789d99c066a0e4f8daa",
+    "semantic_hash": "14f5a8f70ffa2789d99c066a0e4f8daa"
+  },
+  "/home/tony/antigravity/3d_space/extra_docs/COLLISION_FIX_SUMMARY.md": {
+    "mtime": 1778519397.1578045,
+    "ast_hash": "44564e8933e672c8f8795a3c38dd3cab",
+    "semantic_hash": "44564e8933e672c8f8795a3c38dd3cab"
+  },
+  "/home/tony/antigravity/3d_space/extra_docs/INTEGRATION_EXAMPLE.md": {
+    "mtime": 1778519397.1588116,
+    "ast_hash": "1c13e7a52208a4b3f3f5d2c95df2b220",
+    "semantic_hash": "1c13e7a52208a4b3f3f5d2c95df2b220"
+  }
+}
