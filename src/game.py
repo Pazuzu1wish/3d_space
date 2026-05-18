@@ -34,6 +34,8 @@ from src.sound_handler import SoundHandler
 
 class Game:
     def __init__(self):
+        # Pre-initialize mixer with safe, stable parameters before initializing pygame
+        pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
         # Initialize Pygame screen and clock
         pygame.init() # Init Pygame
 

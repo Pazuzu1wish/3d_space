@@ -110,8 +110,8 @@
     "semantic_hash": "742057ec0f817ca334d45e3482af3b7d"
   },
   "/home/tony/antigravity/3d_space/src/game.py": {
-    "mtime": 1779138475.3998735,
-    "ast_hash": "6ce59bb6defca6917180f76b8f9a8aae",
+    "mtime": 1779141618.1720452,
+    "ast_hash": "50c689f02b6e8159ab290d6539d4b2e5",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/camera.py": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/sound_handler.py": {
-    "mtime": 1779139006.0138826,
-    "ast_hash": "50a16d07663fddeb99d9cc1dfab57dc1",
+    "mtime": 1779141614.3139055,
+    "ast_hash": "e93d85f96694cda77caa44820a6d8829",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/tools/generate_sfx.py": {

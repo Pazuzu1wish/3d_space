@@ -5,7 +5,7 @@ import time
 import pygame
 
 class SoundHandler:
-    def __init__(self, sample_rate=44100, bit_depth=-16, channels=2, buffer_size=1024):
+    def __init__(self, sample_rate=44100, bit_depth=-16, channels=2, buffer_size=2048):
         self.sample_rate = sample_rate
         self.bit_depth = bit_depth
         self.channels = channels
@@ -38,22 +38,24 @@ class SoundHandler:
 
     def _init_mixer(self):
         """Initializes Pygame mixer with custom optimal settings for 2011 i5 CPU."""
-        if not pygame.mixer.get_init():
-            try:
-                # size=-16 means signed 16-bit depth
-                pygame.mixer.init(
-                    frequency=self.sample_rate,
-                    size=self.bit_depth,
-                    channels=self.channels,
-                    buffer=self.buffer_size
-                )
-                print(f"Pygame mixer initialized: {self.sample_rate}Hz, 16-bit, {self.channels} channels, buffer={self.buffer_size}")
-            except pygame.error as e:
-                print(f"Failed to initialize Pygame mixer: {e}")
-                return
+        if pygame.mixer.get_init():
+            pygame.mixer.quit()
+            
+        try:
+            # size=-16 means signed 16-bit depth
+            pygame.mixer.init(
+                frequency=self.sample_rate,
+                size=self.bit_depth,
+                channels=self.channels,
+                buffer=self.buffer_size
+            )
+            print(f"Pygame mixer initialized: {self.sample_rate}Hz, 16-bit, {self.channels} channels, buffer={self.buffer_size}")
+        except pygame.error as e:
+            print(f"Failed to initialize Pygame mixer: {e}")
+            return
         
         # Pre-allocate static mixing channels to avoid runtime allocation overhead
-        pygame.mixer.set_num_channels(24)
+        pygame.mixer.set_num_channels(32)
 
     def validate_wav_header(self, filepath):
         """

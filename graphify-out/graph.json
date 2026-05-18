@@ -61,7 +61,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_py",
-      "community": 29,
+      "community": 30,
       "norm_label": "test_optimizations.py"
     },
     {
@@ -322,7 +322,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L310",
       "id": "tests_test_optimizations_run_tests",
-      "community": 29,
+      "community": 30,
       "norm_label": "run_tests()"
     },
     {
@@ -331,7 +331,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_rationale_1",
-      "community": 29,
+      "community": 30,
       "norm_label": "unit tests for object pooling and spatial partitioning systems. run with: python"
     },
     {
@@ -583,7 +583,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L311",
       "id": "tests_test_optimizations_rationale_311",
-      "community": 29,
+      "community": 30,
       "norm_label": "run all tests manually (for environments without pytest)."
     },
     {
@@ -2534,7 +2534,7 @@
       "label": ".validate_wav_header()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L58",
+      "source_location": "L60",
       "id": "src_sound_handler_soundhandler_validate_wav_header",
       "community": 31,
       "norm_label": ".validate_wav_header()"
@@ -2543,7 +2543,7 @@
       "label": ".load_sfx()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L99",
+      "source_location": "L101",
       "id": "src_sound_handler_soundhandler_load_sfx",
       "community": 31,
       "norm_label": ".load_sfx()"
@@ -2552,7 +2552,7 @@
       "label": ".play_sfx()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L126",
+      "source_location": "L128",
       "id": "src_sound_handler_soundhandler_play_sfx",
       "community": 31,
       "norm_label": ".play_sfx()"
@@ -2561,7 +2561,7 @@
       "label": ".play_music()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L155",
+      "source_location": "L157",
       "id": "src_sound_handler_soundhandler_play_music",
       "community": 31,
       "norm_label": ".play_music()"
@@ -2570,7 +2570,7 @@
       "label": ".stop_music()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L173",
+      "source_location": "L175",
       "id": "src_sound_handler_soundhandler_stop_music",
       "community": 31,
       "norm_label": ".stop_music()"
@@ -2579,7 +2579,7 @@
       "label": ".set_sfx_volume()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L177",
+      "source_location": "L179",
       "id": "src_sound_handler_soundhandler_set_sfx_volume",
       "community": 31,
       "norm_label": ".set_sfx_volume()"
@@ -2588,7 +2588,7 @@
       "label": ".set_music_volume()",
       "file_type": "code",
       "source_file": "src/sound_handler.py",
-      "source_location": "L182",
+      "source_location": "L184",
       "id": "src_sound_handler_soundhandler_set_music_volume",
       "community": 31,
       "norm_label": ".set_music_volume()"
@@ -2606,8 +2606,8 @@
       "label": "Parses WAV header using standard 'wave' module to verify it matches         the",
       "file_type": "rationale",
       "source_file": "src/sound_handler.py",
-      "source_location": "L59",
-      "id": "src_sound_handler_rationale_59",
+      "source_location": "L61",
+      "id": "src_sound_handler_rationale_61",
       "community": 31,
       "norm_label": "parses wav header using standard 'wave' module to verify it matches         the"
     },
@@ -2615,8 +2615,8 @@
       "label": "Loads and caches sound effect, validating WAV headers to prevent resampling over",
       "file_type": "rationale",
       "source_file": "src/sound_handler.py",
-      "source_location": "L100",
-      "id": "src_sound_handler_rationale_100",
+      "source_location": "L102",
+      "id": "src_sound_handler_rationale_102",
       "community": 31,
       "norm_label": "loads and caches sound effect, validating wav headers to prevent resampling over"
     },
@@ -2624,8 +2624,8 @@
       "label": "Plays sound effect with voice limiting and trigger cooldowns to minimize CPU cyc",
       "file_type": "rationale",
       "source_file": "src/sound_handler.py",
-      "source_location": "L127",
-      "id": "src_sound_handler_rationale_127",
+      "source_location": "L129",
+      "id": "src_sound_handler_rationale_129",
       "community": 31,
       "norm_label": "plays sound effect with voice limiting and trigger cooldowns to minimize cpu cyc"
     },
@@ -2633,8 +2633,8 @@
       "label": "Streams BGM from disk to conserve RAM and avoid decompression overhead.",
       "file_type": "rationale",
       "source_file": "src/sound_handler.py",
-      "source_location": "L156",
-      "id": "src_sound_handler_rationale_156",
+      "source_location": "L158",
+      "id": "src_sound_handler_rationale_158",
       "community": 31,
       "norm_label": "streams bgm from disk to conserve ram and avoid decompression overhead."
     },
@@ -2788,7 +2788,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L20",
       "id": "src_spatial_partition_spatialhash_hash_position",
-      "community": 10,
+      "community": 66,
       "norm_label": "._hash_position()"
     },
     {
@@ -2797,7 +2797,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L28",
       "id": "src_spatial_partition_spatialhash_insert",
-      "community": 10,
+      "community": 66,
       "norm_label": ".insert()"
     },
     {
@@ -2806,7 +2806,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L35",
       "id": "src_spatial_partition_spatialhash_remove",
-      "community": 10,
+      "community": 66,
       "norm_label": ".remove()"
     },
     {
@@ -2815,7 +2815,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L48",
       "id": "src_spatial_partition_spatialhash_move",
-      "community": 10,
+      "community": 66,
       "norm_label": ".move()"
     },
     {
@@ -2824,7 +2824,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L58",
       "id": "src_spatial_partition_spatialhash_query_radius",
-      "community": 10,
+      "community": 66,
       "norm_label": ".query_radius()"
     },
     {
@@ -2860,7 +2860,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L95",
       "id": "src_spatial_partition_spatialpartition_register_entity",
-      "community": 8,
+      "community": 66,
       "norm_label": ".register_entity()"
     },
     {
@@ -2869,7 +2869,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L101",
       "id": "src_spatial_partition_spatialpartition_unregister_entity",
-      "community": 10,
+      "community": 66,
       "norm_label": ".unregister_entity()"
     },
     {
@@ -2878,7 +2878,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L109",
       "id": "src_spatial_partition_spatialpartition_update_entity",
-      "community": 8,
+      "community": 66,
       "norm_label": ".update_entity()"
     },
     {
@@ -2887,7 +2887,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L122",
       "id": "src_spatial_partition_spatialpartition_query_nearby",
-      "community": 10,
+      "community": 66,
       "norm_label": ".query_nearby()"
     },
     {
@@ -2941,7 +2941,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L21",
       "id": "src_spatial_partition_rationale_21",
-      "community": 10,
+      "community": 66,
       "norm_label": "convert world position to grid cell coordinates using fast truncation."
     },
     {
@@ -2950,7 +2950,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L29",
       "id": "src_spatial_partition_rationale_29",
-      "community": 10,
+      "community": 66,
       "norm_label": "insert an entity into the spatial hash."
     },
     {
@@ -2959,7 +2959,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L36",
       "id": "src_spatial_partition_rationale_36",
-      "community": 10,
+      "community": 66,
       "norm_label": "remove an entity from the spatial hash."
     },
     {
@@ -2968,7 +2968,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L50",
       "id": "src_spatial_partition_rationale_50",
-      "community": 10,
+      "community": 66,
       "norm_label": "incrementally move an entity between cells."
     },
     {
@@ -2977,7 +2977,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L60",
       "id": "src_spatial_partition_rationale_60",
-      "community": 10,
+      "community": 66,
       "norm_label": "query all entities within a sphere."
     },
     {
@@ -3004,7 +3004,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L96",
       "id": "src_spatial_partition_rationale_96",
-      "community": 8,
+      "community": 66,
       "norm_label": "register a new entity."
     },
     {
@@ -3013,7 +3013,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L102",
       "id": "src_spatial_partition_rationale_102",
-      "community": 10,
+      "community": 66,
       "norm_label": "remove an entity from the system."
     },
     {
@@ -3022,7 +3022,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L110",
       "id": "src_spatial_partition_rationale_110",
-      "community": 8,
+      "community": 66,
       "norm_label": "update an entity's position incrementally.         call this every frame for mov"
     },
     {
@@ -3031,7 +3031,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L123",
       "id": "src_spatial_partition_rationale_123",
-      "community": 10,
+      "community": 66,
       "norm_label": "query entities near a position."
     },
     {
@@ -3247,7 +3247,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_py",
-      "community": 12,
+      "community": 17,
       "norm_label": "object_pool.py"
     },
     {
@@ -3481,7 +3481,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_rationale_1",
-      "community": 12,
+      "community": 17,
       "norm_label": "object pooling system efficiently manages reusable game objects to avoid frequen"
     },
     {
@@ -4471,7 +4471,7 @@
       "source_file": "src/game.py",
       "source_location": "L1",
       "id": "src_game_py",
-      "community": 17,
+      "community": 67,
       "norm_label": "game.py"
     },
     {
@@ -4496,7 +4496,7 @@
       "label": ".update_entities()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L119",
+      "source_location": "L121",
       "id": "src_game_game_update_entities",
       "community": 17,
       "norm_label": ".update_entities()"
@@ -4505,7 +4505,7 @@
       "label": ".draw_game()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L246",
+      "source_location": "L248",
       "id": "src_game_game_draw_game",
       "community": 14,
       "norm_label": ".draw_game()"
@@ -4514,7 +4514,7 @@
       "label": "._render_magnified_window()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L353",
+      "source_location": "L355",
       "id": "src_game_game_render_magnified_window",
       "community": 14,
       "norm_label": "._render_magnified_window()"
@@ -4523,7 +4523,7 @@
       "label": ".main()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L465",
+      "source_location": "L467",
       "id": "src_game_game_main",
       "community": 17,
       "norm_label": ".main()"
@@ -4532,8 +4532,8 @@
       "label": "Render a secondary pass for the magnified aim window.",
       "file_type": "rationale",
       "source_file": "src/game.py",
-      "source_location": "L354",
-      "id": "src_game_rationale_354",
+      "source_location": "L356",
+      "id": "src_game_rationale_356",
       "community": 14,
       "norm_label": "render a secondary pass for the magnified aim window."
     },
@@ -4541,9 +4541,9 @@
       "label": "# TODO: Refactor asteroid field creation logic",
       "file_type": "rationale",
       "source_file": "src/game.py",
-      "source_location": "L86",
-      "id": "src_game_rationale_86",
-      "community": 17,
+      "source_location": "L88",
+      "id": "src_game_rationale_88",
+      "community": 67,
       "norm_label": "# todo: refactor asteroid field creation logic"
     },
     {
@@ -7310,6 +7310,60 @@
       "norm_label": "============================================================================="
     },
     {
+      "label": "Parses WAV header using standard 'wave' module to verify it matches         the",
+      "file_type": "rationale",
+      "source_file": "src/sound_handler.py",
+      "source_location": "L59",
+      "community": 31,
+      "norm_label": "parses wav header using standard 'wave' module to verify it matches         the",
+      "id": "src_sound_handler_rationale_59"
+    },
+    {
+      "label": "Loads and caches sound effect, validating WAV headers to prevent resampling over",
+      "file_type": "rationale",
+      "source_file": "src/sound_handler.py",
+      "source_location": "L100",
+      "community": 31,
+      "norm_label": "loads and caches sound effect, validating wav headers to prevent resampling over",
+      "id": "src_sound_handler_rationale_100"
+    },
+    {
+      "label": "Plays sound effect with voice limiting and trigger cooldowns to minimize CPU cyc",
+      "file_type": "rationale",
+      "source_file": "src/sound_handler.py",
+      "source_location": "L127",
+      "community": 31,
+      "norm_label": "plays sound effect with voice limiting and trigger cooldowns to minimize cpu cyc",
+      "id": "src_sound_handler_rationale_127"
+    },
+    {
+      "label": "Streams BGM from disk to conserve RAM and avoid decompression overhead.",
+      "file_type": "rationale",
+      "source_file": "src/sound_handler.py",
+      "source_location": "L156",
+      "community": 31,
+      "norm_label": "streams bgm from disk to conserve ram and avoid decompression overhead.",
+      "id": "src_sound_handler_rationale_156"
+    },
+    {
+      "label": "Render a secondary pass for the magnified aim window.",
+      "file_type": "rationale",
+      "source_file": "src/game.py",
+      "source_location": "L354",
+      "community": 14,
+      "norm_label": "render a secondary pass for the magnified aim window.",
+      "id": "src_game_rationale_354"
+    },
+    {
+      "label": "# TODO: Refactor asteroid field creation logic",
+      "file_type": "rationale",
+      "source_file": "src/game.py",
+      "source_location": "L86",
+      "community": 67,
+      "norm_label": "# todo: refactor asteroid field creation logic",
+      "id": "src_game_rationale_86"
+    },
+    {
       "label": "Combines a rising engine whine with low-frequency thruster roar/rumble.",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
@@ -7548,7 +7602,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L72",
-      "community": 17,
+      "community": 67,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_72"
     },
@@ -13524,11 +13578,31 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/sound_handler.py",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "src_sound_handler_rationale_61",
+      "target": "src_sound_handler_soundhandler_validate_wav_header",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/sound_handler.py",
       "source_location": "L59",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "src_sound_handler_rationale_59",
       "target": "src_sound_handler_soundhandler_validate_wav_header"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/sound_handler.py",
+      "source_location": "L102",
+      "weight": 1.0,
+      "source": "src_sound_handler_rationale_102",
+      "target": "src_sound_handler_soundhandler_load_sfx",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -13544,11 +13618,31 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/sound_handler.py",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "src_sound_handler_rationale_129",
+      "target": "src_sound_handler_soundhandler_play_sfx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/sound_handler.py",
       "source_location": "L127",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "src_sound_handler_rationale_127",
       "target": "src_sound_handler_soundhandler_play_sfx"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/sound_handler.py",
+      "source_location": "L158",
+      "weight": 1.0,
+      "source": "src_sound_handler_rationale_158",
+      "target": "src_sound_handler_soundhandler_play_music",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -16566,6 +16660,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/game.py",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "src_game_rationale_88",
+      "target": "src_game_py",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/game.py",
       "source_location": "L86",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -16748,6 +16852,16 @@
       "weight": 1.0,
       "source": "src_game_game_draw_game",
       "target": "src_cockpit_draw_cockpit_hud"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/game.py",
+      "source_location": "L356",
+      "weight": 1.0,
+      "source": "src_game_rationale_356",
+      "target": "src_game_game_render_magnified_window",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -18413,9 +18527,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_py",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "contains",
@@ -18580,9 +18694,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L75",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_generate_laser",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "calls",
@@ -18591,9 +18705,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_generate_missile",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "calls",
@@ -18602,9 +18716,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L131",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_generate_explosion",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "calls",
@@ -18613,9 +18727,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_generate_shield_hit",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "calls",
@@ -18624,9 +18738,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L185",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_generate_armor_hit",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "rationale_for",
@@ -18634,9 +18748,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L42",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_42",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "calls",
@@ -18655,9 +18769,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L49",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_49",
-      "target": "tools_generate_sfx_generate_laser",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_laser"
     },
     {
       "relation": "rationale_for",
@@ -18686,9 +18800,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L78",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_78",
-      "target": "tools_generate_sfx_generate_missile",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_missile"
     },
     {
       "relation": "rationale_for",
@@ -18737,9 +18851,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L108",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_108",
-      "target": "tools_generate_sfx_generate_explosion",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_explosion"
     },
     {
       "relation": "rationale_for",
@@ -18788,9 +18902,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L134",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_134",
-      "target": "tools_generate_sfx_generate_shield_hit",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_shield_hit"
     },
     {
       "relation": "rationale_for",
@@ -18839,9 +18953,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L162",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_162",
-      "target": "tools_generate_sfx_generate_armor_hit",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_armor_hit"
     },
     {
       "relation": "rationale_for",
@@ -18890,9 +19004,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L188",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_188",
-      "target": "tools_generate_sfx_generate_music_drone",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_music_drone"
     },
     {
       "relation": "rationale_for",
@@ -21442,5 +21556,5 @@
       "source_file": "extra_docs/OPTIMIZATION_SUMMARY.md"
     }
   ],
-  "built_at_commit": "7b9f95f13d2d5609358b04871f90bdaab30cc419"
+  "built_at_commit": "1a8dcd0fb3ab6b92244f9b0b11b4df5fd2952322"
 }
