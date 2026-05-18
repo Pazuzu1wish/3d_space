@@ -754,24 +754,36 @@ def draw_cockpit_frame(
         )
 
     # Left Console Indicator Lights (Status Indicators)
-    # They stay steady green when shields are healthy, and turn pulsing red
-    # progressively as the shield is depleted (one per 33% loss).
+    # They stay steady green when shields are healthy, have an amber phase,
+    # and turn pulsing red progressively as the shield is depleted.
+    # When shields are completely down, all three flash like gun temp.
     for i in range(3):
         y = 500 + i * 24
         
-        # Determine if this specific bar should be Red (warning) or Green (okay)
-        # Thresholds: Top bar (0) turns red at <66%, Mid (1) at <33%, Bottom (2) at 0%
-        if shield_charge <= (1.0 - (i + 1) * 0.333):
-            # Pulsing Red Warning
-            bar_color = (
-                min(255, 180 + int(70 * abs(math.sin(t * 5)))),
-                20,
-                10
-            )
+        if shield_charge <= 0.0:
+            # Flashing warning when shields are completely down
+            pulse = int((math.sin(ticks * 0.015) + 1) * 127)
+            bar_color = (255, pulse, pulse)
         else:
-            # Steady Green Status (with a subtle life pulse)
-            g_pulse = int(140 + 40 * math.sin(t * 2.0))
-            bar_color = (20, g_pulse, 60)
+            red_threshold = 1.0 - (i + 1) * 0.333
+            amber_threshold = red_threshold + 0.166
+            
+            if shield_charge <= red_threshold:
+                # Pulsing Red Warning
+                bar_color = (
+                    min(255, 180 + int(70 * abs(math.sin(t * 5)))),
+                    20,
+                    10
+                )
+            elif shield_charge <= amber_threshold:
+                # Glowing Amber Phase
+                r_pulse = int(180 + 40 * math.sin(t * 2.0))
+                g_pulse = int(90 + 20 * math.sin(t * 2.0))
+                bar_color = (r_pulse, g_pulse, 10)
+            else:
+                # Steady Green Status (with a subtle life pulse)
+                g_pulse = int(140 + 40 * math.sin(t * 2.0))
+                bar_color = (20, g_pulse, 60)
 
         # Small indicator rectangles next to the radar
         _r(surface, bar_color, (50, y + 3, 20, 8), br=2)
