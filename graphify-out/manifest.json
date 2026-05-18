@@ -40,7 +40,7 @@
     "semantic_hash": "a71eecaa9ce034db0e1c4467997c0167"
   },
   "/home/tony/antigravity/3d_space/src/math_engine.py": {
-    "mtime": 1778716443.1925395,
+    "mtime": 1779143106.6028943,
     "ast_hash": "12d2be9fd1255f39bb490134473d3278",
     "semantic_hash": "12d2be9fd1255f39bb490134473d3278"
   },
@@ -50,9 +50,9 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/enemy.py": {
-    "mtime": 1778716443.1919076,
-    "ast_hash": "8e382a539d273629856491870e81bf9b",
-    "semantic_hash": "8e382a539d273629856491870e81bf9b"
+    "mtime": 1779143106.6025596,
+    "ast_hash": "753d534591daa946383151b36672a010",
+    "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/renderer.py": {
     "mtime": 1779132461.2212567,
@@ -80,9 +80,9 @@
     "semantic_hash": "c186cb7ca7187f082cf2bc225b1288ba"
   },
   "/home/tony/antigravity/3d_space/src/spatial_partition.py": {
-    "mtime": 1778720961.4680133,
-    "ast_hash": "3e93d0f1c8ee90cf00326fe092c559d4",
-    "semantic_hash": "3e93d0f1c8ee90cf00326fe092c559d4"
+    "mtime": 1779142474.88633,
+    "ast_hash": "4855d8b3f0a8c1cf147800a5dfe75e65",
+    "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/cockpit_geometry.py": {
     "mtime": 1778960397.919427,
@@ -90,9 +90,9 @@
     "semantic_hash": "4c9af7b8cd0d75e6f1509a4d3b950e72"
   },
   "/home/tony/antigravity/3d_space/src/object_pool.py": {
-    "mtime": 1778519491.5445511,
-    "ast_hash": "e2012ae468713c10ed4135f2b403ce56",
-    "semantic_hash": "e2012ae468713c10ed4135f2b403ce56"
+    "mtime": 1779142442.590607,
+    "ast_hash": "fcbc979892e6bf1d280095f0e8e2a0cf",
+    "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/constants.py": {
     "mtime": 1778960397.919427,
@@ -100,7 +100,7 @@
     "semantic_hash": "4c7a1686f392cb3ba6c63de4f10c5652"
   },
   "/home/tony/antigravity/3d_space/src/asteroid.py": {
-    "mtime": 1778519491.5402303,
+    "mtime": 1779143106.60095,
     "ast_hash": "51ba1121f1d9536f022cd0e55126ab61",
     "semantic_hash": "51ba1121f1d9536f022cd0e55126ab61"
   },
@@ -110,8 +110,8 @@
     "semantic_hash": "742057ec0f817ca334d45e3482af3b7d"
   },
   "/home/tony/antigravity/3d_space/src/game.py": {
-    "mtime": 1779141618.1720452,
-    "ast_hash": "50c689f02b6e8159ab290d6539d4b2e5",
+    "mtime": 1779142504.409077,
+    "ast_hash": "687fb1677af2ef5e0288589b8b0b129e",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/camera.py": {
@@ -277,6 +277,11 @@
   "/home/tony/antigravity/3d_space/tools/assets/sounds/laser.wav": {
     "mtime": 1779139987.0444949,
     "ast_hash": "6c15921e132238e783052d8058abafe8",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/test_run.py": {
+    "mtime": 1779142548.4836993,
+    "ast_hash": "e672d18d718c176df0c6610c3942ecb7",
     "semantic_hash": ""
   }
 }
