@@ -38,8 +38,15 @@ def make_stereo_with_haas(mono_data, delay_ms=2.0, sample_rate=44100):
         
     return stereo
 
+def make_centered_stereo(mono_data):
+    """Converts mono data to centered stereo (duplicated left and right channels)."""
+    stereo = np.zeros((len(mono_data), 2), dtype=np.float32)
+    stereo[:, 0] = mono_data
+    stereo[:, 1] = mono_data
+    return stereo
+
 def generate_laser(sample_rate=44100):
-    """Muffled dull cockpit thud from firing inside the vacuum, centered and click-free."""
+    """Muffled dull cockpit thump from firing inside the vacuum, centered and click-free."""
     duration = 0.14
     num_samples = int(sample_rate * duration)
     t = np.linspace(0, duration, num_samples, endpoint=False)
@@ -65,95 +72,117 @@ def generate_laser(sample_rate=44100):
     fade[-fade_len:] = np.linspace(1.0, 0.0, fade_len)
     
     mono_laser = raw_thump * env * fade
-    
-    # Distribute mono signal equally to both stereo channels (perfect centered thump, no phase/delay mismatch click)
-    stereo = np.zeros((len(mono_laser), 2), dtype=np.float32)
-    stereo[:, 0] = mono_laser
-    stereo[:, 1] = mono_laser
-    return stereo
+    return make_centered_stereo(mono_laser)
 
 def generate_missile(sample_rate=44100):
-    """Combines a rising engine whine with low-frequency thruster roar/rumble."""
+    """Muffled structural rocket combustion roar inside the vacuum, centered and click-free."""
     duration = 0.40
     num_samples = int(sample_rate * duration)
     t = np.linspace(0, duration, num_samples, endpoint=False)
     
-    # Rising whine frequency sweep: 80 Hz up to 350 Hz
-    phase = 2 * np.pi * (80 * t + 0.5 * (350 - 80) * t**2 / duration)
-    whine = np.sin(phase)
+    # Muffled rocket engine hum: low-mid pitch sweep (120 Hz down to 40 Hz)
+    phase = 2 * np.pi * (120 * t + 0.5 * (40 - 120) * t**2 / duration)
+    hum = np.sin(phase)
     
     # Engine white noise
     noise = np.random.normal(0, 0.4, num_samples)
-    # Low-pass filter the noise using a running average (window size 20) for bass rumble
-    window_size = 20
+    # Heavy low-pass filtering (window size 32) for deep muffled thrust roar
+    window_size = 32
     rumble = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
     
     # Envelope: quick linear rise, then gradual decay
     attack_samples = int(sample_rate * 0.05)
     env = np.ones(num_samples)
     env[:attack_samples] = np.linspace(0, 1.0, attack_samples)
-    env[attack_samples:] = np.exp(-5.0 * (t[attack_samples:] - 0.05))
+    env[attack_samples:] = np.exp(-6.5 * (t[attack_samples:] - 0.05))
     
-    mono_missile = (whine * 0.35 + rumble * 0.65) * env
-    return make_stereo_with_haas(mono_missile, delay_ms=2.5)
+    # Apply fade-out to prevent clicks
+    fade_len = int(num_samples * 0.15)
+    fade = np.ones(num_samples)
+    fade[-fade_len:] = np.linspace(1.0, 0.0, fade_len)
+    
+    mono_missile = (hum * 0.35 + rumble * 0.65) * env * fade
+    return make_centered_stereo(mono_missile)
 
 def generate_explosion(sample_rate=44100):
-    """Bass-heavy low-pass filtered brown-esque noise explosion."""
+    """Massive, bass-heavy structural shockwave thud through the hull, centered and click-free."""
     duration = 0.85
     num_samples = int(sample_rate * duration)
     t = np.linspace(0, duration, num_samples, endpoint=False)
     
-    # White noise
-    noise = np.random.normal(0, 0.8, num_samples)
-    # Heavy low-pass filtering (running average window of 40 samples) to create a massive boom
-    window_size = 40
-    boom = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
+    # Deep structural rumble: heavy low-pass filtered noise (window size 64)
+    noise = np.random.normal(0, 0.9, num_samples)
+    window_size = 64
+    rumble = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
     
-    # Rapid attack (0.005s) and slow exponential decay
-    attack_samples = int(sample_rate * 0.005)
-    env = np.ones(num_samples)
-    env[:attack_samples] = np.linspace(0, 1.0, attack_samples)
-    env[attack_samples:] = np.exp(-4.5 * (t[attack_samples:] - 0.005))
+    # Massive physical shockwave sine sweep: 75 Hz down to 20 Hz
+    phase = 2 * np.pi * (75 * t + 0.5 * (20 - 75) * t**2 / duration)
+    shockwave = np.sin(phase)
     
-    mono_explosion = boom * env
-    # Spatialise with delay for a wide cinematic blast field
-    return make_stereo_with_haas(mono_explosion, delay_ms=4.0)
+    # Envelope: instant attack, long deep decay
+    env = np.exp(-4.2 * t)
+    
+    # Apply fade-out to prevent any end clicks
+    fade_len = int(num_samples * 0.12)
+    fade = np.ones(num_samples)
+    fade[-fade_len:] = np.linspace(1.0, 0.0, fade_len)
+    
+    mono_explosion = (shockwave * 0.45 + rumble * 0.55) * env * fade
+    return make_centered_stereo(mono_explosion)
 
 def generate_shield_hit(sample_rate=44100):
-    """High-frequency energetic metallic shield ping using ring-modulation."""
-    duration = 0.12
+    """Satisfying electromagnetic energy absorption thump (low-pitched muffled static surge)."""
+    duration = 0.15
     num_samples = int(sample_rate * duration)
     t = np.linspace(0, duration, num_samples, endpoint=False)
     
-    # High-pitch carrier wave (2400 Hz) multiplied by modulator wave (160 Hz)
-    carrier = np.sin(2 * np.pi * 2400 * t)
-    modulator = np.sin(2 * np.pi * 160 * t)
-    ping = carrier * modulator
+    # Low electromagnetic sweep (280 Hz down to 60 Hz) ring-modulated by 35 Hz
+    carrier_phase = 2 * np.pi * (280 * t + 0.5 * (60 - 280) * t**2 / duration)
+    carrier = np.sin(carrier_phase)
+    modulator = np.sin(2 * np.pi * 35 * t)
+    surge = carrier * modulator
     
-    # Rapid decay envelope
-    env = np.exp(-22 * t)
-    mono_shield = ping * env
-    return make_stereo_with_haas(mono_shield, delay_ms=1.0)
+    # Electromagnetic plasma static dissipation noise
+    noise = np.random.normal(0, 0.35, num_samples)
+    window_size = 20
+    static = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
+    
+    # Envelope
+    env = np.exp(-18 * t)
+    
+    # Fade out
+    fade_len = int(num_samples * 0.15)
+    fade = np.ones(num_samples)
+    fade[-fade_len:] = np.linspace(1.0, 0.0, fade_len)
+    
+    mono_shield = (surge * 0.65 + static * 0.35) * env * fade
+    return make_centered_stereo(mono_shield)
 
 def generate_armor_hit(sample_rate=44100):
-    """Metallic dull hull impact thud."""
+    """Heavy direct hull impact thud (massive structural buckling thud), centered and click-free."""
     duration = 0.18
     num_samples = int(sample_rate * duration)
     t = np.linspace(0, duration, num_samples, endpoint=False)
     
-    # Hull frequency sweep: 180 Hz down to 55 Hz
-    phase = 2 * np.pi * (180 * t + 0.5 * (55 - 180) * t**2 / duration)
-    metallic = np.sin(phase)
+    # Massive hull vibration sweep: 100 Hz down to 25 Hz
+    phase = 2 * np.pi * (100 * t + 0.5 * (25 - 100) * t**2 / duration)
+    hull_vib = np.sin(phase)
     
-    # Add a bit of low-pass noise for the crunch of impact
-    noise = np.random.normal(0, 0.3, num_samples)
-    window_size = 12
+    # Low structural crunch noise
+    noise = np.random.normal(0, 0.45, num_samples)
+    window_size = 24
     crunch = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
     
     # Envelope
-    env = np.exp(-14 * t)
-    mono_armor = (metallic * 0.75 + crunch * 0.25) * env
-    return make_stereo_with_haas(mono_armor, delay_ms=2.0)
+    env = np.exp(-15 * t)
+    
+    # Fade out
+    fade_len = int(num_samples * 0.15)
+    fade = np.ones(num_samples)
+    fade[-fade_len:] = np.linspace(1.0, 0.0, fade_len)
+    
+    mono_armor = (hull_vib * 0.70 + crunch * 0.30) * env * fade
+    return make_centered_stereo(mono_armor)
 
 def generate_music_drone(sample_rate=44100):
     """

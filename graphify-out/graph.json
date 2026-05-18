@@ -34,7 +34,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L1",
       "id": "tests_benchmark_realistic_py",
-      "community": 15,
+      "community": 16,
       "norm_label": "benchmark_realistic.py"
     },
     {
@@ -43,7 +43,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L13",
       "id": "tests_benchmark_realistic_benchmark_realistic",
-      "community": 15,
+      "community": 16,
       "norm_label": "benchmark_realistic()"
     },
     {
@@ -52,7 +52,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L14",
       "id": "tests_benchmark_realistic_rationale_14",
-      "community": 15,
+      "community": 16,
       "norm_label": "benchmark actual game rendering pipeline."
     },
     {
@@ -61,7 +61,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_py",
-      "community": 30,
+      "community": 29,
       "norm_label": "test_optimizations.py"
     },
     {
@@ -322,7 +322,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L310",
       "id": "tests_test_optimizations_run_tests",
-      "community": 30,
+      "community": 29,
       "norm_label": "run_tests()"
     },
     {
@@ -331,7 +331,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_rationale_1",
-      "community": 30,
+      "community": 29,
       "norm_label": "unit tests for object pooling and spatial partitioning systems. run with: python"
     },
     {
@@ -583,7 +583,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L311",
       "id": "tests_test_optimizations_rationale_311",
-      "community": 30,
+      "community": 29,
       "norm_label": "run all tests manually (for environments without pytest)."
     },
     {
@@ -592,7 +592,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L1",
       "id": "tests_benchmark_star_optimization_py",
-      "community": 15,
+      "community": 16,
       "norm_label": "benchmark_star_optimization.py"
     },
     {
@@ -601,7 +601,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L14",
       "id": "tests_benchmark_star_optimization_benchmark_batch_processing",
-      "community": 15,
+      "community": 16,
       "norm_label": "benchmark_batch_processing()"
     },
     {
@@ -610,7 +610,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L15",
       "id": "tests_benchmark_star_optimization_rationale_15",
-      "community": 15,
+      "community": 16,
       "norm_label": "test the optimized batch star processing."
     },
     {
@@ -727,7 +727,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L1",
       "id": "src_projectile_py",
-      "community": 60,
+      "community": 9,
       "norm_label": "projectile.py"
     },
     {
@@ -790,7 +790,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L61",
       "id": "src_projectile_machinegunbolt",
-      "community": 60,
+      "community": 13,
       "norm_label": "machinegunbolt"
     },
     {
@@ -799,7 +799,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L62",
       "id": "src_projectile_machinegunbolt_init",
-      "community": 60,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -808,7 +808,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L69",
       "id": "src_projectile_homingbolt",
-      "community": 60,
+      "community": 9,
       "norm_label": "homingbolt"
     },
     {
@@ -817,7 +817,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L70",
       "id": "src_projectile_homingbolt_init",
-      "community": 60,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -826,7 +826,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L76",
       "id": "src_projectile_homingbolt_update",
-      "community": 60,
+      "community": 9,
       "norm_label": ".update()"
     },
     {
@@ -835,7 +835,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L99",
       "id": "src_projectile_sniperbeam",
-      "community": 27,
+      "community": 9,
       "norm_label": "sniperbeam"
     },
     {
@@ -844,7 +844,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L100",
       "id": "src_projectile_sniperbeam_init",
-      "community": 27,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -853,7 +853,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L107",
       "id": "src_projectile_corvetteturret",
-      "community": 60,
+      "community": 26,
       "norm_label": "corvetteturret"
     },
     {
@@ -862,7 +862,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L108",
       "id": "src_projectile_corvetteturret_init",
-      "community": 60,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -871,7 +871,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L115",
       "id": "src_projectile_mine",
-      "community": 26,
+      "community": 9,
       "norm_label": "mine"
     },
     {
@@ -880,7 +880,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L116",
       "id": "src_projectile_mine_init",
-      "community": 26,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -889,7 +889,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L122",
       "id": "src_projectile_mine_submit_to_renderer",
-      "community": 26,
+      "community": 9,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -898,7 +898,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L128",
       "id": "src_projectile_mine_check_player_collision",
-      "community": 26,
+      "community": 9,
       "norm_label": ".check_player_collision()"
     },
     {
@@ -916,7 +916,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L145",
       "id": "src_projectile_stealthshotgun_init",
-      "community": 60,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -1069,7 +1069,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L22",
       "id": "src_math_engine_quat_from_axis_angle",
-      "community": 1,
+      "community": 60,
       "norm_label": "quat_from_axis_angle()"
     },
     {
@@ -1078,7 +1078,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L31",
       "id": "src_math_engine_quat_mul",
-      "community": 1,
+      "community": 60,
       "norm_label": "quat_mul()"
     },
     {
@@ -1087,7 +1087,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L44",
       "id": "src_math_engine_quat_normalise",
-      "community": 1,
+      "community": 60,
       "norm_label": "quat_normalise()"
     },
     {
@@ -1114,7 +1114,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L80",
       "id": "src_math_engine_rotate_pitch",
-      "community": 1,
+      "community": 60,
       "norm_label": "rotate_pitch()"
     },
     {
@@ -1123,7 +1123,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L89",
       "id": "src_math_engine_rotate_yaw",
-      "community": 1,
+      "community": 60,
       "norm_label": "rotate_yaw()"
     },
     {
@@ -1132,7 +1132,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L97",
       "id": "src_math_engine_rotate_roll",
-      "community": 1,
+      "community": 60,
       "norm_label": "rotate_roll()"
     },
     {
@@ -1150,7 +1150,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L136",
       "id": "src_math_engine_get_forward_from_quat",
-      "community": 59,
+      "community": 13,
       "norm_label": "get_forward_from_quat()"
     },
     {
@@ -1222,7 +1222,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L317",
       "id": "src_math_engine_get_forward_vector",
-      "community": 63,
+      "community": 1,
       "norm_label": "get_forward_vector()"
     },
     {
@@ -1231,7 +1231,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L326",
       "id": "src_math_engine_get_right_vector",
-      "community": 63,
+      "community": 1,
       "norm_label": "get_right_vector()"
     },
     {
@@ -1249,7 +1249,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L350",
       "id": "src_math_engine_basis_from_forward",
-      "community": 5,
+      "community": 1,
       "norm_label": "basis_from_forward()"
     },
     {
@@ -1267,7 +1267,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L23",
       "id": "src_math_engine_rationale_23",
-      "community": 1,
+      "community": 60,
       "norm_label": "create a unit quaternion representing a rotation of `angle` radians     around t"
     },
     {
@@ -1276,7 +1276,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L32",
       "id": "src_math_engine_rationale_32",
-      "community": 1,
+      "community": 60,
       "norm_label": "hamilton product of two quaternions."
     },
     {
@@ -1294,7 +1294,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L81",
       "id": "src_math_engine_rationale_81",
-      "community": 1,
+      "community": 60,
       "norm_label": "pitch: rotate around the ship's local x (right) axis."
     },
     {
@@ -1303,7 +1303,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L90",
       "id": "src_math_engine_rationale_90",
-      "community": 1,
+      "community": 60,
       "norm_label": "yaw: rotate around the ship's local y (up) axis."
     },
     {
@@ -1312,7 +1312,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L98",
       "id": "src_math_engine_rationale_98",
-      "community": 1,
+      "community": 60,
       "norm_label": "roll: rotate around the ship's local z (forward) axis."
     },
     {
@@ -1330,7 +1330,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L137",
       "id": "src_math_engine_rationale_137",
-      "community": 59,
+      "community": 13,
       "norm_label": "extract just the forward (z) vector from a quaternion \u2014 avoids full basis build."
     },
     {
@@ -1384,7 +1384,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L318",
       "id": "src_math_engine_rationale_318",
-      "community": 63,
+      "community": 1,
       "norm_label": "legacy: forward from euler pitch/yaw (no roll)."
     },
     {
@@ -1393,7 +1393,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L327",
       "id": "src_math_engine_rationale_327",
-      "community": 63,
+      "community": 1,
       "norm_label": "legacy: right from euler pitch/yaw."
     },
     {
@@ -1429,7 +1429,7 @@
       "source_file": "src/player.py",
       "source_location": "L18",
       "id": "src_player_player",
-      "community": 59,
+      "community": 5,
       "norm_label": "player"
     },
     {
@@ -1474,7 +1474,7 @@
       "source_file": "src/player.py",
       "source_location": "L67",
       "id": "src_player_player_update",
-      "community": 59,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -1483,7 +1483,7 @@
       "source_file": "src/player.py",
       "source_location": "L273",
       "id": "src_player_player_take_damage",
-      "community": 59,
+      "community": 5,
       "norm_label": ".take_damage()"
     },
     {
@@ -1492,7 +1492,7 @@
       "source_file": "src/player.py",
       "source_location": "L292",
       "id": "src_player_player_target_closest",
-      "community": 59,
+      "community": 65,
       "norm_label": ".target_closest()"
     },
     {
@@ -1501,7 +1501,7 @@
       "source_file": "src/player.py",
       "source_location": "L330",
       "id": "src_player_player_cycle_targets",
-      "community": 59,
+      "community": 64,
       "norm_label": ".cycle_targets()"
     },
     {
@@ -1510,7 +1510,7 @@
       "source_file": "src/player.py",
       "source_location": "L369",
       "id": "src_player_player_clear_dead_target",
-      "community": 59,
+      "community": 63,
       "norm_label": ".clear_dead_target()"
     },
     {
@@ -1546,7 +1546,7 @@
       "source_file": "src/player.py",
       "source_location": "L293",
       "id": "src_player_rationale_293",
-      "community": 59,
+      "community": 65,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view."
     },
     {
@@ -1555,7 +1555,7 @@
       "source_file": "src/player.py",
       "source_location": "L331",
       "id": "src_player_rationale_331",
-      "community": 59,
+      "community": 64,
       "norm_label": "advance to the next non-stealthed enemy in fov (wraps around)."
     },
     {
@@ -1564,7 +1564,7 @@
       "source_file": "src/player.py",
       "source_location": "L370",
       "id": "src_player_rationale_370",
-      "community": 59,
+      "community": 63,
       "norm_label": "nullify the active target if it has been destroyed."
     },
     {
@@ -1645,7 +1645,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L169",
       "id": "src_enemy_enemy_approaching_too_fast",
-      "community": 34,
+      "community": 13,
       "norm_label": "._approaching_too_fast()"
     },
     {
@@ -1654,7 +1654,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L178",
       "id": "src_enemy_enemy_update_orientation",
-      "community": 5,
+      "community": 1,
       "norm_label": "._update_orientation()"
     },
     {
@@ -1699,7 +1699,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L254",
       "id": "src_enemy_enemy_dist_to_player",
-      "community": 13,
+      "community": 20,
       "norm_label": ".dist_to_player()"
     },
     {
@@ -1780,7 +1780,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L341",
       "id": "src_enemy_suicidedrone",
-      "community": 13,
+      "community": 26,
       "norm_label": "suicidedrone"
     },
     {
@@ -1798,7 +1798,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L399",
       "id": "src_enemy_suicidedrone_set_pattern",
-      "community": 13,
+      "community": 26,
       "norm_label": ".set_pattern()"
     },
     {
@@ -1816,7 +1816,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L460",
       "id": "src_enemy_suicidedrone_detonate",
-      "community": 13,
+      "community": 20,
       "norm_label": ".detonate()"
     },
     {
@@ -1825,7 +1825,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L472",
       "id": "src_enemy_suicidedrone_on_hit",
-      "community": 13,
+      "community": 26,
       "norm_label": ".on_hit()"
     },
     {
@@ -1834,7 +1834,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L483",
       "id": "src_enemy_dogfighter",
-      "community": 60,
+      "community": 13,
       "norm_label": "dogfighter"
     },
     {
@@ -1852,7 +1852,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L584",
       "id": "src_enemy_dogfighter_player_forward",
-      "community": 60,
+      "community": 13,
       "norm_label": "._player_forward()"
     },
     {
@@ -1861,7 +1861,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L587",
       "id": "src_enemy_dogfighter_update",
-      "community": 60,
+      "community": 13,
       "norm_label": ".update()"
     },
     {
@@ -1870,7 +1870,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L690",
       "id": "src_enemy_dogfighter_fire_projectile",
-      "community": 60,
+      "community": 13,
       "norm_label": "._fire_projectile()"
     },
     {
@@ -1879,7 +1879,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L720",
       "id": "src_enemy_dogfighter_on_hit",
-      "community": 60,
+      "community": 13,
       "norm_label": ".on_hit()"
     },
     {
@@ -1942,7 +1942,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1064",
       "id": "src_enemy_corvette_update",
-      "community": 13,
+      "community": 26,
       "norm_label": ".update()"
     },
     {
@@ -1960,7 +1960,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1116",
       "id": "src_enemy_minelayer",
-      "community": 27,
+      "community": 22,
       "norm_label": "minelayer"
     },
     {
@@ -1978,7 +1978,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1179",
       "id": "src_enemy_minelayer_pick_flank_offset",
-      "community": 27,
+      "community": 22,
       "norm_label": "._pick_flank_offset()"
     },
     {
@@ -1996,7 +1996,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1289",
       "id": "src_enemy_minelayer_on_hit",
-      "community": 27,
+      "community": 22,
       "norm_label": ".on_hit()"
     },
     {
@@ -2104,7 +2104,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L170",
       "id": "src_enemy_rationale_170",
-      "community": 34,
+      "community": 13,
       "norm_label": "true when close to target and still closing fast \u2014 signal to flip and brake."
     },
     {
@@ -2122,7 +2122,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L461",
       "id": "src_enemy_rationale_461",
-      "community": 13,
+      "community": 20,
       "norm_label": "triggers proximity explosion and deals radial damage to player."
     },
     {
@@ -4705,7 +4705,7 @@
       "source_file": "src/star.py",
       "source_location": "L1",
       "id": "src_star_py",
-      "community": 15,
+      "community": 16,
       "norm_label": "star.py"
     },
     {
@@ -4714,7 +4714,7 @@
       "source_file": "src/star.py",
       "source_location": "L10",
       "id": "src_star_wrap_star_positions_batch",
-      "community": 15,
+      "community": 16,
       "norm_label": "wrap_star_positions_batch()"
     },
     {
@@ -4723,7 +4723,7 @@
       "source_file": "src/star.py",
       "source_location": "L42",
       "id": "src_star_compute_star_colors_batch",
-      "community": 15,
+      "community": 16,
       "norm_label": "compute_star_colors_batch()"
     },
     {
@@ -4732,7 +4732,7 @@
       "source_file": "src/star.py",
       "source_location": "L72",
       "id": "src_star_star",
-      "community": 15,
+      "community": 16,
       "norm_label": "star"
     },
     {
@@ -4741,7 +4741,7 @@
       "source_file": "src/star.py",
       "source_location": "L73",
       "id": "src_star_star_init",
-      "community": 15,
+      "community": 16,
       "norm_label": ".__init__()"
     },
     {
@@ -4750,7 +4750,7 @@
       "source_file": "src/star.py",
       "source_location": "L76",
       "id": "src_star_star_spawn_around",
-      "community": 15,
+      "community": 16,
       "norm_label": ".spawn_around()"
     },
     {
@@ -4759,7 +4759,7 @@
       "source_file": "src/star.py",
       "source_location": "L102",
       "id": "src_star_star_submit_to_renderer",
-      "community": 15,
+      "community": 16,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -4768,7 +4768,7 @@
       "source_file": "src/star.py",
       "source_location": "L132",
       "id": "src_star_submit_batch_to_renderer",
-      "community": 15,
+      "community": 16,
       "norm_label": "submit_batch_to_renderer()"
     },
     {
@@ -4777,7 +4777,7 @@
       "source_file": "src/star.py",
       "source_location": "L11",
       "id": "src_star_rationale_11",
-      "community": 15,
+      "community": 16,
       "norm_label": "batch wrap star positions around player.     avoids 220 individual python functi"
     },
     {
@@ -4786,7 +4786,7 @@
       "source_file": "src/star.py",
       "source_location": "L43",
       "id": "src_star_rationale_43",
-      "community": 15,
+      "community": 16,
       "norm_label": "batch compute final star colors with distance-based dimming.     all 220 stars p"
     },
     {
@@ -5173,7 +5173,7 @@
       "source_file": "src/laser.py",
       "source_location": "L6",
       "id": "src_laser_laser_init",
-      "community": 59,
+      "community": 18,
       "norm_label": ".__init__()"
     },
     {
@@ -5209,7 +5209,7 @@
       "source_file": "src/laser.py",
       "source_location": "L7",
       "id": "src_laser_rationale_7",
-      "community": 59,
+      "community": 18,
       "norm_label": "initialize a laser. can be initialized with player orientation or with explicit"
     },
     {
@@ -5218,7 +5218,7 @@
       "source_file": "src/laser.py",
       "source_location": "L36",
       "id": "src_laser_rationale_36",
-      "community": 59,
+      "community": 18,
       "norm_label": "reinitialize laser with new values (for object pooling)."
     },
     {
@@ -5465,10 +5465,19 @@
       "norm_label": "make_stereo_with_haas()"
     },
     {
-      "label": "generate_laser()",
+      "label": "make_centered_stereo()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
       "source_location": "L41",
+      "id": "tools_generate_sfx_make_centered_stereo",
+      "community": 39,
+      "norm_label": "make_centered_stereo()"
+    },
+    {
+      "label": "generate_laser()",
+      "file_type": "code",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L48",
       "id": "tools_generate_sfx_generate_laser",
       "community": 39,
       "norm_label": "generate_laser()"
@@ -5477,7 +5486,7 @@
       "label": "generate_missile()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L75",
+      "source_location": "L77",
       "id": "tools_generate_sfx_generate_missile",
       "community": 39,
       "norm_label": "generate_missile()"
@@ -5486,7 +5495,7 @@
       "label": "generate_explosion()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L100",
+      "source_location": "L107",
       "id": "tools_generate_sfx_generate_explosion",
       "community": 39,
       "norm_label": "generate_explosion()"
@@ -5495,7 +5504,7 @@
       "label": "generate_shield_hit()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L122",
+      "source_location": "L133",
       "id": "tools_generate_sfx_generate_shield_hit",
       "community": 39,
       "norm_label": "generate_shield_hit()"
@@ -5504,7 +5513,7 @@
       "label": "generate_armor_hit()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L138",
+      "source_location": "L161",
       "id": "tools_generate_sfx_generate_armor_hit",
       "community": 39,
       "norm_label": "generate_armor_hit()"
@@ -5513,7 +5522,7 @@
       "label": "generate_music_drone()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L158",
+      "source_location": "L187",
       "id": "tools_generate_sfx_generate_music_drone",
       "community": 39,
       "norm_label": "generate_music_drone()"
@@ -5522,7 +5531,7 @@
       "label": "main()",
       "file_type": "code",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L206",
+      "source_location": "L235",
       "id": "tools_generate_sfx_main",
       "community": 39,
       "norm_label": "main()"
@@ -5546,56 +5555,65 @@
       "norm_label": "converts mono data to stereo using the haas effect for premium wide soundstage."
     },
     {
-      "label": "Muffled dull cockpit thud from firing inside the vacuum, centered and click-free",
+      "label": "Converts mono data to centered stereo (duplicated left and right channels).",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
       "source_location": "L42",
       "id": "tools_generate_sfx_rationale_42",
       "community": 39,
-      "norm_label": "muffled dull cockpit thud from firing inside the vacuum, centered and click-free"
+      "norm_label": "converts mono data to centered stereo (duplicated left and right channels)."
     },
     {
-      "label": "Combines a rising engine whine with low-frequency thruster roar/rumble.",
+      "label": "Muffled dull cockpit thump from firing inside the vacuum, centered and click-fre",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L76",
-      "id": "tools_generate_sfx_rationale_76",
+      "source_location": "L49",
+      "id": "tools_generate_sfx_rationale_49",
       "community": 39,
-      "norm_label": "combines a rising engine whine with low-frequency thruster roar/rumble."
+      "norm_label": "muffled dull cockpit thump from firing inside the vacuum, centered and click-fre"
     },
     {
-      "label": "Bass-heavy low-pass filtered brown-esque noise explosion.",
+      "label": "Muffled structural rocket combustion roar inside the vacuum, centered and click-",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L101",
-      "id": "tools_generate_sfx_rationale_101",
+      "source_location": "L78",
+      "id": "tools_generate_sfx_rationale_78",
       "community": 39,
-      "norm_label": "bass-heavy low-pass filtered brown-esque noise explosion."
+      "norm_label": "muffled structural rocket combustion roar inside the vacuum, centered and click-"
     },
     {
-      "label": "High-frequency energetic metallic shield ping using ring-modulation.",
+      "label": "Massive, bass-heavy structural shockwave thud through the hull, centered and cli",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L123",
-      "id": "tools_generate_sfx_rationale_123",
+      "source_location": "L108",
+      "id": "tools_generate_sfx_rationale_108",
       "community": 39,
-      "norm_label": "high-frequency energetic metallic shield ping using ring-modulation."
+      "norm_label": "massive, bass-heavy structural shockwave thud through the hull, centered and cli"
     },
     {
-      "label": "Metallic dull hull impact thud.",
+      "label": "Satisfying electromagnetic energy absorption thump (low-pitched muffled static s",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L139",
-      "id": "tools_generate_sfx_rationale_139",
+      "source_location": "L134",
+      "id": "tools_generate_sfx_rationale_134",
       "community": 39,
-      "norm_label": "metallic dull hull impact thud."
+      "norm_label": "satisfying electromagnetic energy absorption thump (low-pitched muffled static s"
+    },
+    {
+      "label": "Heavy direct hull impact thud (massive structural buckling thud), centered and c",
+      "file_type": "rationale",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L162",
+      "id": "tools_generate_sfx_rationale_162",
+      "community": 39,
+      "norm_label": "heavy direct hull impact thud (massive structural buckling thud), centered and c"
     },
     {
       "label": "Seamlessly loopable cinematic deep space drone.     Harmonized multi-oscillator",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L159",
-      "id": "tools_generate_sfx_rationale_159",
+      "source_location": "L188",
+      "id": "tools_generate_sfx_rationale_188",
       "community": 39,
       "norm_label": "seamlessly loopable cinematic deep space drone.     harmonized multi-oscillator"
     },
@@ -7295,6 +7313,51 @@
       "label": "Combines a rising engine whine with low-frequency thruster roar/rumble.",
       "file_type": "rationale",
       "source_file": "tools/generate_sfx.py",
+      "source_location": "L76",
+      "community": 39,
+      "norm_label": "combines a rising engine whine with low-frequency thruster roar/rumble.",
+      "id": "tools_generate_sfx_rationale_76"
+    },
+    {
+      "label": "Bass-heavy low-pass filtered brown-esque noise explosion.",
+      "file_type": "rationale",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L101",
+      "community": 39,
+      "norm_label": "bass-heavy low-pass filtered brown-esque noise explosion.",
+      "id": "tools_generate_sfx_rationale_101"
+    },
+    {
+      "label": "High-frequency energetic metallic shield ping using ring-modulation.",
+      "file_type": "rationale",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L123",
+      "community": 39,
+      "norm_label": "high-frequency energetic metallic shield ping using ring-modulation.",
+      "id": "tools_generate_sfx_rationale_123"
+    },
+    {
+      "label": "Metallic dull hull impact thud.",
+      "file_type": "rationale",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L139",
+      "community": 39,
+      "norm_label": "metallic dull hull impact thud.",
+      "id": "tools_generate_sfx_rationale_139"
+    },
+    {
+      "label": "Seamlessly loopable cinematic deep space drone.     Harmonized multi-oscillator",
+      "file_type": "rationale",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L159",
+      "community": 39,
+      "norm_label": "seamlessly loopable cinematic deep space drone.     harmonized multi-oscillator",
+      "id": "tools_generate_sfx_rationale_159"
+    },
+    {
+      "label": "Combines a rising engine whine with low-frequency thruster roar/rumble.",
+      "file_type": "rationale",
+      "source_file": "tools/generate_sfx.py",
       "source_location": "L67",
       "community": 39,
       "norm_label": "combines a rising engine whine with low-frequency thruster roar/rumble.",
@@ -7386,7 +7449,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L284",
-      "community": 59,
+      "community": 65,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view.",
       "id": "src_player_rationale_284"
     },
@@ -7395,7 +7458,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L322",
-      "community": 59,
+      "community": 64,
       "norm_label": "advance to the next non-stealthed enemy in fov (wraps around).",
       "id": "src_player_rationale_322"
     },
@@ -7404,7 +7467,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L361",
-      "community": 59,
+      "community": 63,
       "norm_label": "nullify the active target if it has been destroyed.",
       "id": "src_player_rationale_361"
     },
@@ -7537,7 +7600,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 15,
+      "community": 16,
       "norm_label": "quick_reference.md",
       "id": "extra_docs_quick_reference"
     },
@@ -7563,7 +7626,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 15,
+      "community": 16,
       "norm_label": "star_optimization_summary.md",
       "id": "extra_docs_star_optimization_summary"
     },
@@ -7590,7 +7653,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Uses compiled Numba functions to wrap all 220 star positions around the player, bypassing Python interpreter overhead and native loops.",
-      "community": 15,
+      "community": 16,
       "norm_label": "numba jit position wrapping",
       "id": "concept_numba_jit"
     },
@@ -7604,7 +7667,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Replaces individual submission loops with a single batch call from game.py, freeing ~0.096ms per frame (~7% performance improvement).",
-      "community": 15,
+      "community": 16,
       "norm_label": "batch star submission",
       "id": "concept_batch_star_submission"
     },
@@ -18350,6 +18413,16 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L41",
       "weight": 1.0,
+      "source": "tools_generate_sfx_py",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L41",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tools_generate_sfx_py",
       "target": "tools_generate_sfx_generate_laser"
@@ -18436,6 +18509,16 @@
       "target": "tools_generate_sfx_save_wav"
     },
     {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L26",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tools_generate_sfx_rationale_26",
+      "target": "tools_generate_sfx_make_stereo_with_haas"
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -18480,16 +18563,6 @@
       "target": "tools_generate_sfx_make_stereo_with_haas"
     },
     {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "source_file": "tools/generate_sfx.py",
-      "source_location": "L26",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tools_generate_sfx_rationale_26",
-      "target": "tools_generate_sfx_make_stereo_with_haas"
-    },
-    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -18505,11 +18578,86 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "tools/generate_sfx.py",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_generate_laser",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_generate_missile",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L131",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_generate_explosion",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L159",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_generate_shield_hit",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L185",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_generate_armor_hit",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_rationale_42",
+      "target": "tools_generate_sfx_make_centered_stereo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
       "source_location": "L192",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tools_generate_sfx_main",
       "target": "tools_generate_sfx_generate_laser"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "tools_generate_sfx_rationale_49",
+      "target": "tools_generate_sfx_generate_laser",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -18536,11 +18684,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L76",
+      "source_location": "L78",
       "weight": 1.0,
-      "source": "tools_generate_sfx_rationale_76",
+      "source": "tools_generate_sfx_rationale_78",
       "target": "tools_generate_sfx_generate_missile",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L76",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tools_generate_sfx_rationale_76",
+      "target": "tools_generate_sfx_generate_missile"
     },
     {
       "relation": "rationale_for",
@@ -18577,11 +18735,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L101",
+      "source_location": "L108",
       "weight": 1.0,
-      "source": "tools_generate_sfx_rationale_101",
+      "source": "tools_generate_sfx_rationale_108",
       "target": "tools_generate_sfx_generate_explosion",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L101",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tools_generate_sfx_rationale_101",
+      "target": "tools_generate_sfx_generate_explosion"
     },
     {
       "relation": "rationale_for",
@@ -18618,11 +18786,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L123",
+      "source_location": "L134",
       "weight": 1.0,
-      "source": "tools_generate_sfx_rationale_123",
+      "source": "tools_generate_sfx_rationale_134",
       "target": "tools_generate_sfx_generate_shield_hit",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L123",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tools_generate_sfx_rationale_123",
+      "target": "tools_generate_sfx_generate_shield_hit"
     },
     {
       "relation": "rationale_for",
@@ -18659,11 +18837,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L139",
+      "source_location": "L162",
       "weight": 1.0,
-      "source": "tools_generate_sfx_rationale_139",
+      "source": "tools_generate_sfx_rationale_162",
       "target": "tools_generate_sfx_generate_armor_hit",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L139",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tools_generate_sfx_rationale_139",
+      "target": "tools_generate_sfx_generate_armor_hit"
     },
     {
       "relation": "rationale_for",
@@ -18700,11 +18888,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "tools/generate_sfx.py",
-      "source_location": "L159",
+      "source_location": "L188",
       "weight": 1.0,
-      "source": "tools_generate_sfx_rationale_159",
+      "source": "tools_generate_sfx_rationale_188",
       "target": "tools_generate_sfx_generate_music_drone",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "tools/generate_sfx.py",
+      "source_location": "L159",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "tools_generate_sfx_rationale_159",
+      "target": "tools_generate_sfx_generate_music_drone"
     },
     {
       "relation": "rationale_for",
@@ -21244,5 +21442,5 @@
       "source_file": "extra_docs/OPTIMIZATION_SUMMARY.md"
     }
   ],
-  "built_at_commit": "430f1aff27233e5f011e51d72a56a401de2bbe41"
+  "built_at_commit": "7b9f95f13d2d5609358b04871f90bdaab30cc419"
 }

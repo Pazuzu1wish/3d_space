@@ -210,8 +210,8 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/tools/generate_sfx.py": {
-    "mtime": 1779140392.3869152,
-    "ast_hash": "caf2a41bf3c4ec42dcd8f2af3bd50da0",
+    "mtime": 1779140689.0665755,
+    "ast_hash": "69e16b6b3f4ddda5e22e82bb4613c455",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/extra_docs/OPTIMIZATION_RENDERING_FACES.md": {
@@ -220,33 +220,33 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/missile.wav": {
-    "mtime": 1779140405.2401874,
-    "ast_hash": "6d7e648bfa33a48d1ad404586514c494",
+    "mtime": 1779140696.9425747,
+    "ast_hash": "608be2585ccb2ce17bf8700571137d65",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/shield_hit.wav": {
-    "mtime": 1779140405.2414715,
-    "ast_hash": "b6ade0bb7a8496769eb4b725c3d14aec",
+    "mtime": 1779140696.9436884,
+    "ast_hash": "70dff32162a0be30b0e9fd32e4415bba",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/bgm_drone.wav": {
-    "mtime": 1779140405.251418,
+    "mtime": 1779140696.9493167,
     "ast_hash": "2e65478320b055925f4265b7729ffc27",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/explosion.wav": {
-    "mtime": 1779140405.2408476,
-    "ast_hash": "de97c3fbd07439345fc3e79fe8663a9e",
+    "mtime": 1779140696.9432204,
+    "ast_hash": "629fac80329a9a2668756a01f44a0876",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/armor_hit.wav": {
-    "mtime": 1779140405.2420971,
-    "ast_hash": "37dcdc26666bbd0a738cefa579c993eb",
+    "mtime": 1779140696.9440246,
+    "ast_hash": "8dead30a266c93dfb30bcab6afe491e7",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/laser.wav": {
-    "mtime": 1779140405.2388055,
-    "ast_hash": "f2bc24bec2ee41c45906fe4eff405118",
+    "mtime": 1779140696.942039,
+    "ast_hash": "1b044558c7f4031036efcccf093ef605",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/tools/assets/sounds/missile.wav": {
