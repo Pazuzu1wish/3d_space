@@ -64,7 +64,7 @@ class Player:
     def current_speed(self):
         return math.sqrt(self.vel[0]**2 + self.vel[1]**2 + self.vel[2]**2)
 
-    def update(self, dt, handler, keys, lasers, particles, enemy_projectiles, player_missiles):
+    def update(self, dt, handler, keys, lasers, particles, enemy_projectiles, player_missiles, sound=None):
         # ── INPUT ─────────────────────────────────
         lx, ly = handler.stick_left()
         rx, _  = handler.stick_right()
@@ -195,6 +195,8 @@ class Player:
         
         # ── WEAPONS ───────────────────────────────
         if missile_fire_pressed and self.missile_ammo > 0:
+            if sound:
+                sound.play_sfx("missile")
             from src.constants import PLAYER_MISSILE_SPEED, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE
             self.missile_ammo -= 1
             forward, right, _ = get_basis_from_quat(self.orientation)
@@ -218,6 +220,8 @@ class Player:
             handler.rumble(0.2, 0.2, 100)
 
         if fire_pressed and self.weapons_cooldown <= 0 and not self.overheated:
+            if sound:
+                sound.play_sfx("laser")
             forward, right, _ = get_basis_from_quat(self.orientation)
             rfx, rfy, rfz = forward
             rrx, rry, rrz = right
@@ -272,9 +276,14 @@ class Player:
         self.shake_queued += amount
         self.rumble_queued += amount
         if self.shield > 0:
+            if hasattr(self, 'sound') and self.sound:
+                self.sound.play_sfx("shield_hit")
             absorbed = min(self.shield, amount)
             self.shield -= absorbed
             amount -= absorbed
+        else:
+            if hasattr(self, 'sound') and self.sound:
+                self.sound.play_sfx("armor_hit")
         if amount > 0:
             self.hp = max(0, self.hp - amount)
 

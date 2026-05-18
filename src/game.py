@@ -26,6 +26,7 @@ from src.utils import draw_damage_overlay
 from src.director import WaveDirector
 from src.encounters import ENCOUNTER_SCRIPT
 from src.object_pool import ParticlePool, LaserPool
+from src.sound_handler import SoundHandler
 
 # ──────────────────────────────────────────────
 # Game Class
@@ -35,6 +36,18 @@ class Game:
     def __init__(self):
         # Initialize Pygame screen and clock
         pygame.init() # Init Pygame
+
+        # Initialize highly optimized audio handler and pre-load assets
+        self.sound = SoundHandler()
+        self.sound.load_sfx("laser", "assets/sounds/laser.wav")
+        self.sound.load_sfx("missile", "assets/sounds/missile.wav")
+        self.sound.load_sfx("explosion", "assets/sounds/explosion.wav")
+        self.sound.load_sfx("shield_hit", "assets/sounds/shield_hit.wav")
+        self.sound.load_sfx("armor_hit", "assets/sounds/armor_hit.wav")
+        
+        # Stream seamless deep space ambient loop from disk (saves memory and CPU)
+        #self.sound.play_music("assets/sounds/bgm_drone.wav", loops=-1, volume=0.35)
+
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT # Set Screen size
         flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
         self.screen = pygame.display.set_mode((self.W, self.H), flags) # Set display mode with screen size variables
@@ -47,6 +60,7 @@ class Game:
 
         # Initialize player and wave director
         self.player = Player() # Init Player class
+        self.player.sound = self.sound
         self.director = WaveDirector(ENCOUNTER_SCRIPT) # Init WaveDirector class
 
         # Initialize object pools for performance
@@ -126,6 +140,7 @@ class Game:
 
             # Drone destroyed
             if e.hp <= 0:
+                self.sound.play_sfx("explosion")
                 p_count = 100 if getattr(e, 'did_detonate', False) else PARTICLES_ON_DESTROY
                 for _ in range(p_count):
                     self.particle_pool.spawn(e.x, e.y, e.z)
@@ -155,6 +170,7 @@ class Game:
             
             # Asteroid destroyed
             if a.hp <= 0:
+                self.sound.play_sfx("explosion")
                 fragments = a.split()
                 for f in fragments:
                     self.asteroids.append(f)
@@ -470,7 +486,7 @@ class Game:
 
             if not self.paused:
                 # ── UPDATE ────────────────────────────────
-                self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles, self.player_missiles)
+                self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles, self.player_missiles, self.sound)
                 self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
                 self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
 
@@ -492,4 +508,5 @@ class Game:
             pygame.display.flip()
             self.handler.update()
 
+        self.sound.stop_music()
         pygame.quit()
