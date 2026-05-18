@@ -257,6 +257,12 @@ class Enemy:
         dz = self.z - player_pos[2]
         return math.sqrt(dx * dx + dy * dy + dz * dz)
 
+    def dist_sq_to_player(self, player_pos):
+        dx = self.x - player_pos[0]
+        dy = self.y - player_pos[1]
+        dz = self.z - player_pos[2]
+        return dx * dx + dy * dy + dz * dz
+
     # --- ADD THIS: Default spherical hit detection ---
     def is_hit(self, px, py, pz):
         """Check if a projectile at (px, py, pz) hits this enemy using spherical collision."""

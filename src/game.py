@@ -151,7 +151,7 @@ class Game:
                 continue
 
             # Collision with player
-            if e.dist_to_player(player.pos) < PLAYER_COLLISION_RADIUS:
+            if e.dist_sq_to_player(player.pos) < PLAYER_COLLISION_RADIUS**2:
                 player.take_damage(COLLISION_DAMAGE)
                 for _ in range(PARTICLES_ON_PLAYER_HIT):
                     self.particle_pool.spawn(e.x, e.y, e.z)
@@ -185,8 +185,8 @@ class Game:
                 continue
                 
             # Collision with player
-            dist_to_p = math.sqrt((a.x-player.pos[0])**2 + (a.y-player.pos[1])**2 + (a.z-player.pos[2])**2)
-            if dist_to_p < (a.hit_radius + PLAYER_COLLISION_RADIUS):
+            dist_sq_to_p = (a.x-player.pos[0])**2 + (a.y-player.pos[1])**2 + (a.z-player.pos[2])**2
+            if dist_sq_to_p < (a.hit_radius + PLAYER_COLLISION_RADIUS)**2:
                 player.take_damage(ASTEROID_DAMAGE)
                 for _ in range(PARTICLES_ON_PLAYER_HIT):
                     self.particle_pool.spawn(player.pos[0], player.pos[1], player.pos[2])

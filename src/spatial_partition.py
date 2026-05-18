@@ -64,15 +64,20 @@ class SpatialHash:
         cx, cy, cz = self._hash_position(*center)
         cells_radius = int(math.ceil(radius * self.inv_cell_size))
         
-        for dx in range(-cells_radius, cells_radius + 1):
-            gx = cx + dx
-            for dy in range(-cells_radius, cells_radius + 1):
-                gy = cy + dy
-                for dz in range(-cells_radius, cells_radius + 1):
-                    gz = cz + dz
-                    cell = (gx, gy, gz)
-                    if cell in self.grid:
-                        results.extend(self.grid[cell])
+        # If the query volume is large, it's faster to iterate over active cells
+        if (2 * cells_radius + 1) ** 3 > len(self.grid):
+            for cell, entities in self.grid.items():
+                if abs(cell[0] - cx) <= cells_radius and abs(cell[1] - cy) <= cells_radius and abs(cell[2] - cz) <= cells_radius:
+                    results.extend(entities)
+        else:
+            for dx in range(-cells_radius, cells_radius + 1):
+                gx = cx + dx
+                for dy in range(-cells_radius, cells_radius + 1):
+                    gy = cy + dy
+                    for dz in range(-cells_radius, cells_radius + 1):
+                        cell = (gx, gy, cz + dz)
+                        if cell in self.grid:
+                            results.extend(self.grid[cell])
         
         return results    
     def clear(self) -> None:

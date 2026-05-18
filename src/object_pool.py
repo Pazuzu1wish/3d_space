@@ -92,23 +92,22 @@ class ObjectPool(Generic[T]):
             self._available.pop()
 
 
+import numpy as np
+
 class ParticlePool:
-    """Specialized high-performance pool for particle effects using parallel lists."""
+    """Specialized high-performance pool for particle effects using numpy vectorization."""
     
     def __init__(self, particle_class=None, initial_size: int = 500, max_size: int = 2000):
         self.max_size = max_size
         
-        # Parallel lists for particle data (much faster than list of dicts)
-        self.px = [0.0] * max_size
-        self.py = [0.0] * max_size
-        self.pz = [0.0] * max_size
-        self.vx = [0.0] * max_size
-        self.vy = [0.0] * max_size
-        self.vz = [0.0] * max_size
-        self.life = [0.0] * max_size
-        self.max_life = [1.0] * max_size
+        # NumPy arrays for vectorized updates
+        self.pos = np.zeros((max_size, 3), dtype=np.float64)
+        self.vel = np.zeros((max_size, 3), dtype=np.float64)
+        self.life = np.zeros(max_size, dtype=np.float64)
+        self.max_life = np.ones(max_size, dtype=np.float64)
+        
         self.color = [(255, 255, 255)] * max_size
-        self.active = [False] * max_size
+        self.active = np.zeros(max_size, dtype=np.bool_)
         
         # Free indices stack for O(1) allocation
         self.free_indices = list(range(max_size - 1, -1, -1))
@@ -125,41 +124,41 @@ class ParticlePool:
         idx = self.free_indices.pop()
         self.active_indices.add(idx)
         
-        self.px[idx] = x
-        self.py[idx] = y
-        self.pz[idx] = z
-        self.vx[idx] = random.uniform(*velocity_range)
-        self.vy[idx] = random.uniform(*velocity_range)
-        self.vz[idx] = random.uniform(*velocity_range)
+        self.pos[idx, 0] = x
+        self.pos[idx, 1] = y
+        self.pos[idx, 2] = z
+        self.vel[idx, 0] = random.uniform(*velocity_range)
+        self.vel[idx, 1] = random.uniform(*velocity_range)
+        self.vel[idx, 2] = random.uniform(*velocity_range)
         self.life[idx] = life
         self.max_life[idx] = life
         self.color[idx] = random.choice(colors) if colors else random.choice(_PARTICLE_COLORS)
         self.active[idx] = True
     
     def update(self, dt: float) -> None:
-        """Update all active particles and recycle dead ones."""
-        to_remove = []
-        for idx in self.active_indices:
-            self.px[idx] += self.vx[idx] * dt
-            self.py[idx] += self.vy[idx] * dt
-            self.pz[idx] += self.vz[idx] * dt
-            self.life[idx] -= dt
+        """Update all active particles using NumPy vectorization and recycle dead ones."""
+        if not self.active_indices:
+            return
             
-            if self.life[idx] <= 0:
-                self.active[idx] = False
-                to_remove.append(idx)
+        # Vectorized physics update for all active particles
+        # This completely eliminates the Python for-loop bottleneck
+        self.pos[self.active] += self.vel[self.active] * dt
+        self.life[self.active] -= dt
         
-        for idx in to_remove:
-            self.active_indices.remove(idx)
-            self.free_indices.append(idx)
+        # Find which particles just died
+        died_mask = (self.life <= 0) & self.active
+        if np.any(died_mask):
+            died_indices = np.nonzero(died_mask)[0]
+            self.active[died_indices] = False
+            for idx in died_indices:
+                self.active_indices.remove(idx)
+                self.free_indices.append(idx)
     
     def submit_to_renderer(self, renderer, camera):
         """Batch submit active particles to the renderer with frustum culling."""
         for idx in self.active_indices:
-            x, y, z = self.px[idx], self.py[idx], self.pz[idx]
+            x, y, z = self.pos[idx]
             # Fast distance-based culling before heavy sphere-in-frustum
-            # (Assuming camera.pos is available via player in game.py, 
-            # but renderer has access to camera)
             if camera.sphere_in_frustum(x, y, z, 50):
                 ratio = self.life[idx] / self.max_life[idx]
                 renderer.submit_sprite(x, y, z, self.color[idx], 15 * ratio, layer='alpha')
@@ -169,7 +168,7 @@ class ParticlePool:
         results = []
         for idx in self.active_indices:
             results.append({
-                'x': self.px[idx], 'y': self.py[idx], 'z': self.pz[idx],
+                'x': self.pos[idx, 0], 'y': self.pos[idx, 1], 'z': self.pos[idx, 2],
                 'life': self.life[idx] / self.max_life[idx],
                 'color': self.color[idx],
                 'active': True
