@@ -447,7 +447,7 @@ def draw_throttle_bg(surface, x, y, h):
         pygame.draw.line(surface, HUD_DIM, (x - 2, ty_up), (x, ty_up), 1)
         pygame.draw.line(surface, HUD_DIM, (x - 2, ty_down), (x, ty_down), 1)
 
-    surface.blit(_cached_label(10, "THR", HUD_GREEN), (x - 8, y - 14))
+    surface.blit(_cached_label(10, "THR", HUD_DIM), (x - 8, y - 14))
 
 def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
     w = 14
@@ -460,9 +460,12 @@ def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
         if blink:
             # Render a premium flashing indicator lamp next to the "THR" label
             lamp_x = x + w + 12
-            lamp_y = y - 8
+            lamp_y = y + 160
             pygame.draw.circle(surface, HUD_AMBER, (lamp_x, lamp_y), 4)
-            pygame.draw.circle(surface, (255, 255, 255, 220), (lamp_x, lamp_y), 2)  # Glowing core
+            pygame.draw.circle(surface, (255, 255, 255, 220), (lamp_x, lamp_y), 1)  # Glowing core
+
+            # fill entire thruster bar with  flashing amber
+            pygame.draw.rect(surface, HUD_AMBER, (x, y, w, h))
             
             # Print blinking "DRIFT" status text below the speedometer section
             surface.blit(_cached_label(10, "DRIFT", HUD_AMBER), (x - 16, y + h + 24))
@@ -779,8 +782,8 @@ def draw_target_brackets(
             max_hp = enemy.max_hp
             hull_pct = int(max(0, enemy.hp / max_hp) * 100)
 
-            dist_lbl = font.render(f"{dist_m:,} m", True, _HUD_ACT_BRACKET)
-            hull_lbl = font.render(f"HULL {hull_pct}%", True, _HUD_ACT_BRACKET)
+            dist_lbl = font.render(f"{dist_m:,} m", True, HUD_AMBER)
+            hull_lbl = font.render(f"HULL {hull_pct}%", True, HUD_AMBER)
             surface.blit(dist_lbl, (sx - dist_lbl.get_width() // 2, sy + 22))
             surface.blit(hull_lbl, (sx - hull_lbl.get_width() // 2, sy + 22 + 14))
 
@@ -788,7 +791,7 @@ def draw_target_brackets(
             from src.constants import PLAYER_MISSILE_LOCK_TIME
             if missile_locked:
                 pulse = int((math.sin(pygame.time.get_ticks() * 0.015) + 1) * 60)
-                col = (255, min(100 + pulse, 255), 50)
+                col = (0, min(100 + pulse, 255), 0)
                 pygame.draw.circle(surface, col, (sx, sy), 30, 2)
                 pygame.draw.line(surface, col, (sx - 40, sy), (sx - 20, sy), 2)
                 pygame.draw.line(surface, col, (sx + 40, sy), (sx + 20, sy), 2)
@@ -799,7 +802,7 @@ def draw_target_brackets(
             elif missile_lock_timer > 0:
                 progress = missile_lock_timer / PLAYER_MISSILE_LOCK_TIME
                 radius = 100 - (70 * progress)
-                pygame.draw.circle(surface, HUD_AMBER, (sx, sy), int(radius), 1)
+                pygame.draw.circle(surface, _HUD_ACT_BRACKET, (sx, sy), int(radius), 1)
 
         else:
             _draw_dim_bracket(surface, sx, sy)
@@ -940,10 +943,12 @@ def draw_waypoints(surface, player_pos, player_orientation, waypoints, W, H):
 
 def draw_missile_ammo(surface, x, y, ammo, max_ammo):
     f = custom_font(12)
-    lbl = f.render("MISSILE", True, HUD_GREEN)
+
+    val_col = HUD_GREEN if ammo > 5 else HUD_RED if ammo >= 1 else HUD_AMBER
+
+    lbl = f.render("MISSILE", True, val_col)
     surface.blit(lbl, (x + 10, y))
 
-    val_col = HUD_GREEN if ammo > 2 else HUD_RED if ammo == 0 else HUD_AMBER
     val = f.render(f"{ammo:02d}", True, val_col)
     surface.blit(val, (x + 45, y + 35))
 
@@ -951,8 +956,8 @@ def draw_missile_ammo(surface, x, y, ammo, max_ammo):
         mx = x + i * 8
         my = y + 20
         col = HUD_GREEN if i < ammo else HUD_DIM
-        pygame.draw.rect(surface, col, (mx + 15, my, 4, 10))
-        pygame.draw.polygon(surface, col, [(mx + 15, my), (mx+19, my), (mx+17, my-4)])
+        pygame.draw.rect(surface, val_col, (mx + 15, my, 4, 10))
+        pygame.draw.polygon(surface, val_col, [(mx + 15, my), (mx+19, my), (mx+17, my-4)])
 
 # ──────────────────────────────────────────────
 #  TEMP METER (Laser Heat)
@@ -1135,8 +1140,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         _HUD_STATIC_GLASS.fill((0, 0, 0, 0))
         
         # Draw all static elements once
-        # Moved to upper strut panels (y=180) to avoid overlapping bottom console UI
-        draw_throttle_bg(_HUD_STATIC_GLASS, W - 60, 180, 160)
+        # Moved to upper strut panels (y=160) to avoid overlapping bottom console UI
+        draw_throttle_bg(_HUD_STATIC_GLASS, W - 60, 160, 160)
         draw_dodge_bg(_HUD_STATIC_GLASS, 46, 180, 160)
         draw_hull_bg(_HUD_STATIC_GLASS, W, H)
         
@@ -1154,7 +1159,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     # Draw dynamic fills onto the cached transparent overlay
     draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
-    draw_throttle_fill(_HUD_OVERLAY, W - 60, 180, 160, throttle, drift_mode=drift_mode)
+    draw_throttle_fill(_HUD_OVERLAY, W - 60, 160, 160, throttle, drift_mode=drift_mode)
     draw_dodge_fill(_HUD_OVERLAY, 46, 180, 160,
                     dodge_charge, dodge_ready, dodge_flash)
     draw_speed(_HUD_OVERLAY, W - 130, 672, current_speed)
