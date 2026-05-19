@@ -45,6 +45,7 @@ class Game:
         self.sound_folder = "assets/sounds/"
         self.sound = SoundHandler()
         self.sound.load_sfx("laser", self.sound_folder + "laser.wav")
+        self.sound.load_sfx("laser_strained", self.sound_folder + "laser_strained.wav")
         self.sound.load_sfx("missile", self.sound_folder + "missile.wav")
         self.sound.load_sfx("explosion", self.sound_folder + "explosion.wav")
         self.sound.load_sfx("shield_hit", self.sound_folder + "shield_hit.wav")

@@ -78,6 +78,62 @@ def generate_laser(sample_rate=44100):
     mono_laser = raw_thump * env * fade
     return make_centered_stereo(mono_laser)
 
+def generate_laser_strained(sample_rate=44100):
+    """Labored, heat-stressed cockpit thump — gun struggling above 75% heat.
+    
+    Differences from normal:
+      - Higher freq sweep (200→80 Hz): more metallic resonance, less deep thud
+      - Slower decay: gun is working harder, sound lingers
+      - Mid-pass noise (not muffled): thermal stress = higher-freq structural noise
+      - Soft harmonic clip: adds odd-order distortion, that 'strained' edge
+      - Flutter envelope: 3 slight dips mimicking heat-stutter/cycling
+      - Slightly longer duration: the firing cycle is slower under load
+    """
+    duration = 0.22
+    num_samples = int(sample_rate * duration)
+    t = np.linspace(0, duration, num_samples, endpoint=False)
+
+    # Metallic sweep: 200 Hz down to 80 Hz (higher than normal, less bass)
+    phase = 2 * np.pi * (200 * t + 0.5 * (80 - 200) * t**2 / duration)
+    vibration = np.sin(phase)
+
+    # Add a second harmonic at 3x (odd harmonic = more gritty/strained)
+    phase3 = 2 * np.pi * (600 * t + 0.5 * (240 - 600) * t**2 / duration)
+    vibration = vibration * 0.75 + np.sin(phase3) * 0.25
+
+    # Mid-pass filtered noise (thermal stress is NOT muffled — it's higher-freq)
+    noise = np.random.normal(0, 0.35, num_samples)
+    lp_window = 8   # lighter low-pass = more midrange present
+    rumble = np.convolve(noise, np.ones(lp_window)/lp_window, mode='same')
+
+    raw = vibration * 0.65 + rumble * 0.35
+
+    # Soft harmonic clip: rounds the peaks without hard limiting
+    # Creates odd-order distortion (tanh shape) — sounds "worked" and hot
+    drive = 2.2
+    raw = np.tanh(raw * drive) / np.tanh(drive)
+
+    # Slower decay — gun is laboring
+    env = np.exp(-14 * t)
+
+    # Flutter: 3 brief amplitude dips at ~20ms intervals simulating heat-cycle stutter
+    flutter = np.ones(num_samples)
+    for dip_t in [0.04, 0.08, 0.13]:
+        dip_center = int(dip_t * sample_rate)
+        dip_width = int(0.008 * sample_rate)  # 8ms dip
+        start = max(0, dip_center - dip_width // 2)
+        end = min(num_samples, dip_center + dip_width // 2)
+        dip_env = np.hanning(end - start) * 0.35  # depth of the dip
+        flutter[start:end] -= dip_env
+
+    # Click-prevention fade
+    fade_len = int(num_samples * 0.12)
+    fade = np.ones(num_samples)
+    fade[-fade_len:] = np.linspace(1.0, 0.0, fade_len)
+
+    mono_laser = raw * env * flutter * fade
+    return make_centered_stereo(mono_laser)
+
 def generate_missile(sample_rate=44100):
     """Muffled structural rocket combustion roar inside the vacuum, centered and click-free."""
     duration = 0.40
@@ -278,11 +334,12 @@ def main():
     
     # Generate all assets
     laser_data = generate_laser()
+    laser_strained_data = generate_laser_strained()
     missile_data = generate_missile()
     explosion_data = generate_explosion()
     shield_data = generate_shield_hit()
     armor_data = generate_armor_hit()
-    #bgm_data = generate_music_drone()
+    #bgm_data = generate_music_drone() # not used anymore
     
     # Generate multiple engine hum layers for dynamic pitch crossfading
     engine_hum_low = generate_engine_hum(25)
@@ -293,11 +350,12 @@ def main():
     
     # Save as WAV files in assets/sounds/
     save_wav("laser.wav", laser_data)
+    save_wav("laser_strained.wav", laser_strained_data)
     save_wav("missile.wav", missile_data)
     save_wav("explosion.wav", explosion_data)
     save_wav("shield_hit.wav", shield_data)
     save_wav("armor_hit.wav", armor_data)
-    #save_wav("bgm_drone.wav", bgm_data)
+    #save_wav("bgm_drone.wav", bgm_data) not used anymore
     save_wav("engine_hum.wav", engine_hum_data)
     save_wav("engine_hum_low.wav", engine_hum_low)
     save_wav("engine_hum_mid.wav", engine_hum_mid)

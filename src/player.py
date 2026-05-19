@@ -246,7 +246,10 @@ class Player:
 
         if fire_pressed and self.weapons_cooldown <= 0 and not self.overheated:
             if sound:
-                sound.play_sfx("laser")
+                if self.laser_heat > .75:
+                    sound.play_sfx("laser_strained")
+                else:
+                    sound.play_sfx("laser")
             forward, right, _ = get_basis_from_quat(self.orientation)
             rfx, rfy, rfz = forward
             rrx, rry, rrz = right
