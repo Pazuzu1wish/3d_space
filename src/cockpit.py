@@ -191,7 +191,7 @@ def draw_pitch_ladder(surface, cx, cy, orientation, basis=None):
 _RADAR_CACHE = {}
 
 
-def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000, basis=None):
+def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000, basis=None, player_vel=None):
     global _RADAR_CACHE
 
     forward, right, up = basis if basis else get_basis_from_quat(orientation)
@@ -371,9 +371,40 @@ def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_
     # ─── 5. DRAW THE PLAYER MARKER ────────────────────────────────────────
     pygame.draw.circle(surface, HUD_GREEN, (cx, cy), 3)
 
+    # Forward heading stem (existing)
     ind_x = cx + int(forward[0] * 12)
     ind_y = cy - int(forward[2] * 12 * tilt_factor)
     pygame.draw.line(surface, HUD_GREEN, (cx, cy), (ind_x, ind_y), 2)
+
+    # Velocity vector stem — cyan, scaled to speed relative to radar range
+    if player_vel is not None:
+        vx, vy, vz = player_vel
+        speed = math.sqrt(vx*vx + vy*vy + vz*vz)
+        if speed > 80.0:
+            scale = (radius - 6) / radar_range
+            local_vx = vx * right[0] + vy * right[1] + vz * right[2]
+            local_vy = vx * up[0]    + vy * up[1]    + vz * up[2]
+            local_vz = vx * forward[0] + vy * forward[1] + vz * forward[2]
+            # Scale same as enemy blips — but cap stem length at 80% of radius
+            sv_x = local_vx * scale
+            sv_z = local_vz * scale
+            sv_y = local_vy * scale
+            # Tip of the stem in radar 2D space
+            tip_x = cx + int(sv_x)
+            tip_y = cy - int(sv_z * tilt_factor)
+            tip_y -= int(sv_y)
+            # Clamp to radar circle
+            dx_tip = tip_x - cx
+            dy_tip = tip_y - cy
+            mag = math.sqrt(dx_tip*dx_tip + dy_tip*dy_tip)
+            max_len = radius * 0.8
+            if mag > max_len:
+                tip_x = cx + int(dx_tip / mag * max_len)
+                tip_y = cy + int(dy_tip / mag * max_len)
+            vel_col = (0, 180, 220)  # cyan, distinct from heading green
+            pygame.draw.line(surface, vel_col, (cx, cy), (tip_x, tip_y), 1)
+            # Arrowhead pip at tip
+            pygame.draw.circle(surface, vel_col, (tip_x, tip_y), 2)
 
     lbl = _cached_label(12, "3D SENSOR", HUD_GREEN)
     surface.blit(lbl, (cx - lbl.get_width() // 2, cy + radius + 5))
@@ -506,6 +537,92 @@ def draw_crosshair(surface, cx, cy, ready):
     pygame.draw.circle(surface, col, (cx, cy), gap, thick)
     if not ready:
         pygame.draw.circle(surface, HUD_RED, (cx, cy), 3)
+
+
+# ──────────────────────────────────────────────
+#  PROGRADE / RETROGRADE MARKER
+# ──────────────────────────────────────────────
+
+# Cyan-teal for prograde, dim amber for retrograde
+_HUD_PROGRADE  = (0, 220, 200)
+_HUD_RETROGRADE = (180, 120, 40)
+
+# Speed below which the marker fades out entirely (avoids phantom dot at rest)
+_PROGRADE_MIN_SPEED = 80.0
+# Speed at which the marker reaches full opacity
+_PROGRADE_FULL_SPEED = 600.0
+
+
+def draw_prograde_marker(surface, cx, cy, orientation, player_vel, W, H):
+    """
+    Project the player's velocity vector into screen space and draw:
+      - A prograde circle (○ with crosshairs) when velocity is in front of camera
+      - A retrograde X when velocity is behind (you're sliding backward)
+    Alpha fades to zero at low speed so it doesn't clutter slow flight.
+    """
+    vx, vy, vz = player_vel
+    speed = math.sqrt(vx*vx + vy*vy + vz*vz)
+
+    if speed < _PROGRADE_MIN_SPEED:
+        return  # too slow — nothing to show
+
+    # Opacity ramp: 0 at min speed → 255 at full speed
+    t = min(1.0, (speed - _PROGRADE_MIN_SPEED) / (_PROGRADE_FULL_SPEED - _PROGRADE_MIN_SPEED))
+    alpha = int(t * 220)
+
+    # Project a point 1000 units along the velocity direction from origin
+    # world_to_camera expects a world position, so offset from player (which is at cam origin)
+    scale = 1000.0 / speed
+    cam_x, cam_y, cam_z = world_to_camera(
+        vx * scale, vy * scale, vz * scale,
+        0.0, 0.0, 0.0,
+        orientation
+    )
+
+    is_prograde = cam_z > 0.1
+
+    if is_prograde:
+        proj = project_to_screen(cam_x, cam_y, cam_z)
+        if proj is None:
+            return
+        mx, my, _ = proj
+        col = (*_HUD_PROGRADE, alpha)
+        r = 12
+        arm = 8
+        gap = r + 3
+        # Circle
+        pygame.draw.circle(surface, col, (mx, my), r, 1)
+        # Cross arms (outside the circle)
+        pygame.draw.line(surface, col, (mx - gap - arm, my), (mx - gap, my), 1)
+        pygame.draw.line(surface, col, (mx + gap, my), (mx + gap + arm, my), 1)
+        pygame.draw.line(surface, col, (mx, my - gap - arm), (mx, my - gap), 1)
+        pygame.draw.line(surface, col, (mx, my + gap), (mx, my + gap + arm), 1)
+        # Label — only show at meaningful speed
+        if speed > 300:
+            lbl = custom_font(10).render("PRG", True, col[:3])
+            surface.blit(lbl, (mx + r + 4, my - lbl.get_height() // 2))
+    else:
+        # Retrograde — flip and project the retrograde point
+        cam_rx, cam_ry, cam_rz = world_to_camera(
+            -vx * scale, -vy * scale, -vz * scale,
+            0.0, 0.0, 0.0,
+            orientation
+        )
+        if cam_rz <= 0.1:
+            return
+        proj = project_to_screen(cam_rx, cam_ry, cam_rz)
+        if proj is None:
+            return
+        mx, my, _ = proj
+        col = (*_HUD_RETROGRADE, alpha)
+        r = 10
+        # X mark
+        pygame.draw.circle(surface, col, (mx, my), r, 1)
+        pygame.draw.line(surface, col, (mx - r + 3, my - r + 3), (mx + r - 3, my + r - 3), 1)
+        pygame.draw.line(surface, col, (mx + r - 3, my - r + 3), (mx - r + 3, my + r - 3), 1)
+        if speed > 300:
+            lbl = custom_font(10).render("RET", True, col[:3])
+            surface.blit(lbl, (mx + r + 4, my - lbl.get_height() // 2))
 
 
 # ──────────────────────────────────────────────
@@ -1014,10 +1131,16 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         draw_heading_tape(_HUD_OVERLAY, cx, 30, orientation, basis=basis)
         draw_pitch_ladder(_HUD_OVERLAY, cx, cy, orientation, basis=basis)
 
+        # Prograde / retrograde velocity marker
+        if player_vel is not None:
+            draw_prograde_marker(_HUD_OVERLAY, cx, cy, orientation, player_vel, W, H)
+
         r_cx, r_cy, r_r = 90, H - 95, 75
         draw_radar(_HUD_OVERLAY, r_cx, r_cy, r_r, orientation,
                    player_pos or [0, 0, 0],
-                   radar_enemies if radar_enemies is not None else (enemies or []), basis=basis)
+                   radar_enemies if radar_enemies is not None else (enemies or []),
+                   basis=basis,
+                   player_vel=player_vel)
 
         # ── Target brackets and lead indicator
         if enemies and player_pos is not None:

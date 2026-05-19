@@ -43,7 +43,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L1",
       "id": "tests_benchmark_realistic_py",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_realistic.py"
     },
     {
@@ -52,7 +52,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L13",
       "id": "tests_benchmark_realistic_benchmark_realistic",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_realistic()"
     },
     {
@@ -61,7 +61,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L14",
       "id": "tests_benchmark_realistic_rationale_14",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark actual game rendering pipeline."
     },
     {
@@ -70,7 +70,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_py",
-      "community": 30,
+      "community": 29,
       "norm_label": "test_optimizations.py"
     },
     {
@@ -331,7 +331,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L310",
       "id": "tests_test_optimizations_run_tests",
-      "community": 30,
+      "community": 29,
       "norm_label": "run_tests()"
     },
     {
@@ -340,7 +340,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_rationale_1",
-      "community": 30,
+      "community": 29,
       "norm_label": "unit tests for object pooling and spatial partitioning systems. run with: python"
     },
     {
@@ -592,7 +592,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L311",
       "id": "tests_test_optimizations_rationale_311",
-      "community": 30,
+      "community": 29,
       "norm_label": "run all tests manually (for environments without pytest)."
     },
     {
@@ -601,7 +601,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L1",
       "id": "tests_benchmark_star_optimization_py",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_star_optimization.py"
     },
     {
@@ -610,7 +610,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L14",
       "id": "tests_benchmark_star_optimization_benchmark_batch_processing",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_batch_processing()"
     },
     {
@@ -619,7 +619,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L15",
       "id": "tests_benchmark_star_optimization_rationale_15",
-      "community": 16,
+      "community": 15,
       "norm_label": "test the optimized batch star processing."
     },
     {
@@ -745,7 +745,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L6",
       "id": "src_projectile_enemyprojectile",
-      "community": 61,
+      "community": 9,
       "norm_label": "enemyprojectile"
     },
     {
@@ -754,7 +754,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L7",
       "id": "src_projectile_enemyprojectile_init",
-      "community": 61,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -763,7 +763,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L20",
       "id": "src_projectile_enemyprojectile_update",
-      "community": 61,
+      "community": 9,
       "norm_label": ".update()"
     },
     {
@@ -772,7 +772,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L26",
       "id": "src_projectile_enemyprojectile_submit_to_renderer",
-      "community": 61,
+      "community": 9,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -781,7 +781,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L33",
       "id": "src_projectile_enemyprojectile_check_player_collision",
-      "community": 61,
+      "community": 9,
       "norm_label": ".check_player_collision()"
     },
     {
@@ -790,7 +790,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L45",
       "id": "src_projectile_enemyprojectile_check_asteroid_collision",
-      "community": 61,
+      "community": 9,
       "norm_label": ".check_asteroid_collision()"
     },
     {
@@ -844,7 +844,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L99",
       "id": "src_projectile_sniperbeam",
-      "community": 9,
+      "community": 13,
       "norm_label": "sniperbeam"
     },
     {
@@ -862,7 +862,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L107",
       "id": "src_projectile_corvetteturret",
-      "community": 13,
+      "community": 9,
       "norm_label": "corvetteturret"
     },
     {
@@ -880,7 +880,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L115",
       "id": "src_projectile_mine",
-      "community": 34,
+      "community": 60,
       "norm_label": "mine"
     },
     {
@@ -889,7 +889,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L116",
       "id": "src_projectile_mine_init",
-      "community": 9,
+      "community": 60,
       "norm_label": ".__init__()"
     },
     {
@@ -898,7 +898,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L122",
       "id": "src_projectile_mine_submit_to_renderer",
-      "community": 34,
+      "community": 60,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -907,7 +907,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L128",
       "id": "src_projectile_mine_check_player_collision",
-      "community": 34,
+      "community": 60,
       "norm_label": ".check_player_collision()"
     },
     {
@@ -934,7 +934,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L34",
       "id": "src_projectile_rationale_34",
-      "community": 61,
+      "community": 9,
       "norm_label": "check if this projectile hits the player. returns true if collision occurred."
     },
     {
@@ -943,7 +943,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L46",
       "id": "src_projectile_rationale_46",
-      "community": 61,
+      "community": 9,
       "norm_label": "check if this projectile hits an asteroid. returns true if collision occurred."
     },
     {
@@ -1069,7 +1069,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L16",
       "id": "src_math_engine_quat_identity",
-      "community": 60,
+      "community": 1,
       "norm_label": "quat_identity()"
     },
     {
@@ -1114,7 +1114,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L57",
       "id": "src_math_engine_quat_rotate_vec",
-      "community": 59,
+      "community": 1,
       "norm_label": "quat_rotate_vec()"
     },
     {
@@ -1159,7 +1159,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L136",
       "id": "src_math_engine_get_forward_from_quat",
-      "community": 5,
+      "community": 13,
       "norm_label": "get_forward_from_quat()"
     },
     {
@@ -1177,7 +1177,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L160",
       "id": "src_math_engine_world_to_camera",
-      "community": 65,
+      "community": 1,
       "norm_label": "world_to_camera()"
     },
     {
@@ -1195,7 +1195,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L211",
       "id": "src_math_engine_project_to_screen",
-      "community": 59,
+      "community": 1,
       "norm_label": "project_to_screen()"
     },
     {
@@ -1204,7 +1204,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L220",
       "id": "src_math_engine_project_to_screen_batch",
-      "community": 16,
+      "community": 63,
       "norm_label": "project_to_screen_batch()"
     },
     {
@@ -1222,7 +1222,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L300",
       "id": "src_math_engine_is_in_front_of_camera",
-      "community": 65,
+      "community": 1,
       "norm_label": "is_in_front_of_camera()"
     },
     {
@@ -1231,7 +1231,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L317",
       "id": "src_math_engine_get_forward_vector",
-      "community": 63,
+      "community": 1,
       "norm_label": "get_forward_vector()"
     },
     {
@@ -1240,7 +1240,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L326",
       "id": "src_math_engine_get_right_vector",
-      "community": 63,
+      "community": 1,
       "norm_label": "get_right_vector()"
     },
     {
@@ -1294,7 +1294,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L58",
       "id": "src_math_engine_rationale_58",
-      "community": 59,
+      "community": 1,
       "norm_label": "rotate vector v = (vx, vy, vz) by unit quaternion q.     uses direct rotation ma"
     },
     {
@@ -1339,7 +1339,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L137",
       "id": "src_math_engine_rationale_137",
-      "community": 5,
+      "community": 13,
       "norm_label": "extract just the forward (z) vector from a quaternion \u2014 avoids full basis build."
     },
     {
@@ -1357,7 +1357,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L161",
       "id": "src_math_engine_rationale_161",
-      "community": 65,
+      "community": 1,
       "norm_label": "transform world-space point (x,y,z) into camera space.      px,py,pz  \u2013 camera/p"
     },
     {
@@ -1375,7 +1375,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L221",
       "id": "src_math_engine_rationale_221",
-      "community": 16,
+      "community": 63,
       "norm_label": "numba-optimized batch projection.     cam_verts: (n, 3) float64 array     return"
     },
     {
@@ -1384,7 +1384,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L301",
       "id": "src_math_engine_rationale_301",
-      "community": 65,
+      "community": 1,
       "norm_label": "returns true if world_pos is in the positive-z half of camera space     (i.e. th"
     },
     {
@@ -1393,7 +1393,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L318",
       "id": "src_math_engine_rationale_318",
-      "community": 63,
+      "community": 1,
       "norm_label": "legacy: forward from euler pitch/yaw (no roll)."
     },
     {
@@ -1402,7 +1402,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L327",
       "id": "src_math_engine_rationale_327",
-      "community": 63,
+      "community": 1,
       "norm_label": "legacy: right from euler pitch/yaw."
     },
     {
@@ -1429,7 +1429,7 @@
       "source_file": "src/player.py",
       "source_location": "L1",
       "id": "src_player_py",
-      "community": 62,
+      "community": 64,
       "norm_label": "player.py"
     },
     {
@@ -1438,7 +1438,7 @@
       "source_file": "src/player.py",
       "source_location": "L18",
       "id": "src_player_player",
-      "community": 60,
+      "community": 64,
       "norm_label": "player"
     },
     {
@@ -1447,7 +1447,7 @@
       "source_file": "src/player.py",
       "source_location": "L19",
       "id": "src_player_player_init",
-      "community": 60,
+      "community": 1,
       "norm_label": ".__init__()"
     },
     {
@@ -1456,7 +1456,7 @@
       "source_file": "src/player.py",
       "source_location": "L56",
       "id": "src_player_shield_charge",
-      "community": 62,
+      "community": 64,
       "norm_label": "shield_charge()"
     },
     {
@@ -1465,7 +1465,7 @@
       "source_file": "src/player.py",
       "source_location": "L61",
       "id": "src_player_shield_recharging",
-      "community": 62,
+      "community": 64,
       "norm_label": "shield_recharging()"
     },
     {
@@ -1474,7 +1474,7 @@
       "source_file": "src/player.py",
       "source_location": "L65",
       "id": "src_player_current_speed",
-      "community": 62,
+      "community": 64,
       "norm_label": "current_speed()"
     },
     {
@@ -1492,7 +1492,7 @@
       "source_file": "src/player.py",
       "source_location": "L302",
       "id": "src_player_player_take_damage",
-      "community": 60,
+      "community": 64,
       "norm_label": ".take_damage()"
     },
     {
@@ -1501,7 +1501,7 @@
       "source_file": "src/player.py",
       "source_location": "L321",
       "id": "src_player_player_target_closest",
-      "community": 5,
+      "community": 64,
       "norm_label": ".target_closest()"
     },
     {
@@ -1510,7 +1510,7 @@
       "source_file": "src/player.py",
       "source_location": "L359",
       "id": "src_player_player_cycle_targets",
-      "community": 5,
+      "community": 64,
       "norm_label": ".cycle_targets()"
     },
     {
@@ -1519,7 +1519,7 @@
       "source_file": "src/player.py",
       "source_location": "L398",
       "id": "src_player_player_clear_dead_target",
-      "community": 60,
+      "community": 64,
       "norm_label": ".clear_dead_target()"
     },
     {
@@ -1528,7 +1528,7 @@
       "source_file": "src/player.py",
       "source_location": "L404",
       "id": "src_player_dodge_charge",
-      "community": 62,
+      "community": 64,
       "norm_label": "dodge_charge()"
     },
     {
@@ -1537,7 +1537,7 @@
       "source_file": "src/player.py",
       "source_location": "L409",
       "id": "src_player_dodge_ready",
-      "community": 62,
+      "community": 64,
       "norm_label": "dodge_ready()"
     },
     {
@@ -1555,7 +1555,7 @@
       "source_file": "src/player.py",
       "source_location": "L322",
       "id": "src_player_rationale_322",
-      "community": 5,
+      "community": 64,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view."
     },
     {
@@ -1564,7 +1564,7 @@
       "source_file": "src/player.py",
       "source_location": "L360",
       "id": "src_player_rationale_360",
-      "community": 5,
+      "community": 64,
       "norm_label": "advance to the next non-stealthed enemy in fov (wraps around)."
     },
     {
@@ -1573,7 +1573,7 @@
       "source_file": "src/player.py",
       "source_location": "L399",
       "id": "src_player_rationale_399",
-      "community": 60,
+      "community": 64,
       "norm_label": "nullify the active target if it has been destroyed."
     },
     {
@@ -1708,7 +1708,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L254",
       "id": "src_enemy_enemy_dist_to_player",
-      "community": 13,
+      "community": 20,
       "norm_label": ".dist_to_player()"
     },
     {
@@ -1834,7 +1834,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L466",
       "id": "src_enemy_suicidedrone_detonate",
-      "community": 13,
+      "community": 20,
       "norm_label": ".detonate()"
     },
     {
@@ -1978,7 +1978,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1122",
       "id": "src_enemy_minelayer",
-      "community": 34,
+      "community": 60,
       "norm_label": "minelayer"
     },
     {
@@ -1996,7 +1996,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1185",
       "id": "src_enemy_minelayer_pick_flank_offset",
-      "community": 34,
+      "community": 60,
       "norm_label": "._pick_flank_offset()"
     },
     {
@@ -2005,7 +2005,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1201",
       "id": "src_enemy_minelayer_update",
-      "community": 34,
+      "community": 13,
       "norm_label": ".update()"
     },
     {
@@ -2014,7 +2014,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1295",
       "id": "src_enemy_minelayer_on_hit",
-      "community": 34,
+      "community": 60,
       "norm_label": ".on_hit()"
     },
     {
@@ -2095,7 +2095,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1547",
       "id": "src_enemy_carrier_update",
-      "community": 9,
+      "community": 13,
       "norm_label": ".update()"
     },
     {
@@ -2140,7 +2140,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L467",
       "id": "src_enemy_rationale_467",
-      "community": 13,
+      "community": 20,
       "norm_label": "triggers proximity explosion and deals radial damage to player."
     },
     {
@@ -2428,7 +2428,7 @@
       "source_file": "src/utils.py",
       "source_location": "L151",
       "id": "src_utils_draw_damage_overlay",
-      "community": 3,
+      "community": 5,
       "norm_label": "draw_damage_overlay()"
     },
     {
@@ -2509,7 +2509,7 @@
       "source_file": "src/utils.py",
       "source_location": "L152",
       "id": "src_utils_rationale_152",
-      "community": 3,
+      "community": 5,
       "norm_label": "red vignette that fades in when the player is hit."
     },
     {
@@ -2698,7 +2698,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L1",
       "id": "src_nebula_py",
-      "community": 3,
+      "community": 59,
       "norm_label": "nebula.py"
     },
     {
@@ -2707,7 +2707,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L4",
       "id": "src_nebula_nebulacloud",
-      "community": 3,
+      "community": 59,
       "norm_label": "nebulacloud"
     },
     {
@@ -2716,7 +2716,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L5",
       "id": "src_nebula_nebulacloud_init",
-      "community": 3,
+      "community": 59,
       "norm_label": ".__init__()"
     },
     {
@@ -2725,7 +2725,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L37",
       "id": "src_nebula_nebulacloud_submit_to_renderer",
-      "community": 3,
+      "community": 59,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -2734,7 +2734,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L44",
       "id": "src_nebula_nebulasystem",
-      "community": 3,
+      "community": 59,
       "norm_label": "nebulasystem"
     },
     {
@@ -2743,7 +2743,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L45",
       "id": "src_nebula_nebulasystem_init",
-      "community": 3,
+      "community": 59,
       "norm_label": ".__init__()"
     },
     {
@@ -2752,7 +2752,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L55",
       "id": "src_nebula_nebulasystem_submit_to_renderer",
-      "community": 3,
+      "community": 59,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -2878,7 +2878,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L58",
       "id": "src_spatial_partition_spatialhash_query_radius",
-      "community": 66,
+      "community": 62,
       "norm_label": ".query_radius()"
     },
     {
@@ -2941,7 +2941,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L127",
       "id": "src_spatial_partition_spatialpartition_query_nearby",
-      "community": 66,
+      "community": 62,
       "norm_label": ".query_nearby()"
     },
     {
@@ -3031,7 +3031,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L60",
       "id": "src_spatial_partition_rationale_60",
-      "community": 66,
+      "community": 62,
       "norm_label": "query all entities within a sphere."
     },
     {
@@ -3085,7 +3085,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L128",
       "id": "src_spatial_partition_rationale_128",
-      "community": 66,
+      "community": 62,
       "norm_label": "query entities near a position."
     },
     {
@@ -3301,7 +3301,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_py",
-      "community": 12,
+      "community": 17,
       "norm_label": "object_pool.py"
     },
     {
@@ -3418,7 +3418,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L116",
       "id": "src_object_pool_particlepool_spawn",
-      "community": 12,
+      "community": 74,
       "norm_label": ".spawn()"
     },
     {
@@ -3427,7 +3427,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L138",
       "id": "src_object_pool_particlepool_update",
-      "community": 12,
+      "community": 76,
       "norm_label": ".update()"
     },
     {
@@ -3436,7 +3436,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L157",
       "id": "src_object_pool_particlepool_submit_to_renderer",
-      "community": 12,
+      "community": 75,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -3445,7 +3445,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L166",
       "id": "src_object_pool_particlepool_get_active_particles",
-      "community": 12,
+      "community": 73,
       "norm_label": ".get_active_particles()"
     },
     {
@@ -3499,7 +3499,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L225",
       "id": "src_object_pool_laserpool_update",
-      "community": 17,
+      "community": 71,
       "norm_label": ".update()"
     },
     {
@@ -3508,7 +3508,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L239",
       "id": "src_object_pool_laserpool_get_active",
-      "community": 17,
+      "community": 65,
       "norm_label": ".get_active()"
     },
     {
@@ -3517,7 +3517,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L243",
       "id": "src_object_pool_laserpool_get_active_count",
-      "community": 17,
+      "community": 70,
       "norm_label": ".get_active_count()"
     },
     {
@@ -3535,7 +3535,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_rationale_1",
-      "community": 12,
+      "community": 17,
       "norm_label": "object pooling system efficiently manages reusable game objects to avoid frequen"
     },
     {
@@ -3643,7 +3643,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L120",
       "id": "src_object_pool_rationale_120",
-      "community": 12,
+      "community": 74,
       "norm_label": "spawn a particle at the given position."
     },
     {
@@ -3652,7 +3652,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L139",
       "id": "src_object_pool_rationale_139",
-      "community": 12,
+      "community": 76,
       "norm_label": "update all active particles using numpy vectorization and recycle dead ones."
     },
     {
@@ -3661,7 +3661,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L158",
       "id": "src_object_pool_rationale_158",
-      "community": 12,
+      "community": 75,
       "norm_label": "batch submit active particles to the renderer with frustum culling."
     },
     {
@@ -3670,7 +3670,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L167",
       "id": "src_object_pool_rationale_167",
-      "community": 12,
+      "community": 73,
       "norm_label": "legacy shim for compatibility with existing game.py loops."
     },
     {
@@ -3706,7 +3706,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L226",
       "id": "src_object_pool_rationale_226",
-      "community": 17,
+      "community": 71,
       "norm_label": "update all active lasers and recycle expired ones."
     },
     {
@@ -3715,7 +3715,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L240",
       "id": "src_object_pool_rationale_240",
-      "community": 17,
+      "community": 65,
       "norm_label": "get list of active lasers."
     },
     {
@@ -3724,7 +3724,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L244",
       "id": "src_object_pool_rationale_244",
-      "community": 17,
+      "community": 70,
       "norm_label": "get number of active lasers."
     },
     {
@@ -4525,7 +4525,7 @@
       "source_file": "src/game.py",
       "source_location": "L1",
       "id": "src_game_py",
-      "community": 3,
+      "community": 61,
       "norm_label": "game.py"
     },
     {
@@ -4534,7 +4534,7 @@
       "source_file": "src/game.py",
       "source_location": "L35",
       "id": "src_game_game",
-      "community": 3,
+      "community": 5,
       "norm_label": "game"
     },
     {
@@ -4543,7 +4543,7 @@
       "source_file": "src/game.py",
       "source_location": "L36",
       "id": "src_game_game_init",
-      "community": 3,
+      "community": 59,
       "norm_label": ".__init__()"
     },
     {
@@ -4552,7 +4552,7 @@
       "source_file": "src/game.py",
       "source_location": "L124",
       "id": "src_game_game_update_entities",
-      "community": 3,
+      "community": 5,
       "norm_label": ".update_entities()"
     },
     {
@@ -4561,7 +4561,7 @@
       "source_file": "src/game.py",
       "source_location": "L251",
       "id": "src_game_game_draw_game",
-      "community": 3,
+      "community": 5,
       "norm_label": ".draw_game()"
     },
     {
@@ -4570,7 +4570,7 @@
       "source_file": "src/game.py",
       "source_location": "L359",
       "id": "src_game_game_render_magnified_window",
-      "community": 3,
+      "community": 5,
       "norm_label": "._render_magnified_window()"
     },
     {
@@ -4579,7 +4579,7 @@
       "source_file": "src/game.py",
       "source_location": "L471",
       "id": "src_game_game_main",
-      "community": 3,
+      "community": 5,
       "norm_label": ".main()"
     },
     {
@@ -4588,7 +4588,7 @@
       "source_file": "src/game.py",
       "source_location": "L360",
       "id": "src_game_rationale_360",
-      "community": 3,
+      "community": 5,
       "norm_label": "render a secondary pass for the magnified aim window."
     },
     {
@@ -4597,7 +4597,7 @@
       "source_file": "src/game.py",
       "source_location": "L91",
       "id": "src_game_rationale_91",
-      "community": 3,
+      "community": 61,
       "norm_label": "# todo: refactor asteroid field creation logic"
     },
     {
@@ -4669,7 +4669,7 @@
       "source_file": "src/camera.py",
       "source_location": "L76",
       "id": "src_camera_camera_project_batch",
-      "community": 16,
+      "community": 63,
       "norm_label": ".project_batch()"
     },
     {
@@ -4741,7 +4741,7 @@
       "source_file": "src/camera.py",
       "source_location": "L77",
       "id": "src_camera_rationale_77",
-      "community": 16,
+      "community": 63,
       "norm_label": "project batch of camera-space points to screen space using numba."
     },
     {
@@ -4759,7 +4759,7 @@
       "source_file": "src/star.py",
       "source_location": "L1",
       "id": "src_star_py",
-      "community": 16,
+      "community": 15,
       "norm_label": "star.py"
     },
     {
@@ -4768,7 +4768,7 @@
       "source_file": "src/star.py",
       "source_location": "L10",
       "id": "src_star_wrap_star_positions_batch",
-      "community": 16,
+      "community": 15,
       "norm_label": "wrap_star_positions_batch()"
     },
     {
@@ -4777,7 +4777,7 @@
       "source_file": "src/star.py",
       "source_location": "L42",
       "id": "src_star_compute_star_colors_batch",
-      "community": 16,
+      "community": 15,
       "norm_label": "compute_star_colors_batch()"
     },
     {
@@ -4786,7 +4786,7 @@
       "source_file": "src/star.py",
       "source_location": "L72",
       "id": "src_star_star",
-      "community": 16,
+      "community": 15,
       "norm_label": "star"
     },
     {
@@ -4795,7 +4795,7 @@
       "source_file": "src/star.py",
       "source_location": "L73",
       "id": "src_star_star_init",
-      "community": 16,
+      "community": 15,
       "norm_label": ".__init__()"
     },
     {
@@ -4804,7 +4804,7 @@
       "source_file": "src/star.py",
       "source_location": "L76",
       "id": "src_star_star_spawn_around",
-      "community": 16,
+      "community": 15,
       "norm_label": ".spawn_around()"
     },
     {
@@ -4813,7 +4813,7 @@
       "source_file": "src/star.py",
       "source_location": "L102",
       "id": "src_star_star_submit_to_renderer",
-      "community": 16,
+      "community": 15,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -4822,7 +4822,7 @@
       "source_file": "src/star.py",
       "source_location": "L132",
       "id": "src_star_submit_batch_to_renderer",
-      "community": 16,
+      "community": 15,
       "norm_label": "submit_batch_to_renderer()"
     },
     {
@@ -4831,7 +4831,7 @@
       "source_file": "src/star.py",
       "source_location": "L11",
       "id": "src_star_rationale_11",
-      "community": 16,
+      "community": 15,
       "norm_label": "batch wrap star positions around player.     avoids 220 individual python functi"
     },
     {
@@ -4840,7 +4840,7 @@
       "source_file": "src/star.py",
       "source_location": "L43",
       "id": "src_star_rationale_43",
-      "community": 16,
+      "community": 15,
       "norm_label": "batch compute final star colors with distance-based dimming.     all 220 stars p"
     },
     {
@@ -4910,7 +4910,7 @@
       "label": "draw_throttle_bg()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L385",
+      "source_location": "L416",
       "id": "src_cockpit_draw_throttle_bg",
       "community": 2,
       "norm_label": "draw_throttle_bg()"
@@ -4919,7 +4919,7 @@
       "label": "draw_throttle_fill()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L404",
+      "source_location": "L435",
       "id": "src_cockpit_draw_throttle_fill",
       "community": 2,
       "norm_label": "draw_throttle_fill()"
@@ -4928,7 +4928,7 @@
       "label": "draw_dodge_bg()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L449",
+      "source_location": "L480",
       "id": "src_cockpit_draw_dodge_bg",
       "community": 2,
       "norm_label": "draw_dodge_bg()"
@@ -4937,7 +4937,7 @@
       "label": "draw_dodge_fill()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L461",
+      "source_location": "L492",
       "id": "src_cockpit_draw_dodge_fill",
       "community": 2,
       "norm_label": "draw_dodge_fill()"
@@ -4946,16 +4946,25 @@
       "label": "draw_crosshair()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L496",
+      "source_location": "L527",
       "id": "src_cockpit_draw_crosshair",
       "community": 2,
       "norm_label": "draw_crosshair()"
     },
     {
+      "label": "draw_prograde_marker()",
+      "file_type": "code",
+      "source_file": "src/cockpit.py",
+      "source_location": "L556",
+      "id": "src_cockpit_draw_prograde_marker",
+      "community": 2,
+      "norm_label": "draw_prograde_marker()"
+    },
+    {
       "label": "_draw_dim_bracket()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L527",
+      "source_location": "L644",
       "id": "src_cockpit_draw_dim_bracket",
       "community": 2,
       "norm_label": "_draw_dim_bracket()"
@@ -4964,7 +4973,7 @@
       "label": "_draw_active_bracket()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L541",
+      "source_location": "L658",
       "id": "src_cockpit_draw_active_bracket",
       "community": 2,
       "norm_label": "_draw_active_bracket()"
@@ -4973,7 +4982,7 @@
       "label": "draw_target_brackets()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L565",
+      "source_location": "L682",
       "id": "src_cockpit_draw_target_brackets",
       "community": 2,
       "norm_label": "draw_target_brackets()"
@@ -4982,7 +4991,7 @@
       "label": "print_spd()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L673",
+      "source_location": "L790",
       "id": "src_cockpit_print_spd",
       "community": 2,
       "norm_label": "print_spd()"
@@ -4991,7 +5000,7 @@
       "label": "draw_speed()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L678",
+      "source_location": "L795",
       "id": "src_cockpit_draw_speed",
       "community": 2,
       "norm_label": "draw_speed()"
@@ -5000,7 +5009,7 @@
       "label": "print_kph()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L685",
+      "source_location": "L802",
       "id": "src_cockpit_print_kph",
       "community": 2,
       "norm_label": "print_kph()"
@@ -5009,7 +5018,7 @@
       "label": "draw_waypoints()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L693",
+      "source_location": "L810",
       "id": "src_cockpit_draw_waypoints",
       "community": 2,
       "norm_label": "draw_waypoints()"
@@ -5018,7 +5027,7 @@
       "label": "draw_missile_ammo()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L772",
+      "source_location": "L889",
       "id": "src_cockpit_draw_missile_ammo",
       "community": 2,
       "norm_label": "draw_missile_ammo()"
@@ -5027,7 +5036,7 @@
       "label": "draw_temp_meter()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L792",
+      "source_location": "L909",
       "id": "src_cockpit_draw_temp_meter",
       "community": 2,
       "norm_label": "draw_temp_meter()"
@@ -5036,7 +5045,7 @@
       "label": "draw_hull_bg()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L837",
+      "source_location": "L954",
       "id": "src_cockpit_draw_hull_bg",
       "community": 2,
       "norm_label": "draw_hull_bg()"
@@ -5045,7 +5054,7 @@
       "label": "draw_hull_fill()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L860",
+      "source_location": "L977",
       "id": "src_cockpit_draw_hull_fill",
       "community": 2,
       "norm_label": "draw_hull_fill()"
@@ -5054,7 +5063,7 @@
       "label": "draw_cockpit_hud()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L944",
+      "source_location": "L1061",
       "id": "src_cockpit_draw_cockpit_hud",
       "community": 2,
       "norm_label": "draw_cockpit_hud()"
@@ -5069,11 +5078,20 @@
       "norm_label": "return a cached font.render surface for static text."
     },
     {
+      "label": "Project the player's velocity vector into screen space and draw:       - A progr",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L557",
+      "id": "src_cockpit_rationale_557",
+      "community": 2,
+      "norm_label": "project the player's velocity vector into screen space and draw:       - a progr"
+    },
+    {
       "label": "Faint corner-bracket [ ] for an untargeted enemy.",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L528",
-      "id": "src_cockpit_rationale_528",
+      "source_location": "L645",
+      "id": "src_cockpit_rationale_645",
       "community": 2,
       "norm_label": "faint corner-bracket [ ] for an untargeted enemy."
     },
@@ -5081,8 +5099,8 @@
       "label": "Bright angled bracket < > for the active/locked target.",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L542",
-      "id": "src_cockpit_rationale_542",
+      "source_location": "L659",
+      "id": "src_cockpit_rationale_659",
       "community": 2,
       "norm_label": "bright angled bracket < > for the active/locked target."
     },
@@ -5090,8 +5108,8 @@
       "label": "Draw HUD brackets for every visible enemy:       - Untargeted: dim [ ] bracket",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L569",
-      "id": "src_cockpit_rationale_569",
+      "source_location": "L686",
+      "id": "src_cockpit_rationale_686",
       "community": 2,
       "norm_label": "draw hud brackets for every visible enemy:       - untargeted: dim [ ] bracket"
     },
@@ -5099,8 +5117,8 @@
       "label": "Draws the \"GUN TEMP\" word and a small heat bar.     Colors transition from Green",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L793",
-      "id": "src_cockpit_rationale_793",
+      "source_location": "L910",
+      "id": "src_cockpit_rationale_910",
       "community": 2,
       "norm_label": "draws the \"gun temp\" word and a small heat bar.     colors transition from green"
     },
@@ -5695,7 +5713,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L1",
       "id": "tools_3d_viewer_py",
-      "community": 59,
+      "community": 1,
       "norm_label": "3d_viewer.py"
     },
     {
@@ -5704,7 +5722,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L19",
       "id": "tools_3d_viewer_viewer",
-      "community": 59,
+      "community": 1,
       "norm_label": "viewer"
     },
     {
@@ -5713,7 +5731,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L20",
       "id": "tools_3d_viewer_viewer_init",
-      "community": 60,
+      "community": 1,
       "norm_label": ".__init__()"
     },
     {
@@ -5722,7 +5740,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L60",
       "id": "tools_3d_viewer_viewer_update_trails",
-      "community": 59,
+      "community": 1,
       "norm_label": ".update_trails()"
     },
     {
@@ -5731,7 +5749,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L86",
       "id": "tools_3d_viewer_viewer_handle_input",
-      "community": 59,
+      "community": 1,
       "norm_label": ".handle_input()"
     },
     {
@@ -5740,7 +5758,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L143",
       "id": "tools_3d_viewer_viewer_build_render_queue",
-      "community": 59,
+      "community": 1,
       "norm_label": ".build_render_queue()"
     },
     {
@@ -5749,7 +5767,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L198",
       "id": "tools_3d_viewer_viewer_build_particle_queue",
-      "community": 59,
+      "community": 1,
       "norm_label": ".build_particle_queue()"
     },
     {
@@ -5758,7 +5776,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L219",
       "id": "tools_3d_viewer_viewer_build_engine_glow_queue",
-      "community": 59,
+      "community": 1,
       "norm_label": ".build_engine_glow_queue()"
     },
     {
@@ -5767,7 +5785,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L243",
       "id": "tools_3d_viewer_viewer_draw_queue",
-      "community": 59,
+      "community": 1,
       "norm_label": ".draw_queue()"
     },
     {
@@ -5776,7 +5794,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L260",
       "id": "tools_3d_viewer_viewer_draw_hud",
-      "community": 59,
+      "community": 1,
       "norm_label": ".draw_hud()"
     },
     {
@@ -5785,7 +5803,7 @@
       "source_file": "tools/3d_viewer.py",
       "source_location": "L280",
       "id": "tools_3d_viewer_viewer_run",
-      "community": 59,
+      "community": 1,
       "norm_label": ".run()"
     },
     {
@@ -7382,6 +7400,42 @@
       "norm_label": "============================================================================="
     },
     {
+      "label": "Faint corner-bracket [ ] for an untargeted enemy.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L528",
+      "community": 2,
+      "norm_label": "faint corner-bracket [ ] for an untargeted enemy.",
+      "id": "src_cockpit_rationale_528"
+    },
+    {
+      "label": "Bright angled bracket < > for the active/locked target.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L542",
+      "community": 2,
+      "norm_label": "bright angled bracket < > for the active/locked target.",
+      "id": "src_cockpit_rationale_542"
+    },
+    {
+      "label": "Draw HUD brackets for every visible enemy:       - Untargeted: dim [ ] bracket",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L569",
+      "community": 2,
+      "norm_label": "draw hud brackets for every visible enemy:       - untargeted: dim [ ] bracket",
+      "id": "src_cockpit_rationale_569"
+    },
+    {
+      "label": "Draws the \"GUN TEMP\" word and a small heat bar.     Colors transition from Green",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L793",
+      "community": 2,
+      "norm_label": "draws the \"gun temp\" word and a small heat bar.     colors transition from green",
+      "id": "src_cockpit_rationale_793"
+    },
+    {
       "label": "0.0 = depleted, 1.0 = full.",
       "file_type": "rationale",
       "source_file": "src/player.py",
@@ -7395,7 +7449,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L310",
-      "community": 5,
+      "community": 64,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view.",
       "id": "src_player_rationale_310"
     },
@@ -7404,7 +7458,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L348",
-      "community": 5,
+      "community": 64,
       "norm_label": "advance to the next non-stealthed enemy in fov (wraps around).",
       "id": "src_player_rationale_348"
     },
@@ -7413,7 +7467,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L387",
-      "community": 60,
+      "community": 64,
       "norm_label": "nullify the active target if it has been destroyed.",
       "id": "src_player_rationale_387"
     },
@@ -7431,7 +7485,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L359",
-      "community": 3,
+      "community": 5,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_359"
     },
@@ -7476,7 +7530,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L297",
-      "community": 5,
+      "community": 64,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view.",
       "id": "src_player_rationale_297"
     },
@@ -7485,7 +7539,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L335",
-      "community": 5,
+      "community": 64,
       "norm_label": "advance to the next non-stealthed enemy in fov (wraps around).",
       "id": "src_player_rationale_335"
     },
@@ -7494,7 +7548,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L374",
-      "community": 60,
+      "community": 64,
       "norm_label": "nullify the active target if it has been destroyed.",
       "id": "src_player_rationale_374"
     },
@@ -7512,7 +7566,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L293",
-      "community": 5,
+      "community": 64,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view.",
       "id": "src_player_rationale_293"
     },
@@ -7521,7 +7575,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L331",
-      "community": 5,
+      "community": 64,
       "norm_label": "advance to the next non-stealthed enemy in fov (wraps around).",
       "id": "src_player_rationale_331"
     },
@@ -7530,7 +7584,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L370",
-      "community": 60,
+      "community": 64,
       "norm_label": "nullify the active target if it has been destroyed.",
       "id": "src_player_rationale_370"
     },
@@ -7593,7 +7647,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L356",
-      "community": 3,
+      "community": 5,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_356"
     },
@@ -7602,7 +7656,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L88",
-      "community": 3,
+      "community": 61,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_88"
     },
@@ -7620,7 +7674,7 @@
       "file_type": "rationale",
       "source_file": "src/enemy.py",
       "source_location": "L461",
-      "community": 13,
+      "community": 20,
       "norm_label": "triggers proximity explosion and deals radial damage to player.",
       "id": "src_enemy_rationale_461"
     },
@@ -7665,7 +7719,7 @@
       "file_type": "rationale",
       "source_file": "src/spatial_partition.py",
       "source_location": "L123",
-      "community": 66,
+      "community": 62,
       "norm_label": "query entities near a position.",
       "id": "src_spatial_partition_rationale_123"
     },
@@ -7692,7 +7746,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L121",
-      "community": 12,
+      "community": 74,
       "norm_label": "spawn a particle at the given position.",
       "id": "src_object_pool_rationale_121"
     },
@@ -7701,7 +7755,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L140",
-      "community": 12,
+      "community": 76,
       "norm_label": "update all active particles and recycle dead ones.",
       "id": "src_object_pool_rationale_140"
     },
@@ -7710,7 +7764,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L157",
-      "community": 12,
+      "community": 75,
       "norm_label": "batch submit active particles to the renderer with frustum culling.",
       "id": "src_object_pool_rationale_157"
     },
@@ -7719,7 +7773,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L168",
-      "community": 12,
+      "community": 73,
       "norm_label": "legacy shim for compatibility with existing game.py loops.",
       "id": "src_object_pool_rationale_168"
     },
@@ -7755,7 +7809,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L227",
-      "community": 17,
+      "community": 71,
       "norm_label": "update all active lasers and recycle expired ones.",
       "id": "src_object_pool_rationale_227"
     },
@@ -7764,7 +7818,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L241",
-      "community": 17,
+      "community": 65,
       "norm_label": "get list of active lasers.",
       "id": "src_object_pool_rationale_241"
     },
@@ -7773,7 +7827,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L245",
-      "community": 17,
+      "community": 70,
       "norm_label": "get number of active lasers.",
       "id": "src_object_pool_rationale_245"
     },
@@ -7827,7 +7881,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L354",
-      "community": 3,
+      "community": 5,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_354"
     },
@@ -7836,7 +7890,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L86",
-      "community": 3,
+      "community": 61,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_86"
     },
@@ -7980,7 +8034,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L284",
-      "community": 5,
+      "community": 64,
       "norm_label": "lock onto the nearest living, non-stealthed enemy within field of view.",
       "id": "src_player_rationale_284"
     },
@@ -7989,7 +8043,7 @@
       "file_type": "rationale",
       "source_file": "src/player.py",
       "source_location": "L361",
-      "community": 60,
+      "community": 64,
       "norm_label": "nullify the active target if it has been destroyed.",
       "id": "src_player_rationale_361"
     },
@@ -8061,7 +8115,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L338",
-      "community": 3,
+      "community": 5,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_338"
     },
@@ -8070,7 +8124,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L72",
-      "community": 3,
+      "community": 61,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_72"
     },
@@ -8122,7 +8176,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 16,
+      "community": 15,
       "norm_label": "quick_reference.md",
       "id": "extra_docs_quick_reference"
     },
@@ -8148,7 +8202,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 16,
+      "community": 15,
       "norm_label": "star_optimization_summary.md",
       "id": "extra_docs_star_optimization_summary"
     },
@@ -8175,7 +8229,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Uses compiled Numba functions to wrap all 220 star positions around the player, bypassing Python interpreter overhead and native loops.",
-      "community": 16,
+      "community": 15,
       "norm_label": "numba jit position wrapping",
       "id": "concept_numba_jit"
     },
@@ -8189,7 +8243,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Replaces individual submission loops with a single batch call from game.py, freeing ~0.096ms per frame (~7% performance improvement).",
-      "community": 16,
+      "community": 15,
       "norm_label": "batch star submission",
       "id": "concept_batch_star_submission"
     },
@@ -8203,7 +8257,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Pre-allocates game entities (Particles and Lasers) to eliminate garbage collection spikes and runtime allocation overhead, boosting FPS by 10-30%.",
-      "community": 8,
+      "community": 4,
       "norm_label": "object pooling",
       "id": "concept_object_pooling"
     },
@@ -8217,7 +8271,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Uses hierarchical octrees and spatial hashing to reduce collision detection complexity from O(n\u00b2) to O(n log n) or O(n), saving 50-80% CPU.",
-      "community": 8,
+      "community": 4,
       "norm_label": "spatial partitioning",
       "id": "concept_spatial_partitioning"
     },
@@ -11526,6 +11580,17 @@
       "confidence": "INFERRED",
       "confidence_score": 0.8,
       "source_file": "src/cockpit.py",
+      "source_location": "L585",
+      "weight": 1.0,
+      "source": "src_cockpit_draw_prograde_marker",
+      "target": "src_math_engine_project_to_screen"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "src/cockpit.py",
       "source_location": "L574",
       "weight": 1.0,
       "source": "src_cockpit_draw_target_brackets",
@@ -11848,9 +11913,9 @@
       "source_file": "src/player.py",
       "source_location": "L322",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_rationale_322",
-      "target": "src_player_player_target_closest",
-      "confidence_score": 1.0
+      "target": "src_player_player_target_closest"
     },
     {
       "relation": "rationale_for",
@@ -11898,9 +11963,9 @@
       "source_file": "src/player.py",
       "source_location": "L360",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_rationale_360",
-      "target": "src_player_player_cycle_targets",
-      "confidence_score": 1.0
+      "target": "src_player_player_cycle_targets"
     },
     {
       "relation": "rationale_for",
@@ -11948,9 +12013,9 @@
       "source_file": "src/player.py",
       "source_location": "L399",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_player_rationale_399",
-      "target": "src_player_player_clear_dead_target",
-      "confidence_score": 1.0
+      "target": "src_player_player_clear_dead_target"
     },
     {
       "relation": "rationale_for",
@@ -17737,9 +17802,9 @@
       "source_file": "src/game.py",
       "source_location": "L360",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_game_rationale_360",
-      "target": "src_game_game_render_magnified_window",
-      "confidence_score": 1.0
+      "target": "src_game_game_render_magnified_window"
     },
     {
       "relation": "rationale_for",
@@ -18228,6 +18293,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
+      "source_location": "L556",
+      "weight": 1.0,
+      "source": "src_cockpit_py",
+      "target": "src_cockpit_draw_prograde_marker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
       "source_location": "L511",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18387,6 +18462,17 @@
       "confidence_score": 1.0,
       "source": "src_cockpit_draw_radar",
       "target": "src_cockpit_custom_font"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L602",
+      "weight": 1.0,
+      "source": "src_cockpit_draw_prograde_marker",
+      "target": "src_cockpit_custom_font",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -18678,6 +18764,27 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
+      "source_location": "L1136",
+      "weight": 1.0,
+      "source": "src_cockpit_draw_cockpit_hud",
+      "target": "src_cockpit_draw_prograde_marker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L557",
+      "weight": 1.0,
+      "source": "src_cockpit_rationale_557",
+      "target": "src_cockpit_draw_prograde_marker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
       "source_location": "L620",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18688,11 +18795,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L528",
+      "source_location": "L645",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_528",
+      "source": "src_cockpit_rationale_645",
       "target": "src_cockpit_draw_dim_bracket",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L528",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_528",
+      "target": "src_cockpit_draw_dim_bracket"
     },
     {
       "relation": "rationale_for",
@@ -18719,11 +18836,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L542",
+      "source_location": "L659",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_542",
+      "source": "src_cockpit_rationale_659",
       "target": "src_cockpit_draw_active_bracket",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L542",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_542",
+      "target": "src_cockpit_draw_active_bracket"
     },
     {
       "relation": "rationale_for",
@@ -18750,11 +18877,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L569",
+      "source_location": "L686",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_569",
+      "source": "src_cockpit_rationale_686",
       "target": "src_cockpit_draw_target_brackets",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L569",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_569",
+      "target": "src_cockpit_draw_target_brackets"
     },
     {
       "relation": "rationale_for",
@@ -18836,11 +18973,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L793",
+      "source_location": "L910",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_793",
+      "source": "src_cockpit_rationale_910",
       "target": "src_cockpit_draw_temp_meter",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L793",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_793",
+      "target": "src_cockpit_draw_temp_meter"
     },
     {
       "relation": "rationale_for",
@@ -22536,5 +22683,5 @@
       "source_file": "extra_docs/OPTIMIZATION_SUMMARY.md"
     }
   ],
-  "built_at_commit": "be2c24cdab717067ce36839c18e5f10eece2e180"
+  "built_at_commit": "26261751ddf295594192a0a77988ff95e7083c39"
 }
