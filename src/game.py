@@ -46,7 +46,10 @@ class Game:
         self.sound.load_sfx("explosion", "assets/sounds/explosion.wav")
         self.sound.load_sfx("shield_hit", "assets/sounds/shield_hit.wav")
         self.sound.load_sfx("armor_hit", "assets/sounds/armor_hit.wav")
-        self.sound.load_sfx("engine_hum", "assets/sounds/engine_hum.wav")
+        self.sound.load_sfx("engine_hum_low", "assets/sounds/engine_hum_low.wav")
+        self.sound.load_sfx("engine_hum_mid", "assets/sounds/engine_hum_mid.wav")
+        self.sound.load_sfx("engine_hum_high", "assets/sounds/engine_hum_high.wav")
+        self.sound.load_sfx("engine_hum_overdrive", "assets/sounds/engine_hum_overdrive.wav")
         
         self.sound.start_engine_hum()
         

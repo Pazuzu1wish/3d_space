@@ -34,7 +34,7 @@ class SoundHandler:
         self.music_volume = .7
         self.sfx_volume = .7
         
-        self.engine_hum_channel = None
+        self.engine_hum_channels = {}
         
         self._init_mixer()
 
@@ -189,26 +189,35 @@ class SoundHandler:
             pygame.mixer.music.set_volume(self.music_volume)
 
     def start_engine_hum(self):
-        """Starts the continuous engine hum on a dedicated channel."""
-        if not pygame.mixer.get_init() or "engine_hum" not in self.sounds:
+        """Starts the continuous multi-layer engine hums on dedicated channels."""
+        if not pygame.mixer.get_init():
             return
             
-        if not self.engine_hum_channel:
-            self.engine_hum_channel = pygame.mixer.find_channel()
-            if self.engine_hum_channel:
-                sound = self.sounds["engine_hum"]
-                self.engine_hum_channel.play(sound, loops=-1)
-                self.engine_hum_channel.set_volume(0.0) # start silent
+        self.engine_hum_channels = {}
+        self.engine_hum_sounds = ["engine_hum_low", "engine_hum_mid", "engine_hum_high", "engine_hum_overdrive"]
+        
+        for name in self.engine_hum_sounds:
+            if name in self.sounds:
+                chan = pygame.mixer.find_channel()
+                if chan:
+                    self.engine_hum_channels[name] = chan
+                    chan.play(self.sounds[name], loops=-1)
+                    chan.set_volume(0.0) # Start silent
 
     def update_engine_hum(self, throttle, yaw_input, roll_input, pitch_input):
         """
-        Dynamically adjusts the volume and panning of the engine hum based on ship movement.
-        Throttle controls base volume. Rotational inputs control stereo panning.
+        Dynamically adjusts the volume and blending of multi-layer engine hums
+        based on ship movement and throttle/rotational effort.
         """
-        if not self.engine_hum_channel or not self.engine_hum_channel.get_busy():
+        if not hasattr(self, 'engine_hum_channels') or not self.engine_hum_channels:
             return
             
-        # Base engine hum: 10% volume when idle, up to 70% at max throttle
+        # Verify at least one channel is active
+        active = any(chan.get_busy() for chan in self.engine_hum_channels.values())
+        if not active:
+            return
+            
+        # Base engine effort: 10% volume when idle, up to 70% at max throttle
         effort = abs(throttle)
         
         # Add rotational effort (thrusters working to turn)
@@ -220,14 +229,45 @@ class SoundHandler:
         # Apply master SFX volume
         base_vol *= self.sfx_volume
         
-        # Panning: If turning right (yaw > 0 or roll > 0), left thrusters work harder (pan left).
-        # We'll pan based on yaw and roll.
+        # Panning: If turning right, left thrusters work harder.
         pan_amount = (yaw_input + roll_input) * 0.5
         pan_amount = max(-1.0, min(1.0, pan_amount))
         
-        # Left channel volume = base_vol * (1 - pan_amount/2) ... it's a rough approximation
-        # If pan_amount > 0 (turning right, pushing from left), left is louder.
         left_vol = base_vol * (1.0 + pan_amount * 0.4)
         right_vol = base_vol * (1.0 - pan_amount * 0.4)
         
-        self.engine_hum_channel.set_volume(max(0.0, min(1.0, left_vol)), max(0.0, min(1.0, right_vol)))
+        # Calculate contribution for each of the 4 layers:
+        # engine_hum_low       (center: 0.00)
+        # engine_hum_mid       (center: 0.33)
+        # engine_hum_high      (center: 0.66)
+        # engine_hum_overdrive (center: 1.00)
+        
+        contribs = {
+            "engine_hum_low": 0.0,
+            "engine_hum_mid": 0.0,
+            "engine_hum_high": 0.0,
+            "engine_hum_overdrive": 0.0,
+        }
+        
+        if total_effort <= 0.33:
+            # Blend low and mid
+            t = total_effort / 0.33
+            contribs["engine_hum_low"] = 1.0 - t
+            contribs["engine_hum_mid"] = t
+        elif total_effort <= 0.66:
+            # Blend mid and high
+            t = (total_effort - 0.33) / 0.33
+            contribs["engine_hum_mid"] = 1.0 - t
+            contribs["engine_hum_high"] = t
+        else:
+            # Blend high and overdrive
+            t = (total_effort - 0.66) / 0.34
+            contribs["engine_hum_high"] = 1.0 - t
+            contribs["engine_hum_overdrive"] = t
+            
+        # Apply scaled volume to each layer's channel
+        for name, chan in self.engine_hum_channels.items():
+            contrib = contribs.get(name, 0.0)
+            l_vol = max(0.0, min(1.0, left_vol * contrib))
+            r_vol = max(0.0, min(1.0, right_vol * contrib))
+            chan.set_volume(l_vol, r_vol)

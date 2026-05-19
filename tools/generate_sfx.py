@@ -232,7 +232,7 @@ def generate_music_drone(sample_rate=44100):
     # Scale overall volume down to suitable background level
     return loop_drone * 0.6
 
-def generate_engine_hum(sample_rate=44100):
+def generate_engine_hum(base_freq, sample_rate=44100):
     """
     Continuous low-frequency hum for the player's ship engine.
     Designed to be played in a loop, with its volume dynamically modulated by thrust state.
@@ -243,11 +243,11 @@ def generate_engine_hum(sample_rate=44100):
     total_samples = num_samples + fade_len
     t = np.linspace(0, total_samples / sample_rate, total_samples, endpoint=False)
     
-    # Deep base sub-bass engine frequency: 45 Hz (90 cycles in 2s)
-    hum1 = np.sin(2 * np.pi * 45 * t)
+    # Deep base sub-bass engine frequency: base_freq Hz
+    hum1 = np.sin(2 * np.pi * base_freq * t)
     
-    # Higher harmonic for character: 90 Hz (180 cycles in 2s)
-    hum2 = np.sin(2 * np.pi * 90 * t) * 0.4
+    # Higher harmonic for character: base_freq * 2 Hz
+    hum2 = np.sin(2 * np.pi * (base_freq * 2) * t) * 0.4
     
     # Very low filtered structural rumble
     noise = np.random.normal(0, 0.3, total_samples)
@@ -279,7 +279,13 @@ def main():
     shield_data = generate_shield_hit()
     armor_data = generate_armor_hit()
     bgm_data = generate_music_drone()
-    engine_hum_data = generate_engine_hum()
+    
+    # Generate multiple engine hum layers for dynamic pitch crossfading
+    engine_hum_low = generate_engine_hum(25)
+    engine_hum_mid = generate_engine_hum(27)
+    engine_hum_high = generate_engine_hum(30)
+    engine_hum_overdrive = generate_engine_hum(33)
+    engine_hum_data = generate_engine_hum(35) # Original/fallback
     
     # Save as WAV files in assets/sounds/
     save_wav("laser.wav", laser_data)
@@ -289,6 +295,10 @@ def main():
     save_wav("armor_hit.wav", armor_data)
     save_wav("bgm_drone.wav", bgm_data)
     save_wav("engine_hum.wav", engine_hum_data)
+    save_wav("engine_hum_low.wav", engine_hum_low)
+    save_wav("engine_hum_mid.wav", engine_hum_mid)
+    save_wav("engine_hum_high.wav", engine_hum_high)
+    save_wav("engine_hum_overdrive.wav", engine_hum_overdrive)
     
     print("All audio assets synthesized successfully!")
 
