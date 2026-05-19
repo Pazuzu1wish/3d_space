@@ -626,6 +626,45 @@ def draw_prograde_marker(surface, cx, cy, orientation, player_vel, W, H):
 
 
 # ──────────────────────────────────────────────
+#  COORDINATES READOUT
+# ──────────────────────────────────────────────
+
+def draw_coordinates(surface, cx, cy, player_pos):
+    """
+    Draw player coordinates relative to the origin on the left side of the pitch ladder.
+    Renders in dim amber.
+    """
+    if player_pos is None:
+        return
+
+    px, py, pz = player_pos
+    font = custom_font(11)
+    col = (180, 120, 40)  # Dim amber
+    
+    # Render labels and values
+    lbl_title = _cached_label(10, "SYS COORDS", col)
+    lbl_x = font.render(f"X: {int(px):+7,d}", True, col)
+    lbl_y = font.render(f"Y: {int(py):+7,d}", True, col)
+    lbl_z = font.render(f"Z: {int(pz):+7,d}", True, col)
+    
+    # Position on screen
+    # Draw to the left of the pitch ladder (pitch ladder starts at cx - 160)
+    x = cx - 290
+    y_start = cy - 30
+    
+    # Draw bracket line on the left side of the coordinates readout
+    pygame.draw.line(surface, col, (x - 6, y_start - 4), (x - 6, y_start + 50), 1)
+    pygame.draw.line(surface, col, (x - 6, y_start - 4), (x + 4, y_start - 4), 1)
+    pygame.draw.line(surface, col, (x - 6, y_start + 50), (x + 4, y_start + 50), 1)
+
+    # Blit strings
+    surface.blit(lbl_title, (x, y_start))
+    surface.blit(lbl_x, (x, y_start + 12))
+    surface.blit(lbl_y, (x, y_start + 24))
+    surface.blit(lbl_z, (x, y_start + 36))
+
+
+# ──────────────────────────────────────────────
 #  TARGET BRACKETS + LEAD INDICATOR (PIP)
 # ──────────────────────────────────────────────
 
@@ -1070,7 +1109,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      missile_lock=False, alert_active=False,
                      missile_ammo=0, missile_lock_timer=0.0, missile_locked=False,
                      drift_mode=False,
-                     show_prograde=True):
+                     show_prograde=True,
+                     show_coords=False):
 
     global _HUD_OVERLAY, _HUD_STATIC_GLASS, _LAST_SIZE
 
@@ -1131,6 +1171,10 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         basis = get_basis_from_quat(orientation)
         draw_heading_tape(_HUD_OVERLAY, cx, 30, orientation, basis=basis)
         draw_pitch_ladder(_HUD_OVERLAY, cx, cy, orientation, basis=basis)
+
+        # Coordinates readout on the left of the pitch ladder
+        if show_coords:
+            draw_coordinates(_HUD_OVERLAY, cx, cy, player_pos)
 
         # Prograde / retrograde velocity marker
         if player_vel is not None and show_prograde:
