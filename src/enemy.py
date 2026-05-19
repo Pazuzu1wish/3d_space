@@ -507,7 +507,7 @@ class Dogfighter(Enemy):
         self.engine_pulse_rate = 8.0
         self.trail_life = 0.6
         self.trail_drift = 60.0
-        self.hit_radius = 70
+        self.hit_radius = 200
 
         self.mg_timer = 0.0
         self.bolt_timer = random.uniform(2.0, 5.0)
@@ -531,8 +531,6 @@ class Dogfighter(Enemy):
         self.drag           = 0.01
         
         self._flicker = 0
-
-        self.hit_radius = 200
 
         # Colors
         C_BLUE = (50, 80, 255)

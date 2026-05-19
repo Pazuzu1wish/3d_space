@@ -1,4 +1,5 @@
 # pyrefly: ignore [missing-import]
+from random import choice
 import pygame
 import math
 from src.camera import Camera
@@ -40,21 +41,28 @@ class Game:
         pygame.init() # Init Pygame
 
         # Initialize highly optimized audio handler and pre-load assets
+        self.sound_folder = "assets/sounds/"
         self.sound = SoundHandler()
-        self.sound.load_sfx("laser", "assets/sounds/laser.wav")
-        self.sound.load_sfx("missile", "assets/sounds/missile.wav")
-        self.sound.load_sfx("explosion", "assets/sounds/explosion.wav")
-        self.sound.load_sfx("shield_hit", "assets/sounds/shield_hit.wav")
-        self.sound.load_sfx("armor_hit", "assets/sounds/armor_hit.wav")
-        self.sound.load_sfx("engine_hum_low", "assets/sounds/engine_hum_low.wav")
-        self.sound.load_sfx("engine_hum_mid", "assets/sounds/engine_hum_mid.wav")
-        self.sound.load_sfx("engine_hum_high", "assets/sounds/engine_hum_high.wav")
-        self.sound.load_sfx("engine_hum_overdrive", "assets/sounds/engine_hum_overdrive.wav")
+        self.sound.load_sfx("laser", self.sound_folder + "laser.wav")
+        self.sound.load_sfx("missile", self.sound_folder + "missile.wav")
+        self.sound.load_sfx("explosion", self.sound_folder + "explosion.wav")
+        self.sound.load_sfx("shield_hit", self.sound_folder + "shield_hit.wav")
+        self.sound.load_sfx("armor_hit", self.sound_folder + "armor_hit.wav")
+        self.sound.load_sfx("engine_hum_low", self.sound_folder + "engine_hum_low.wav")
+        self.sound.load_sfx("engine_hum_mid", self.sound_folder + "engine_hum_mid.wav")
+        self.sound.load_sfx("engine_hum_high", self.sound_folder + "engine_hum_high.wav")
+        self.sound.load_sfx("engine_hum_overdrive", self.sound_folder + "engine_hum_overdrive.wav")
         
         self.sound.start_engine_hum()
+
+        self.music_file = choice([
+            self.sound_folder + "bgm_drone.wav",
+            self.sound_folder + "bgm_drone2.wav",
+            self.sound_folder + "bgm_drone3.wav"
+        ])
         
         # Stream seamless deep space ambient loop from disk (saves memory and CPU)
-        self.sound.play_music("assets/sounds/bgm_drone.wav", loops=-1, volume=0.35)
+        self.sound.play_music(self.music_file, loops=-1, volume=0.55)
 
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT # Set Screen size
         flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
