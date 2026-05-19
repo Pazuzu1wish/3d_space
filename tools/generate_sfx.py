@@ -192,7 +192,9 @@ def generate_music_drone(sample_rate=44100):
     """
     duration = 8.0
     num_samples = int(sample_rate * duration)
-    t = np.linspace(0, duration, num_samples, endpoint=False)
+    fade_len = int(sample_rate * 0.05) # 50ms fade
+    total_samples = num_samples + fade_len
+    t = np.linspace(0, total_samples / sample_rate, total_samples, endpoint=False)
     
     # Define exact frequencies that fit integer cycles in 8 seconds
     # (Cycles = Freq * 8: must be integer)
@@ -218,19 +220,17 @@ def generate_music_drone(sample_rate=44100):
     drone_stereo = np.column_stack((l_drone, r_drone))
     
     # Smooth envelope overlay to prevent tiny clicks at the wrap-around (crossfade window)
-    fade_len = int(sample_rate * 0.05) # 50ms fade
     fade_in = np.linspace(0.0, 1.0, fade_len)
     fade_out = np.linspace(1.0, 0.0, fade_len)
     
-    drone_stereo[:fade_len] *= fade_in[:, np.newaxis]
-    drone_stereo[-fade_len:] *= fade_out[:, np.newaxis]
+    # Extract the main loop sound
+    loop_drone = drone_stereo[:num_samples].copy()
     
-    # Re-apply matching crossfade blend of raw signal to make the fade completely silent/seamless
-    loop_tail = drone_stereo[-fade_len:].copy()
-    drone_stereo[:fade_len] += loop_tail * fade_out[:, np.newaxis]
+    # Crossfade the extra trailing tail into the beginning
+    loop_drone[:fade_len] = drone_stereo[:fade_len] * fade_in[:, np.newaxis] + drone_stereo[num_samples:num_samples+fade_len] * fade_out[:, np.newaxis]
     
     # Scale overall volume down to suitable background level
-    return drone_stereo * 0.6
+    return loop_drone * 0.6
 
 def generate_engine_hum(sample_rate=44100):
     """
@@ -239,7 +239,9 @@ def generate_engine_hum(sample_rate=44100):
     """
     duration = 2.0  # 2 seconds loop
     num_samples = int(sample_rate * duration)
-    t = np.linspace(0, duration, num_samples, endpoint=False)
+    fade_len = int(sample_rate * 0.05)
+    total_samples = num_samples + fade_len
+    t = np.linspace(0, total_samples / sample_rate, total_samples, endpoint=False)
     
     # Deep base sub-bass engine frequency: 45 Hz (90 cycles in 2s)
     hum1 = np.sin(2 * np.pi * 45 * t)
@@ -248,7 +250,7 @@ def generate_engine_hum(sample_rate=44100):
     hum2 = np.sin(2 * np.pi * 90 * t) * 0.4
     
     # Very low filtered structural rumble
-    noise = np.random.normal(0, 0.3, num_samples)
+    noise = np.random.normal(0, 0.3, total_samples)
     window_size = 48
     rumble = np.convolve(noise, np.ones(window_size)/window_size, mode='same')
     
@@ -256,16 +258,14 @@ def generate_engine_hum(sample_rate=44100):
     mono_hum = (hum1 * 0.5 + hum2 * 0.3 + rumble * 0.2)
     
     # Make it a perfect loop: sine waves align perfectly, crossfade the noise rumble
-    fade_len = int(sample_rate * 0.05)
     fade_in = np.linspace(0.0, 1.0, fade_len)
     fade_out = np.linspace(1.0, 0.0, fade_len)
     
-    loop_hum = mono_hum.copy()
-    loop_hum[:fade_len] *= fade_in
-    loop_hum[-fade_len:] *= fade_out
+    # Extract the main loop sound
+    loop_hum = mono_hum[:num_samples].copy()
     
-    loop_tail = mono_hum[-fade_len:].copy()
-    loop_hum[:fade_len] += loop_tail * fade_out
+    # Crossfade the extra trailing tail into the beginning
+    loop_hum[:fade_len] = mono_hum[:fade_len] * fade_in + mono_hum[num_samples:num_samples+fade_len] * fade_out
     
     return make_centered_stereo(loop_hum * 0.4)
 
