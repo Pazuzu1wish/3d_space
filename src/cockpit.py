@@ -507,7 +507,7 @@ def draw_dodge_bg(surface, x, y, h):
         ty = int(y + h * (1.0 - pct))
         pygame.draw.line(surface, HUD_DIM, (x + w, ty), (x + w + 2, ty), 1)
 
-    surface.blit(_cached_label(10, "DCH", HUD_GREEN), (x - 8, y - 14))
+    surface.blit(_cached_label(10, "EVD", HUD_DIM), (x - 8, y - 14))
 
 def draw_dodge_fill(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
     w = 14
@@ -1142,7 +1142,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         # Draw all static elements once
         # Moved to upper strut panels (y=160) to avoid overlapping bottom console UI
         draw_throttle_bg(_HUD_STATIC_GLASS, W - 60, 160, 160)
-        draw_dodge_bg(_HUD_STATIC_GLASS, 46, 180, 160)
+        draw_dodge_bg(_HUD_STATIC_GLASS, W - 110, 160, 160)
         draw_hull_bg(_HUD_STATIC_GLASS, W, H)
         
         # Positioned within the lower speed trench (starts at y=640)
@@ -1160,7 +1160,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
     draw_throttle_fill(_HUD_OVERLAY, W - 60, 160, 160, throttle, drift_mode=drift_mode)
-    draw_dodge_fill(_HUD_OVERLAY, 46, 180, 160,
+    draw_dodge_fill(_HUD_OVERLAY, W - 110, 160, 160,
                     dodge_charge, dodge_ready, dodge_flash)
     draw_speed(_HUD_OVERLAY, W - 130, 672, current_speed)
 
