@@ -459,7 +459,7 @@ def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
         blink = (pygame.time.get_ticks() // 250) % 2 == 0
         if blink:
             # Render a premium flashing indicator lamp next to the "THR" label
-            lamp_x = x + w + 12
+            lamp_x = x - 10
             lamp_y = y + 160
             pygame.draw.circle(surface, HUD_AMBER, (lamp_x, lamp_y), 4)
             pygame.draw.circle(surface, (255, 255, 255, 220), (lamp_x, lamp_y), 1)  # Glowing core
@@ -468,7 +468,7 @@ def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
             pygame.draw.rect(surface, HUD_AMBER, (x, y, w, h))
             
             # Print blinking "DRIFT" status text below the speedometer section
-            surface.blit(_cached_label(10, "DRIFT", HUD_AMBER), (x - 16, y + h + 24))
+            surface.blit(_cached_label(10, "DRIFT", HUD_AMBER), (x - 16, y + h + 34))
             
         txt = "  0%"
         col_throttle_per = HUD_DIM
@@ -1047,55 +1047,6 @@ def draw_hull_fill(surface, W, H, player_hp, max_hp=100,
     val = _cached_label(11, f"{int(ratio * 100):3d}%", col)
     surface.blit(val, (bar_x + bar_w + 8,
                        bar_y + bar_h // 2 - val.get_height() // 2))
-
-    # ── SHIELD BRACKETS ──────────────────────────────────────────
-    # if shield_charge <= 0:
-    #     return   # no brackets when fully depleted
-
-    # # Bracket colour — cyan, shifts amber when low, pulses when recharging
-    # if shield_recharging:
-    #     pulse = int((math.sin(pygame.time.get_ticks() * 0.006) + 1) * 60)
-    #     s_col = (0, min(255, 180 + pulse), min(255, 200 + pulse))
-    # elif shield_charge > 0.5:
-    #     s_col = (0, 200, 255)       # cyan
-    # else:
-    #     s_col = HUD_AMBER           # amber when low
-
-    # # Brackets shrink inward from both ends toward center
-    # # At full charge bracket tips are at the bar edges
-    # # At 0 charge brackets would meet at center (but we return early above)
-    # bracket_reach = int((bar_w // 2) * shield_charge)
-    # pad   = 4    # pixels outside the hull bar
-    # thick = 2
-    # bx_l  = bar_x - pad                          # left edge
-    # bx_r  = bar_x + bar_w + pad                  # right edge
-    # by_t  = bar_y - pad                           # top edge
-    # by_b  = bar_y + bar_h + pad                   # bottom edge
-    # arm   = 6                                     # length of horizontal serifs
-
-    # # Left bracket — extends rightward by bracket_reach
-    # lx_inner = bx_l + bracket_reach
-    # # vertical bar
-    # pygame.draw.line(surface, s_col, (bx_l, by_t), (bx_l, by_b), thick)
-    # # top serif
-    # pygame.draw.line(surface, s_col, (bx_l, by_t), (min(bx_l + arm, lx_inner), by_t), thick)
-    # # bottom serif
-    # pygame.draw.line(surface, s_col, (bx_l, by_b), (min(bx_l + arm, lx_inner), by_b), thick)
-
-    # # Right bracket — extends leftward by bracket_reach
-    # rx_inner = bx_r - bracket_reach
-    # # vertical bar
-    # pygame.draw.line(surface, s_col, (bx_r, by_t), (bx_r, by_b), thick)
-    # # top serif
-    # pygame.draw.line(surface, s_col, (bx_r, by_t), (max(bx_r - arm, rx_inner), by_t), thick)
-    # # bottom serif
-    # pygame.draw.line(surface, s_col, (bx_r, by_b), (max(bx_r - arm, rx_inner), by_b), thick)
-
-    # # Shield percentage — only show when not full
-    # if shield_charge < 1.0:
-    #     shld_val = _cached_label(10, f"SHD {int(shield_charge * 100):3d}%", s_col)
-    #     surface.blit(shld_val, (bar_x + bar_w // 2 - shld_val.get_width() // 2,
-    #                             bar_y - shld_val.get_height() - 4))
 
 def shield_label(surface, text, shield_charge, x, y):
     font = custom_font(14)

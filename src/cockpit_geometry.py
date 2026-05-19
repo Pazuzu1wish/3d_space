@@ -443,14 +443,14 @@ def _build_static(W, H):
     
 
     # asymmetrical detail (moved down to clear HUD bars)
-    _hex_plate(s, W - 70, 390, 32)
+    _hex_plate(s, W - 70, 400, 32)
 
     groove_r = [
-        (W - 250, 72),
-        (W - 205, 132),
-        (W - 170, 300),
-        (W - 155, 430),
-        (W - 120, 470)
+        (W - 250, 82),
+        (W - 205, 142),
+        (W - 170, 310),
+        (W - 155, 440),
+        (W - 120, 480)
     ]
 
     _poly(s, _EDGE, groove_r, 2)
@@ -650,7 +650,7 @@ def _build_static(W, H):
             s,
             _EDGE_DIM,
             (cx + off, y1),
-            (cx + int(off * 1.2), y2),
+            (cx + int(off * 1.4), y2),
             1
         )
 
@@ -818,6 +818,8 @@ def draw_cockpit_frame(
 
         # Small indicator rectangles next to the radar
         _r(surface, bar_color, (50, y + 3, 20, 8), br=2)
+
+    
 
     # hit flash
     if hit_flash > 0.01:
