@@ -542,7 +542,7 @@ def draw_dodge_fill(surface, x, y, h, dodge_charge, dodge_ready, dodge_flash):
 # ──────────────────────────────────────────────
 
 def draw_crosshair(surface, cx, cy, ready):
-    col = HUD_RED if ready else HUD_AMBER
+    col = (0, 220, 200) if ready else HUD_AMBER
     gap = 10
     arm = 18
     thick = 1
@@ -561,7 +561,7 @@ def draw_crosshair(surface, cx, cy, ready):
 # ──────────────────────────────────────────────
 
 # Cyan-teal for prograde, dim amber for retrograde
-_HUD_PROGRADE  = (0, 220, 200)
+_HUD_PROGRADE  = (170, 110, 40)
 _HUD_RETROGRADE = (180, 120, 40)
 
 # Speed below which the marker fades out entirely (avoids phantom dot at rest)
@@ -604,19 +604,15 @@ def draw_prograde_marker(surface, cx, cy, orientation, player_vel, W, H):
             return
         mx, my, _ = proj
         col = (*_HUD_PROGRADE, alpha)
-        r = 12
+        r = 8
         arm = 8
         gap = r + 3
         # Circle
         pygame.draw.circle(surface, col, (mx, my), r, 1)
-        # Cross arms (outside the circle)
-        pygame.draw.line(surface, col, (mx - gap - arm, my), (mx - gap, my), 1)
-        pygame.draw.line(surface, col, (mx + gap, my), (mx + gap + arm, my), 1)
-        pygame.draw.line(surface, col, (mx, my - gap - arm), (mx, my - gap), 1)
-        pygame.draw.line(surface, col, (mx, my + gap), (mx, my + gap + arm), 1)
-        # Label — only show at meaningful speed
+        
+        # # Label — only show at meaningful speed
         if speed > 300:
-            lbl = custom_font(10).render("PRG", True, col[:3])
+            lbl = custom_font(10).render("VECT", True, col[:3])
             surface.blit(lbl, (mx + r + 4, my - lbl.get_height() // 2))
     else:
         # Retrograde — flip and project the retrograde point
@@ -638,7 +634,7 @@ def draw_prograde_marker(surface, cx, cy, orientation, player_vel, W, H):
         pygame.draw.line(surface, col, (mx - r + 3, my - r + 3), (mx + r - 3, my + r - 3), 1)
         pygame.draw.line(surface, col, (mx + r - 3, my - r + 3), (mx - r + 3, my + r - 3), 1)
         if speed > 300:
-            lbl = custom_font(10).render("RET", True, col[:3])
+            lbl = custom_font(10).render("REV", True, col[:3])
             surface.blit(lbl, (mx + r + 4, my - lbl.get_height() // 2))
 
 
@@ -655,30 +651,30 @@ def draw_coordinates(surface, cx, cy, player_pos):
         return
 
     px, py, pz = player_pos
-    font = custom_font(11)
-    col = (180, 120, 40)  # Dim amber
+    font = custom_font(12)
+    col = (0, 220, 200)  # Dim light blue/green
     
     # Render labels and values
-    lbl_title = _cached_label(10, "SYS COORDS", col)
+    lbl_title = _cached_label(10, "COORDS", col)
     lbl_x = font.render(f"X: {int(px):+7,d}", True, col)
     lbl_y = font.render(f"Y: {int(py):+7,d}", True, col)
     lbl_z = font.render(f"Z: {int(pz):+7,d}", True, col)
     
     # Position on screen
     # Draw to the left of the pitch ladder (pitch ladder starts at cx - 160)
-    x = cx - 290
+    x = cx - 375
     y_start = cy - 30
     
     # Draw bracket line on the left side of the coordinates readout
-    pygame.draw.line(surface, col, (x - 6, y_start - 4), (x - 6, y_start + 50), 1)
+    pygame.draw.line(surface, col, (x - 6, y_start - 4), (x - 6, y_start + 60), 1)
     pygame.draw.line(surface, col, (x - 6, y_start - 4), (x + 4, y_start - 4), 1)
-    pygame.draw.line(surface, col, (x - 6, y_start + 50), (x + 4, y_start + 50), 1)
+    pygame.draw.line(surface, col, (x - 6, y_start + 60), (x + 4, y_start + 60), 1)
 
     # Blit strings
     surface.blit(lbl_title, (x, y_start))
-    surface.blit(lbl_x, (x, y_start + 12))
-    surface.blit(lbl_y, (x, y_start + 24))
-    surface.blit(lbl_z, (x, y_start + 36))
+    surface.blit(lbl_x, (x, y_start + 14))
+    surface.blit(lbl_y, (x, y_start + 30))
+    surface.blit(lbl_z, (x, y_start + 46))
 
 
 # ──────────────────────────────────────────────
