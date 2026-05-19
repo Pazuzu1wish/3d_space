@@ -314,7 +314,7 @@ class Game:
                     intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', SNIPER_CHARGE_TIME) / SNIPER_CHARGE_TIME))
                     jitter = math.sin(pygame.time.get_ticks() * 0.05) * (SNIPER_CHARGE_JITTER * intensity)
                     jx, jy = sx + jitter, sy - jitter
-                    thickness = max(1, int(8 * intensity))
+                    thickness = max(1, int(2 * intensity))
                     pygame.draw.line(screen, (255, 0, 0), (jx, jy), (W//2, H//2), thickness)
                     if intensity > SNIPER_CHARGE_CORE_THRESHOLD:
                         pygame.draw.line(screen, (255, 255, 255), (jx, jy), (W//2, H//2), max(1, thickness - 3))

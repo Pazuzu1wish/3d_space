@@ -256,8 +256,9 @@ class Player:
             LASER_SPEED = PLAYER_LASER_SPEED
             offset = 40
             
-            # Calculate current spread based on heat
+            # Calculate current spread and color based on heat
             current_spread = PLAYER_LASER_BASE_SPREAD + (self.laser_heat * PLAYER_LASER_MAX_SPREAD)
+            laser_color = (255, 50, 50) if self.laser_heat > 0.75 else None
             
             for side in (-1, 1):
                 # Apply random jitter to the forward vector
@@ -280,7 +281,8 @@ class Player:
                 
                 lasers.fire(
                     wx, wy, wz,
-                    pfx * LASER_SPEED, pfy * LASER_SPEED, pfz * LASER_SPEED
+                    pfx * LASER_SPEED, pfy * LASER_SPEED, pfz * LASER_SPEED,
+                    color=laser_color
                 )
             
             # Update cooldown, heat and shake

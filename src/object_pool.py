@@ -201,7 +201,7 @@ class LaserPool:
     
     def fire(self, x: float, y: float, z: float, 
              vx: float, vy: float, vz: float,
-             life: float = 2.0) -> Optional[object]:
+             life: float = 2.0, color: tuple = None) -> Optional[object]:
         """Fire a laser from the given position with the given velocity."""
         if self._pool:
             laser = self._pool.pop()
@@ -212,7 +212,7 @@ class LaserPool:
         
         # Initialize laser (assumes laser has init method)
         if hasattr(laser, 'init'):
-            laser.init(x, y, z, vx, vy, vz, life)
+            laser.init(x, y, z, vx, vy, vz, life, color)
         else:
             # Fallback: set attributes directly
             laser.x, laser.y, laser.z = x, y, z
