@@ -11,7 +11,7 @@ from src.math_engine import (
 )
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION
+from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION, PLAYER_LASER_SPEED
 from src.cockpit_geometry import draw_cockpit_frame
 
 def interpolate_color(val, c0, c1, c2):
@@ -684,7 +684,7 @@ def draw_coordinates(surface, cx, cy, player_pos):
 #  TARGET BRACKETS + LEAD INDICATOR (PIP)
 # ──────────────────────────────────────────────
 
-_LASER_SPEED = 20000.0   # Must match Laser class speed
+_LASER_SPEED = PLAYER_LASER_SPEED   # Must match Laser class speed
 
 # Dim colour for untargeted enemies (slightly transparent red-brown)
 _HUD_DIM_TARGET  = (180, 40, 40, 90)
