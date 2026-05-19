@@ -21,6 +21,23 @@ static/dynamic visual elements (indicators, pulses, flashes).
 
 import pygame
 import math
+import numpy as np
+
+def interpolate_color(val, c0, c1, c2):
+    """
+    Interpolates smoothly from c0 (val=0.0) to c1 (val=0.5) to c2 (val=1.0) using NumPy interp.
+    val: float between 0.0 and 1.0.
+    Returns: RGB or RGBA tuple of ints.
+    """
+    val = max(0.0, min(1.0, float(val)))
+    xp = [0.0, 0.5, 1.0]
+    r = int(np.interp(val, xp, [c0[0], c1[0], c2[0]]))
+    g = int(np.interp(val, xp, [c0[1], c1[1], c2[1]]))
+    b = int(np.interp(val, xp, [c0[2], c1[2], c2[2]]))
+    if len(c0) > 3:
+        a = int(np.interp(val, xp, [c0[3], c1[3], c2[3]]))
+        return (r, g, b, a)
+    return (r, g, b)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Palette
@@ -765,25 +782,24 @@ def draw_cockpit_frame(
             pulse = int((math.sin(ticks * 0.015) + 1) * 127)
             bar_color = (255, pulse, pulse)
         else:
-            red_threshold = 1.0 - (i + 1) * 0.333
-            amber_threshold = red_threshold + 0.166
+            # Dynamic Green Color
+            g_pulse_green = int(140 + 40 * math.sin(t * 2.0))
+            col_green = (20, g_pulse_green, 60)
             
-            if shield_charge <= red_threshold:
-                # Pulsing Red Warning
-                bar_color = (
-                    min(255, 180 + int(70 * abs(math.sin(t * 5)))),
-                    20,
-                    10
-                )
-            elif shield_charge <= amber_threshold:
-                # Glowing Amber Phase
-                r_pulse = int(180 + 40 * math.sin(t * 2.0))
-                g_pulse = int(90 + 20 * math.sin(t * 2.0))
-                bar_color = (r_pulse, g_pulse, 10)
-            else:
-                # Steady Green Status (with a subtle life pulse)
-                g_pulse = int(140 + 40 * math.sin(t * 2.0))
-                bar_color = (20, g_pulse, 60)
+            # Dynamic Amber Color
+            r_pulse_amber = int(180 + 40 * math.sin(t * 2.0))
+            g_pulse_amber = int(90 + 20 * math.sin(t * 2.0))
+            col_amber = (r_pulse_amber, g_pulse_amber, 10)
+            
+            # Dynamic Red Color
+            r_pulse_red = min(255, 180 + int(70 * abs(math.sin(t * 5))))
+            col_red = (r_pulse_red, 20, 10)
+            
+            # Compute smooth transition based on local range for light i
+            red_threshold = 1.0 - (i + 1) * 0.333
+            val = (shield_charge - red_threshold) / 0.333
+            
+            bar_color = interpolate_color(val, col_red, col_amber, col_green)
 
         # Small indicator rectangles next to the radar
         _r(surface, bar_color, (50, y + 3, 20, 8), br=2)

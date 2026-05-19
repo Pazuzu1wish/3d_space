@@ -43,7 +43,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L1",
       "id": "tests_benchmark_realistic_py",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_realistic.py"
     },
     {
@@ -52,7 +52,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L13",
       "id": "tests_benchmark_realistic_benchmark_realistic",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_realistic()"
     },
     {
@@ -61,7 +61,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L14",
       "id": "tests_benchmark_realistic_rationale_14",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark actual game rendering pipeline."
     },
     {
@@ -601,7 +601,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L1",
       "id": "tests_benchmark_star_optimization_py",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_star_optimization.py"
     },
     {
@@ -610,7 +610,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L14",
       "id": "tests_benchmark_star_optimization_benchmark_batch_processing",
-      "community": 16,
+      "community": 15,
       "norm_label": "benchmark_batch_processing()"
     },
     {
@@ -619,7 +619,7 @@
       "source_file": "tests/benchmark_star_optimization.py",
       "source_location": "L15",
       "id": "tests_benchmark_star_optimization_rationale_15",
-      "community": 16,
+      "community": 15,
       "norm_label": "test the optimized batch star processing."
     },
     {
@@ -844,7 +844,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L99",
       "id": "src_projectile_sniperbeam",
-      "community": 9,
+      "community": 13,
       "norm_label": "sniperbeam"
     },
     {
@@ -880,7 +880,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L115",
       "id": "src_projectile_mine",
-      "community": 9,
+      "community": 34,
       "norm_label": "mine"
     },
     {
@@ -889,7 +889,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L116",
       "id": "src_projectile_mine_init",
-      "community": 9,
+      "community": 34,
       "norm_label": ".__init__()"
     },
     {
@@ -898,7 +898,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L122",
       "id": "src_projectile_mine_submit_to_renderer",
-      "community": 9,
+      "community": 34,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -907,7 +907,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L128",
       "id": "src_projectile_mine_check_player_collision",
-      "community": 9,
+      "community": 34,
       "norm_label": ".check_player_collision()"
     },
     {
@@ -916,7 +916,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L144",
       "id": "src_projectile_stealthshotgun",
-      "community": 9,
+      "community": 5,
       "norm_label": "stealthshotgun"
     },
     {
@@ -1654,7 +1654,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L169",
       "id": "src_enemy_enemy_approaching_too_fast",
-      "community": 13,
+      "community": 5,
       "norm_label": "._approaching_too_fast()"
     },
     {
@@ -1708,7 +1708,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L254",
       "id": "src_enemy_enemy_dist_to_player",
-      "community": 13,
+      "community": 20,
       "norm_label": ".dist_to_player()"
     },
     {
@@ -1834,7 +1834,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L466",
       "id": "src_enemy_suicidedrone_detonate",
-      "community": 13,
+      "community": 20,
       "norm_label": ".detonate()"
     },
     {
@@ -1870,7 +1870,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L590",
       "id": "src_enemy_dogfighter_player_forward",
-      "community": 13,
+      "community": 9,
       "norm_label": "._player_forward()"
     },
     {
@@ -1879,7 +1879,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L593",
       "id": "src_enemy_dogfighter_update",
-      "community": 13,
+      "community": 9,
       "norm_label": ".update()"
     },
     {
@@ -1906,7 +1906,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L737",
       "id": "src_enemy_sniper",
-      "community": 22,
+      "community": 27,
       "norm_label": "sniper"
     },
     {
@@ -1915,7 +1915,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L742",
       "id": "src_enemy_sniper_init",
-      "community": 22,
+      "community": 27,
       "norm_label": ".__init__()"
     },
     {
@@ -1933,7 +1933,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L936",
       "id": "src_enemy_sniper_on_hit",
-      "community": 22,
+      "community": 27,
       "norm_label": ".on_hit()"
     },
     {
@@ -1942,7 +1942,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L945",
       "id": "src_enemy_corvette",
-      "community": 27,
+      "community": 22,
       "norm_label": "corvette"
     },
     {
@@ -1951,7 +1951,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L949",
       "id": "src_enemy_corvette_init",
-      "community": 27,
+      "community": 22,
       "norm_label": ".__init__()"
     },
     {
@@ -1969,7 +1969,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1113",
       "id": "src_enemy_corvette_on_hit",
-      "community": 27,
+      "community": 22,
       "norm_label": ".on_hit()"
     },
     {
@@ -1978,7 +1978,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1122",
       "id": "src_enemy_minelayer",
-      "community": 9,
+      "community": 34,
       "norm_label": "minelayer"
     },
     {
@@ -1996,7 +1996,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1185",
       "id": "src_enemy_minelayer_pick_flank_offset",
-      "community": 9,
+      "community": 34,
       "norm_label": "._pick_flank_offset()"
     },
     {
@@ -2014,7 +2014,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1295",
       "id": "src_enemy_minelayer_on_hit",
-      "community": 9,
+      "community": 34,
       "norm_label": ".on_hit()"
     },
     {
@@ -2023,7 +2023,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1307",
       "id": "src_enemy_stealthinterceptor",
-      "community": 9,
+      "community": 5,
       "norm_label": "stealthinterceptor"
     },
     {
@@ -2041,7 +2041,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1361",
       "id": "src_enemy_stealthinterceptor_pick_flank_offset",
-      "community": 13,
+      "community": 5,
       "norm_label": "._pick_flank_offset()"
     },
     {
@@ -2050,7 +2050,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1379",
       "id": "src_enemy_stealthinterceptor_update",
-      "community": 13,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -2059,7 +2059,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1455",
       "id": "src_enemy_stealthinterceptor_on_hit",
-      "community": 9,
+      "community": 5,
       "norm_label": ".on_hit()"
     },
     {
@@ -2122,7 +2122,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L170",
       "id": "src_enemy_rationale_170",
-      "community": 13,
+      "community": 5,
       "norm_label": "true when close to target and still closing fast \u2014 signal to flip and brake."
     },
     {
@@ -2140,7 +2140,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L467",
       "id": "src_enemy_rationale_467",
-      "community": 13,
+      "community": 20,
       "norm_label": "triggers proximity explosion and deals radial damage to player."
     },
     {
@@ -2428,7 +2428,7 @@
       "source_file": "src/utils.py",
       "source_location": "L151",
       "id": "src_utils_draw_damage_overlay",
-      "community": 3,
+      "community": 14,
       "norm_label": "draw_damage_overlay()"
     },
     {
@@ -2509,7 +2509,7 @@
       "source_file": "src/utils.py",
       "source_location": "L152",
       "id": "src_utils_rationale_152",
-      "community": 3,
+      "community": 14,
       "norm_label": "red vignette that fades in when the player is hit."
     },
     {
@@ -3107,10 +3107,19 @@
       "norm_label": "cockpit_geometry.py"
     },
     {
+      "label": "interpolate_color()",
+      "file_type": "code",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L26",
+      "id": "src_cockpit_geometry_interpolate_color",
+      "community": 7,
+      "norm_label": "interpolate_color()"
+    },
+    {
       "label": "_p()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L45",
+      "source_location": "L62",
       "id": "src_cockpit_geometry_p",
       "community": 7,
       "norm_label": "_p()"
@@ -3119,7 +3128,7 @@
       "label": "_l()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L57",
+      "source_location": "L74",
       "id": "src_cockpit_geometry_l",
       "community": 7,
       "norm_label": "_l()"
@@ -3128,7 +3137,7 @@
       "label": "_poly()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L69",
+      "source_location": "L86",
       "id": "src_cockpit_geometry_poly",
       "community": 7,
       "norm_label": "_poly()"
@@ -3137,7 +3146,7 @@
       "label": "_r()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L81",
+      "source_location": "L98",
       "id": "src_cockpit_geometry_r",
       "community": 7,
       "norm_label": "_r()"
@@ -3146,7 +3155,7 @@
       "label": "_c()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L93",
+      "source_location": "L110",
       "id": "src_cockpit_geometry_c",
       "community": 7,
       "norm_label": "_c()"
@@ -3155,7 +3164,7 @@
       "label": "_inset_panel()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L108",
+      "source_location": "L125",
       "id": "src_cockpit_geometry_inset_panel",
       "community": 7,
       "norm_label": "_inset_panel()"
@@ -3164,7 +3173,7 @@
       "label": "_vent()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L156",
+      "source_location": "L173",
       "id": "src_cockpit_geometry_vent",
       "community": 7,
       "norm_label": "_vent()"
@@ -3173,7 +3182,7 @@
       "label": "_hex_plate()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L178",
+      "source_location": "L195",
       "id": "src_cockpit_geometry_hex_plate",
       "community": 7,
       "norm_label": "_hex_plate()"
@@ -3182,7 +3191,7 @@
       "label": "_build_static()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L212",
+      "source_location": "L229",
       "id": "src_cockpit_geometry_build_static",
       "community": 7,
       "norm_label": "_build_static()"
@@ -3191,7 +3200,7 @@
       "label": "draw_cockpit_frame()",
       "file_type": "code",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L642",
+      "source_location": "L659",
       "id": "src_cockpit_geometry_draw_cockpit_frame",
       "community": 7,
       "norm_label": "draw_cockpit_frame()"
@@ -3206,11 +3215,20 @@
       "norm_label": "enhanced_cockpit_geometry.py  retro-futurist low-poly cockpit frame implementati"
     },
     {
+      "label": "Interpolates smoothly from c0 (val=0.0) to c1 (val=0.5) to c2 (val=1.0) using Nu",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L27",
+      "id": "src_cockpit_geometry_rationale_27",
+      "community": 7,
+      "norm_label": "interpolates smoothly from c0 (val=0.0) to c1 (val=0.5) to c2 (val=1.0) using nu"
+    },
+    {
       "label": "Draws a filled or outlined polygon.          Args:         surf (pygame.Surface)",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L46",
-      "id": "src_cockpit_geometry_rationale_46",
+      "source_location": "L63",
+      "id": "src_cockpit_geometry_rationale_63",
       "community": 7,
       "norm_label": "draws a filled or outlined polygon.          args:         surf (pygame.surface)"
     },
@@ -3218,8 +3236,8 @@
       "label": "Draws a single line.          Args:         surf (pygame.Surface): Target surfac",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L58",
-      "id": "src_cockpit_geometry_rationale_58",
+      "source_location": "L75",
+      "id": "src_cockpit_geometry_rationale_75",
       "community": 7,
       "norm_label": "draws a single line.          args:         surf (pygame.surface): target surfac"
     },
@@ -3227,8 +3245,8 @@
       "label": "Draws an open sequence of connected lines (a polyline).          Args:         s",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L70",
-      "id": "src_cockpit_geometry_rationale_70",
+      "source_location": "L87",
+      "id": "src_cockpit_geometry_rationale_87",
       "community": 7,
       "norm_label": "draws an open sequence of connected lines (a polyline).          args:         s"
     },
@@ -3236,8 +3254,8 @@
       "label": "Draws a rectangle, optionally with rounded corners.          Args:         surf",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L82",
-      "id": "src_cockpit_geometry_rationale_82",
+      "source_location": "L99",
+      "id": "src_cockpit_geometry_rationale_99",
       "community": 7,
       "norm_label": "draws a rectangle, optionally with rounded corners.          args:         surf"
     },
@@ -3245,8 +3263,8 @@
       "label": "Draws a circle.          Args:         surf (pygame.Surface): Target surface.",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L94",
-      "id": "src_cockpit_geometry_rationale_94",
+      "source_location": "L111",
+      "id": "src_cockpit_geometry_rationale_111",
       "community": 7,
       "norm_label": "draws a circle.          args:         surf (pygame.surface): target surface."
     },
@@ -3254,8 +3272,8 @@
       "label": "Creates a recessed panel effect by drawing a smaller polygon inside another.",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L112",
-      "id": "src_cockpit_geometry_rationale_112",
+      "source_location": "L129",
+      "id": "src_cockpit_geometry_rationale_129",
       "community": 7,
       "norm_label": "creates a recessed panel effect by drawing a smaller polygon inside another."
     },
@@ -3263,8 +3281,8 @@
       "label": "Draws an industrial vent with horizontal slats.          Args:         surf (pyg",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L157",
-      "id": "src_cockpit_geometry_rationale_157",
+      "source_location": "L174",
+      "id": "src_cockpit_geometry_rationale_174",
       "community": 7,
       "norm_label": "draws an industrial vent with horizontal slats.          args:         surf (pyg"
     },
@@ -3272,8 +3290,8 @@
       "label": "Draws a hexagonal armor plate with an inset recessed area.          Args:",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L179",
-      "id": "src_cockpit_geometry_rationale_179",
+      "source_location": "L196",
+      "id": "src_cockpit_geometry_rationale_196",
       "community": 7,
       "norm_label": "draws a hexagonal armor plate with an inset recessed area.          args:"
     },
@@ -3281,8 +3299,8 @@
       "label": "Bakes the non-animated cockpit geometry into a static Surface.          This inc",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L213",
-      "id": "src_cockpit_geometry_rationale_213",
+      "source_location": "L230",
+      "id": "src_cockpit_geometry_rationale_230",
       "community": 7,
       "norm_label": "bakes the non-animated cockpit geometry into a static surface.          this inc"
     },
@@ -3290,8 +3308,8 @@
       "label": "Main entry point to draw the cockpit and HUD overlays.          Handles static g",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L651",
-      "id": "src_cockpit_geometry_rationale_651",
+      "source_location": "L668",
+      "id": "src_cockpit_geometry_rationale_668",
       "community": 7,
       "norm_label": "main entry point to draw the cockpit and hud overlays.          handles static g"
     },
@@ -3301,7 +3319,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_py",
-      "community": 12,
+      "community": 17,
       "norm_label": "object_pool.py"
     },
     {
@@ -3535,7 +3553,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_rationale_1",
-      "community": 12,
+      "community": 17,
       "norm_label": "object pooling system efficiently manages reusable game objects to avoid frequen"
     },
     {
@@ -4543,7 +4561,7 @@
       "source_file": "src/game.py",
       "source_location": "L36",
       "id": "src_game_game_init",
-      "community": 3,
+      "community": 17,
       "norm_label": ".__init__()"
     },
     {
@@ -4759,7 +4777,7 @@
       "source_file": "src/star.py",
       "source_location": "L1",
       "id": "src_star_py",
-      "community": 16,
+      "community": 15,
       "norm_label": "star.py"
     },
     {
@@ -4768,7 +4786,7 @@
       "source_file": "src/star.py",
       "source_location": "L10",
       "id": "src_star_wrap_star_positions_batch",
-      "community": 16,
+      "community": 15,
       "norm_label": "wrap_star_positions_batch()"
     },
     {
@@ -4777,7 +4795,7 @@
       "source_file": "src/star.py",
       "source_location": "L42",
       "id": "src_star_compute_star_colors_batch",
-      "community": 16,
+      "community": 15,
       "norm_label": "compute_star_colors_batch()"
     },
     {
@@ -4786,7 +4804,7 @@
       "source_file": "src/star.py",
       "source_location": "L72",
       "id": "src_star_star",
-      "community": 16,
+      "community": 15,
       "norm_label": "star"
     },
     {
@@ -4795,7 +4813,7 @@
       "source_file": "src/star.py",
       "source_location": "L73",
       "id": "src_star_star_init",
-      "community": 16,
+      "community": 15,
       "norm_label": ".__init__()"
     },
     {
@@ -4804,7 +4822,7 @@
       "source_file": "src/star.py",
       "source_location": "L76",
       "id": "src_star_star_spawn_around",
-      "community": 16,
+      "community": 15,
       "norm_label": ".spawn_around()"
     },
     {
@@ -4813,7 +4831,7 @@
       "source_file": "src/star.py",
       "source_location": "L102",
       "id": "src_star_star_submit_to_renderer",
-      "community": 16,
+      "community": 15,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -4822,7 +4840,7 @@
       "source_file": "src/star.py",
       "source_location": "L132",
       "id": "src_star_submit_batch_to_renderer",
-      "community": 16,
+      "community": 15,
       "norm_label": "submit_batch_to_renderer()"
     },
     {
@@ -4831,7 +4849,7 @@
       "source_file": "src/star.py",
       "source_location": "L11",
       "id": "src_star_rationale_11",
-      "community": 16,
+      "community": 15,
       "norm_label": "batch wrap star positions around player.     avoids 220 individual python functi"
     },
     {
@@ -4840,7 +4858,7 @@
       "source_file": "src/star.py",
       "source_location": "L43",
       "id": "src_star_rationale_43",
-      "community": 16,
+      "community": 15,
       "norm_label": "batch compute final star colors with distance-based dimming.     all 220 stars p"
     },
     {
@@ -4862,10 +4880,19 @@
       "norm_label": "cockpit.py"
     },
     {
+      "label": "interpolate_color()",
+      "file_type": "code",
+      "source_file": "src/cockpit.py",
+      "source_location": "L17",
+      "id": "src_cockpit_interpolate_color",
+      "community": 2,
+      "norm_label": "interpolate_color()"
+    },
+    {
       "label": "custom_font()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L37",
+      "source_location": "L54",
       "id": "src_cockpit_custom_font",
       "community": 2,
       "norm_label": "custom_font()"
@@ -4874,7 +4901,7 @@
       "label": "_cached_label()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L46",
+      "source_location": "L63",
       "id": "src_cockpit_cached_label",
       "community": 2,
       "norm_label": "_cached_label()"
@@ -4883,7 +4910,7 @@
       "label": "draw_heading_tape()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L58",
+      "source_location": "L75",
       "id": "src_cockpit_draw_heading_tape",
       "community": 2,
       "norm_label": "draw_heading_tape()"
@@ -4892,7 +4919,7 @@
       "label": "draw_pitch_ladder()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L120",
+      "source_location": "L137",
       "id": "src_cockpit_draw_pitch_ladder",
       "community": 2,
       "norm_label": "draw_pitch_ladder()"
@@ -4901,7 +4928,7 @@
       "label": "draw_radar()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L194",
+      "source_location": "L211",
       "id": "src_cockpit_draw_radar",
       "community": 2,
       "norm_label": "draw_radar()"
@@ -4910,7 +4937,7 @@
       "label": "draw_throttle_bg()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L416",
+      "source_location": "L433",
       "id": "src_cockpit_draw_throttle_bg",
       "community": 2,
       "norm_label": "draw_throttle_bg()"
@@ -4919,7 +4946,7 @@
       "label": "draw_throttle_fill()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L435",
+      "source_location": "L452",
       "id": "src_cockpit_draw_throttle_fill",
       "community": 2,
       "norm_label": "draw_throttle_fill()"
@@ -4928,7 +4955,7 @@
       "label": "draw_dodge_bg()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L480",
+      "source_location": "L497",
       "id": "src_cockpit_draw_dodge_bg",
       "community": 2,
       "norm_label": "draw_dodge_bg()"
@@ -4937,7 +4964,7 @@
       "label": "draw_dodge_fill()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L492",
+      "source_location": "L509",
       "id": "src_cockpit_draw_dodge_fill",
       "community": 2,
       "norm_label": "draw_dodge_fill()"
@@ -4946,7 +4973,7 @@
       "label": "draw_crosshair()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L527",
+      "source_location": "L544",
       "id": "src_cockpit_draw_crosshair",
       "community": 2,
       "norm_label": "draw_crosshair()"
@@ -4955,7 +4982,7 @@
       "label": "draw_prograde_marker()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L556",
+      "source_location": "L573",
       "id": "src_cockpit_draw_prograde_marker",
       "community": 2,
       "norm_label": "draw_prograde_marker()"
@@ -4964,7 +4991,7 @@
       "label": "draw_coordinates()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L632",
+      "source_location": "L649",
       "id": "src_cockpit_draw_coordinates",
       "community": 2,
       "norm_label": "draw_coordinates()"
@@ -4973,7 +5000,7 @@
       "label": "_draw_dim_bracket()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L683",
+      "source_location": "L700",
       "id": "src_cockpit_draw_dim_bracket",
       "community": 2,
       "norm_label": "_draw_dim_bracket()"
@@ -4982,7 +5009,7 @@
       "label": "_draw_active_bracket()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L697",
+      "source_location": "L714",
       "id": "src_cockpit_draw_active_bracket",
       "community": 2,
       "norm_label": "_draw_active_bracket()"
@@ -4991,7 +5018,7 @@
       "label": "draw_target_brackets()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L721",
+      "source_location": "L738",
       "id": "src_cockpit_draw_target_brackets",
       "community": 2,
       "norm_label": "draw_target_brackets()"
@@ -5000,7 +5027,7 @@
       "label": "print_spd()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L829",
+      "source_location": "L846",
       "id": "src_cockpit_print_spd",
       "community": 2,
       "norm_label": "print_spd()"
@@ -5009,7 +5036,7 @@
       "label": "draw_speed()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L834",
+      "source_location": "L851",
       "id": "src_cockpit_draw_speed",
       "community": 2,
       "norm_label": "draw_speed()"
@@ -5018,7 +5045,7 @@
       "label": "print_kph()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L841",
+      "source_location": "L858",
       "id": "src_cockpit_print_kph",
       "community": 2,
       "norm_label": "print_kph()"
@@ -5027,7 +5054,7 @@
       "label": "draw_waypoints()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L849",
+      "source_location": "L866",
       "id": "src_cockpit_draw_waypoints",
       "community": 2,
       "norm_label": "draw_waypoints()"
@@ -5036,7 +5063,7 @@
       "label": "draw_missile_ammo()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L928",
+      "source_location": "L945",
       "id": "src_cockpit_draw_missile_ammo",
       "community": 2,
       "norm_label": "draw_missile_ammo()"
@@ -5045,7 +5072,7 @@
       "label": "draw_temp_meter()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L948",
+      "source_location": "L965",
       "id": "src_cockpit_draw_temp_meter",
       "community": 2,
       "norm_label": "draw_temp_meter()"
@@ -5054,7 +5081,7 @@
       "label": "draw_hull_bg()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L993",
+      "source_location": "L1006",
       "id": "src_cockpit_draw_hull_bg",
       "community": 2,
       "norm_label": "draw_hull_bg()"
@@ -5063,7 +5090,7 @@
       "label": "draw_hull_fill()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L1016",
+      "source_location": "L1029",
       "id": "src_cockpit_draw_hull_fill",
       "community": 2,
       "norm_label": "draw_hull_fill()"
@@ -5072,17 +5099,26 @@
       "label": "draw_cockpit_hud()",
       "file_type": "code",
       "source_file": "src/cockpit.py",
-      "source_location": "L1100",
+      "source_location": "L1108",
       "id": "src_cockpit_draw_cockpit_hud",
       "community": 2,
       "norm_label": "draw_cockpit_hud()"
     },
     {
+      "label": "Interpolates smoothly from c0 (val=0.0) to c1 (val=0.5) to c2 (val=1.0) using Nu",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L18",
+      "id": "src_cockpit_rationale_18",
+      "community": 2,
+      "norm_label": "interpolates smoothly from c0 (val=0.0) to c1 (val=0.5) to c2 (val=1.0) using nu"
+    },
+    {
       "label": "Return a cached font.render surface for static text.",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L47",
-      "id": "src_cockpit_rationale_47",
+      "source_location": "L64",
+      "id": "src_cockpit_rationale_64",
       "community": 2,
       "norm_label": "return a cached font.render surface for static text."
     },
@@ -5090,8 +5126,8 @@
       "label": "Project the player's velocity vector into screen space and draw:       - A progr",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L557",
-      "id": "src_cockpit_rationale_557",
+      "source_location": "L574",
+      "id": "src_cockpit_rationale_574",
       "community": 2,
       "norm_label": "project the player's velocity vector into screen space and draw:       - a progr"
     },
@@ -5099,8 +5135,8 @@
       "label": "Draw player coordinates relative to the origin on the left side of the pitch lad",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L633",
-      "id": "src_cockpit_rationale_633",
+      "source_location": "L650",
+      "id": "src_cockpit_rationale_650",
       "community": 2,
       "norm_label": "draw player coordinates relative to the origin on the left side of the pitch lad"
     },
@@ -5108,8 +5144,8 @@
       "label": "Faint corner-bracket [ ] for an untargeted enemy.",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L684",
-      "id": "src_cockpit_rationale_684",
+      "source_location": "L701",
+      "id": "src_cockpit_rationale_701",
       "community": 2,
       "norm_label": "faint corner-bracket [ ] for an untargeted enemy."
     },
@@ -5117,8 +5153,8 @@
       "label": "Bright angled bracket < > for the active/locked target.",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L698",
-      "id": "src_cockpit_rationale_698",
+      "source_location": "L715",
+      "id": "src_cockpit_rationale_715",
       "community": 2,
       "norm_label": "bright angled bracket < > for the active/locked target."
     },
@@ -5126,8 +5162,8 @@
       "label": "Draw HUD brackets for every visible enemy:       - Untargeted: dim [ ] bracket",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L725",
-      "id": "src_cockpit_rationale_725",
+      "source_location": "L742",
+      "id": "src_cockpit_rationale_742",
       "community": 2,
       "norm_label": "draw hud brackets for every visible enemy:       - untargeted: dim [ ] bracket"
     },
@@ -5135,8 +5171,8 @@
       "label": "Draws the \"GUN TEMP\" word and a small heat bar.     Colors transition from Green",
       "file_type": "rationale",
       "source_file": "src/cockpit.py",
-      "source_location": "L949",
-      "id": "src_cockpit_rationale_949",
+      "source_location": "L966",
+      "id": "src_cockpit_rationale_966",
       "community": 2,
       "norm_label": "draws the \"gun temp\" word and a small heat bar.     colors transition from green"
     },
@@ -5146,7 +5182,7 @@
       "source_file": "src/director.py",
       "source_location": "L1",
       "id": "src_director_py",
-      "community": 24,
+      "community": 22,
       "norm_label": "director.py"
     },
     {
@@ -7342,7 +7378,7 @@
       "source_file": "extra_docs/INTEGRATION_EXAMPLE.md",
       "source_location": "L6",
       "id": "extra_docs_integration_example",
-      "community": 17,
+      "community": 8,
       "norm_label": "============================================================================="
     },
     {
@@ -7416,6 +7452,159 @@
       "id": "extra_docs_integration_example_202",
       "community": 53,
       "norm_label": "============================================================================="
+    },
+    {
+      "label": "Draws a filled or outlined polygon.          Args:         surf (pygame.Surface)",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L46",
+      "community": 7,
+      "norm_label": "draws a filled or outlined polygon.          args:         surf (pygame.surface)",
+      "id": "src_cockpit_geometry_rationale_46"
+    },
+    {
+      "label": "Draws a single line.          Args:         surf (pygame.Surface): Target surfac",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L58",
+      "community": 7,
+      "norm_label": "draws a single line.          args:         surf (pygame.surface): target surfac",
+      "id": "src_cockpit_geometry_rationale_58"
+    },
+    {
+      "label": "Draws an open sequence of connected lines (a polyline).          Args:         s",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L70",
+      "community": 7,
+      "norm_label": "draws an open sequence of connected lines (a polyline).          args:         s",
+      "id": "src_cockpit_geometry_rationale_70"
+    },
+    {
+      "label": "Draws a rectangle, optionally with rounded corners.          Args:         surf",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L82",
+      "community": 7,
+      "norm_label": "draws a rectangle, optionally with rounded corners.          args:         surf",
+      "id": "src_cockpit_geometry_rationale_82"
+    },
+    {
+      "label": "Draws a circle.          Args:         surf (pygame.Surface): Target surface.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L94",
+      "community": 7,
+      "norm_label": "draws a circle.          args:         surf (pygame.surface): target surface.",
+      "id": "src_cockpit_geometry_rationale_94"
+    },
+    {
+      "label": "Creates a recessed panel effect by drawing a smaller polygon inside another.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L112",
+      "community": 7,
+      "norm_label": "creates a recessed panel effect by drawing a smaller polygon inside another.",
+      "id": "src_cockpit_geometry_rationale_112"
+    },
+    {
+      "label": "Draws an industrial vent with horizontal slats.          Args:         surf (pyg",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L157",
+      "community": 7,
+      "norm_label": "draws an industrial vent with horizontal slats.          args:         surf (pyg",
+      "id": "src_cockpit_geometry_rationale_157"
+    },
+    {
+      "label": "Draws a hexagonal armor plate with an inset recessed area.          Args:",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L179",
+      "community": 7,
+      "norm_label": "draws a hexagonal armor plate with an inset recessed area.          args:",
+      "id": "src_cockpit_geometry_rationale_179"
+    },
+    {
+      "label": "Bakes the non-animated cockpit geometry into a static Surface.          This inc",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L213",
+      "community": 7,
+      "norm_label": "bakes the non-animated cockpit geometry into a static surface.          this inc",
+      "id": "src_cockpit_geometry_rationale_213"
+    },
+    {
+      "label": "Main entry point to draw the cockpit and HUD overlays.          Handles static g",
+      "file_type": "rationale",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L651",
+      "community": 7,
+      "norm_label": "main entry point to draw the cockpit and hud overlays.          handles static g",
+      "id": "src_cockpit_geometry_rationale_651"
+    },
+    {
+      "label": "Return a cached font.render surface for static text.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L47",
+      "community": 2,
+      "norm_label": "return a cached font.render surface for static text.",
+      "id": "src_cockpit_rationale_47"
+    },
+    {
+      "label": "Project the player's velocity vector into screen space and draw:       - A progr",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L557",
+      "community": 2,
+      "norm_label": "project the player's velocity vector into screen space and draw:       - a progr",
+      "id": "src_cockpit_rationale_557"
+    },
+    {
+      "label": "Draw player coordinates relative to the origin on the left side of the pitch lad",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L633",
+      "community": 2,
+      "norm_label": "draw player coordinates relative to the origin on the left side of the pitch lad",
+      "id": "src_cockpit_rationale_633"
+    },
+    {
+      "label": "Faint corner-bracket [ ] for an untargeted enemy.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L684",
+      "community": 2,
+      "norm_label": "faint corner-bracket [ ] for an untargeted enemy.",
+      "id": "src_cockpit_rationale_684"
+    },
+    {
+      "label": "Bright angled bracket < > for the active/locked target.",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L698",
+      "community": 2,
+      "norm_label": "bright angled bracket < > for the active/locked target.",
+      "id": "src_cockpit_rationale_698"
+    },
+    {
+      "label": "Draw HUD brackets for every visible enemy:       - Untargeted: dim [ ] bracket",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L725",
+      "community": 2,
+      "norm_label": "draw hud brackets for every visible enemy:       - untargeted: dim [ ] bracket",
+      "id": "src_cockpit_rationale_725"
+    },
+    {
+      "label": "Draws the \"GUN TEMP\" word and a small heat bar.     Colors transition from Green",
+      "file_type": "rationale",
+      "source_file": "src/cockpit.py",
+      "source_location": "L949",
+      "community": 2,
+      "norm_label": "draws the \"gun temp\" word and a small heat bar.     colors transition from green",
+      "id": "src_cockpit_rationale_949"
     },
     {
       "label": "Render a secondary pass for the magnified aim window.",
@@ -7746,7 +7935,7 @@
       "file_type": "rationale",
       "source_file": "src/enemy.py",
       "source_location": "L461",
-      "community": 13,
+      "community": 20,
       "norm_label": "triggers proximity explosion and deals radial damage to player.",
       "id": "src_enemy_rationale_461"
     },
@@ -8248,7 +8437,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 16,
+      "community": 15,
       "norm_label": "quick_reference.md",
       "id": "extra_docs_quick_reference"
     },
@@ -8261,7 +8450,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 17,
+      "community": 8,
       "norm_label": "optimization_summary.md",
       "id": "extra_docs_optimization_summary"
     },
@@ -8274,7 +8463,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 16,
+      "community": 15,
       "norm_label": "star_optimization_summary.md",
       "id": "extra_docs_star_optimization_summary"
     },
@@ -8301,7 +8490,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Uses compiled Numba functions to wrap all 220 star positions around the player, bypassing Python interpreter overhead and native loops.",
-      "community": 16,
+      "community": 15,
       "norm_label": "numba jit position wrapping",
       "id": "concept_numba_jit"
     },
@@ -8315,7 +8504,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Replaces individual submission loops with a single batch call from game.py, freeing ~0.096ms per frame (~7% performance improvement).",
-      "community": 16,
+      "community": 15,
       "norm_label": "batch star submission",
       "id": "concept_batch_star_submission"
     },
@@ -8329,7 +8518,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Pre-allocates game entities (Particles and Lasers) to eliminate garbage collection spikes and runtime allocation overhead, boosting FPS by 10-30%.",
-      "community": 8,
+      "community": 4,
       "norm_label": "object pooling",
       "id": "concept_object_pooling"
     },
@@ -8343,7 +8532,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Uses hierarchical octrees and spatial hashing to reduce collision detection complexity from O(n\u00b2) to O(n log n) or O(n), saving 50-80% CPU.",
-      "community": 8,
+      "community": 4,
       "norm_label": "spatial partitioning",
       "id": "concept_spatial_partitioning"
     },
@@ -15189,6 +15378,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_py",
+      "target": "src_cockpit_geometry_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L45",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15300,6 +15499,27 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L802",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_draw_cockpit_frame",
+      "target": "src_cockpit_geometry_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_27",
+      "target": "src_cockpit_geometry_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L129",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15316,6 +15536,16 @@
       "confidence_score": 1.0,
       "source": "src_cockpit_geometry_build_static",
       "target": "src_cockpit_geometry_p"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_63",
+      "target": "src_cockpit_geometry_p",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -15348,6 +15578,16 @@
       "confidence_score": 1.0,
       "source": "src_cockpit_geometry_build_static",
       "target": "src_cockpit_geometry_l"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_75",
+      "target": "src_cockpit_geometry_l",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -15396,6 +15636,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_87",
+      "target": "src_cockpit_geometry_poly",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L70",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15423,6 +15673,16 @@
       "confidence_score": 1.0,
       "source": "src_cockpit_geometry_draw_cockpit_frame",
       "target": "src_cockpit_geometry_r"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_99",
+      "target": "src_cockpit_geometry_r",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -15460,6 +15720,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_111",
+      "target": "src_cockpit_geometry_c",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L94",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15492,6 +15762,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_129",
+      "target": "src_cockpit_geometry_inset_panel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L112",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15508,6 +15788,16 @@
       "confidence_score": 1.0,
       "source": "src_cockpit_geometry_build_static",
       "target": "src_cockpit_geometry_vent"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_174",
+      "target": "src_cockpit_geometry_vent",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -15534,6 +15824,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L196",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_196",
+      "target": "src_cockpit_geometry_hex_plate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L179",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15555,6 +15855,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
+      "source_location": "L230",
+      "weight": 1.0,
+      "source": "src_cockpit_geometry_rationale_230",
+      "target": "src_cockpit_geometry_build_static",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
       "source_location": "L213",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -15565,11 +15875,11 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit_geometry.py",
-      "source_location": "L651",
+      "source_location": "L668",
       "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "src_cockpit_geometry_rationale_651",
-      "target": "src_cockpit_geometry_draw_cockpit_frame"
+      "source": "src_cockpit_geometry_rationale_668",
+      "target": "src_cockpit_geometry_draw_cockpit_frame",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -15580,6 +15890,16 @@
       "source_location": "L944",
       "weight": 1.0,
       "source": "src_cockpit_draw_cockpit_hud",
+      "target": "src_cockpit_geometry_draw_cockpit_frame"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit_geometry.py",
+      "source_location": "L651",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_geometry_rationale_651",
       "target": "src_cockpit_geometry_draw_cockpit_frame"
     },
     {
@@ -17874,9 +18194,9 @@
       "source_file": "src/game.py",
       "source_location": "L364",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_game_rationale_364",
-      "target": "src_game_game_render_magnified_window",
-      "confidence_score": 1.0
+      "target": "src_game_game_render_magnified_window"
     },
     {
       "relation": "rationale_for",
@@ -18285,6 +18605,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_cockpit_py",
+      "target": "src_cockpit_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
       "source_location": "L37",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18397,9 +18727,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L632",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_py",
-      "target": "src_cockpit_draw_coordinates",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_coordinates"
     },
     {
       "relation": "contains",
@@ -18526,6 +18856,49 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
+      "source_location": "L476",
+      "weight": 1.0,
+      "source": "src_cockpit_draw_throttle_fill",
+      "target": "src_cockpit_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L979",
+      "weight": 1.0,
+      "source": "src_cockpit_draw_temp_meter",
+      "target": "src_cockpit_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L1038",
+      "weight": 1.0,
+      "source": "src_cockpit_draw_hull_fill",
+      "target": "src_cockpit_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "src_cockpit_rationale_18",
+      "target": "src_cockpit_interpolate_color",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
       "source_location": "L50",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18583,9 +18956,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L641",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_coordinates",
-      "target": "src_cockpit_custom_font",
-      "confidence_score": 1.0
+      "target": "src_cockpit_custom_font"
     },
     {
       "relation": "calls",
@@ -18726,9 +19099,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L645",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_coordinates",
-      "target": "src_cockpit_cached_label",
-      "confidence_score": 1.0
+      "target": "src_cockpit_cached_label"
     },
     {
       "relation": "calls",
@@ -18784,6 +19157,16 @@
       "confidence_score": 1.0,
       "source": "src_cockpit_draw_hull_fill",
       "target": "src_cockpit_cached_label"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "src_cockpit_rationale_64",
+      "target": "src_cockpit_cached_label",
+      "confidence_score": 1.0
     },
     {
       "relation": "rationale_for",
@@ -18898,6 +19281,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
+      "source_location": "L574",
+      "weight": 1.0,
+      "source": "src_cockpit_rationale_574",
+      "target": "src_cockpit_draw_prograde_marker",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
       "source_location": "L557",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18911,7 +19304,17 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1177",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_cockpit_hud",
+      "target": "src_cockpit_draw_coordinates"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L650",
+      "weight": 1.0,
+      "source": "src_cockpit_rationale_650",
       "target": "src_cockpit_draw_coordinates",
       "confidence_score": 1.0
     },
@@ -18921,9 +19324,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L633",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_633",
-      "target": "src_cockpit_draw_coordinates",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_coordinates"
     },
     {
       "relation": "calls",
@@ -18940,11 +19343,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L684",
+      "source_location": "L701",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_684",
+      "source": "src_cockpit_rationale_701",
       "target": "src_cockpit_draw_dim_bracket",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L684",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_684",
+      "target": "src_cockpit_draw_dim_bracket"
     },
     {
       "relation": "rationale_for",
@@ -18991,11 +19404,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L698",
+      "source_location": "L715",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_698",
+      "source": "src_cockpit_rationale_715",
       "target": "src_cockpit_draw_active_bracket",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L698",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_698",
+      "target": "src_cockpit_draw_active_bracket"
     },
     {
       "relation": "rationale_for",
@@ -19042,11 +19465,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L725",
+      "source_location": "L742",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_725",
+      "source": "src_cockpit_rationale_742",
       "target": "src_cockpit_draw_target_brackets",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L725",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_725",
+      "target": "src_cockpit_draw_target_brackets"
     },
     {
       "relation": "rationale_for",
@@ -19148,11 +19581,21 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/cockpit.py",
-      "source_location": "L949",
+      "source_location": "L966",
       "weight": 1.0,
-      "source": "src_cockpit_rationale_949",
+      "source": "src_cockpit_rationale_966",
       "target": "src_cockpit_draw_temp_meter",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/cockpit.py",
+      "source_location": "L949",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_cockpit_rationale_949",
+      "target": "src_cockpit_draw_temp_meter"
     },
     {
       "relation": "rationale_for",
@@ -22868,5 +23311,5 @@
       "source_file": "extra_docs/OPTIMIZATION_SUMMARY.md"
     }
   ],
-  "built_at_commit": "2631132780791f92fd1d28c7228ae79b54277e5d"
+  "built_at_commit": "f6c989dd8fdb2e3e1ead1be1e228ed7d3033edf1"
 }

@@ -45,7 +45,7 @@
     "semantic_hash": "12d2be9fd1255f39bb490134473d3278"
   },
   "/home/tony/antigravity/3d_space/src/player.py": {
-    "mtime": 1779170808.2583349,
+    "mtime": 1779176652.2542784,
     "ast_hash": "f34eef43a64e745c92fc3013e7e0a879",
     "semantic_hash": ""
   },
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/cockpit_geometry.py": {
-    "mtime": 1779169428.3658051,
-    "ast_hash": "e63ed064140ba895318b2bad5e71a8da",
+    "mtime": 1779177041.679316,
+    "ast_hash": "d0ed41fa255a26e57f592ae116bd3f7d",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/object_pool.py": {
@@ -95,7 +95,7 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/constants.py": {
-    "mtime": 1779170331.4959671,
+    "mtime": 1779176652.2539222,
     "ast_hash": "3ce8b119e0041991b6c312c38370b7b8",
     "semantic_hash": ""
   },
@@ -110,7 +110,7 @@
     "semantic_hash": "742057ec0f817ca334d45e3482af3b7d"
   },
   "/home/tony/antigravity/3d_space/src/game.py": {
-    "mtime": 1779173949.2531486,
+    "mtime": 1779176652.2542784,
     "ast_hash": "2e98a49b1f171c8ff346d70aebf9b53b",
     "semantic_hash": ""
   },
@@ -125,8 +125,8 @@
     "semantic_hash": "eddfc26ecbc713e39cbfb4cc6adcb53a"
   },
   "/home/tony/antigravity/3d_space/src/cockpit.py": {
-    "mtime": 1779173938.3955677,
-    "ast_hash": "0f3a7cd42f0ca5fbe7ab5e4e44c9651a",
+    "mtime": 1779177029.9634342,
+    "ast_hash": "eecf9ebb2171dd07660401c3fe9e6ebc",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/director.py": {

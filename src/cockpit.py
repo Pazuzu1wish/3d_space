@@ -1,6 +1,7 @@
 from pathlib import Path
 import pygame
 import math
+import numpy as np
 from src.math_engine import (
     get_basis_from_quat,
     world_to_camera,
@@ -12,6 +13,22 @@ from src.math_engine import (
 # ── Palette (R, G, B, Alpha) ──────────────────
 from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION
 from src.cockpit_geometry import draw_cockpit_frame
+
+def interpolate_color(val, c0, c1, c2):
+    """
+    Interpolates smoothly from c0 (val=0.0) to c1 (val=0.5) to c2 (val=1.0) using NumPy interp.
+    val: float between 0.0 and 1.0.
+    Returns: RGB or RGBA tuple of ints.
+    """
+    val = max(0.0, min(1.0, float(val)))
+    xp = [0.0, 0.5, 1.0]
+    r = int(np.interp(val, xp, [c0[0], c1[0], c2[0]]))
+    g = int(np.interp(val, xp, [c0[1], c1[1], c2[1]]))
+    b = int(np.interp(val, xp, [c0[2], c1[2], c2[2]]))
+    if len(c0) > 3:
+        a = int(np.interp(val, xp, [c0[3], c1[3], c2[3]]))
+        return (r, g, b, a)
+    return (r, g, b)
 
 # ──────────────────────────────────────────────
 #  COCKPIT HUD
@@ -456,7 +473,7 @@ def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
         # Standard active thruster fill
         if throttle > 0:
             fill_h = int(half_h * throttle)
-            col = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+            col = interpolate_color(throttle, HUD_GREEN, HUD_AMBER, HUD_RED)
             pygame.draw.rect(surface, col, (x, center_y - fill_h, w, fill_h))
         elif throttle < 0:
             fill_h = int(half_h * abs(throttle))
@@ -464,7 +481,7 @@ def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
             pygame.draw.rect(surface, col, (x, center_y, w, fill_h))
 
         if throttle >= 0:
-            col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+            col_throttle_per = interpolate_color(throttle, HUD_GREEN, HUD_AMBER, HUD_RED)
             txt = f"{int(throttle * 100):3d}%"
         else:
             col_throttle_per = (0, 200, 255, 160)
@@ -958,12 +975,8 @@ def draw_temp_meter(surface, x, y, heat, overheated):
         # Flashing Red
         pulse = int((math.sin(pygame.time.get_ticks() * 0.015) + 1) * 127)
         col = (255, pulse, pulse, 200)
-    elif heat > 0.8:
-        col = HUD_RED
-    elif heat > 0.5:
-        col = HUD_AMBER
     else:
-        col = HUD_GREEN
+        col = interpolate_color(heat, HUD_GREEN, HUD_AMBER, HUD_RED)
 
     # Draw label
     lbl = f.render("GUN TEMP", True, col)
@@ -1022,12 +1035,7 @@ def draw_hull_fill(surface, W, H, player_hp, max_hp=100,
     bar_y = H - 28
 
     # Hull colour
-    if ratio > 0.5:
-        col = HUD_GREEN
-    elif ratio > 0.25:
-        col = HUD_AMBER
-    else:
-        col = HUD_RED
+    col = interpolate_color(ratio, HUD_RED, HUD_AMBER, HUD_GREEN)
 
     # Hull fill
     fill_w = int(bar_w * ratio)
