@@ -28,6 +28,7 @@ from src.director import WaveDirector
 from src.encounters import ENCOUNTER_SCRIPT
 from src.object_pool import ParticlePool, LaserPool
 from src.sound_handler import SoundHandler
+from src.ship_ai import ShipAI
 
 # ──────────────────────────────────────────────
 # Game Class
@@ -78,6 +79,7 @@ class Game:
         self.player = Player() # Init Player class
         self.player.sound = self.sound
         self.director = WaveDirector(ENCOUNTER_SCRIPT) # Init WaveDirector class
+        self.ship_ai = ShipAI(self.sound) # Initialize Ship AI voice announcer
 
         # Initialize object pools for performance
         self.particle_pool = ParticlePool(initial_size=500, max_size=2000) # Init ParticlePool class
@@ -520,6 +522,7 @@ class Game:
                 self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles, self.player_missiles, self.sound)
                 self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
                 self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
+                self.ship_ai.update(self.player, self.enemies, self.enemy_projectiles, self.director, dt)
 
                 # ── TARGETING ──────────────────────────────────────
                 # Keep target valid after kills/culls

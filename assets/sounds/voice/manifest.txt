@@ -1,0 +1,78 @@
+combat/missile_incoming.wav	Missile incoming.
+combat/missile_incoming_2.wav	Missile lock detected.
+combat/missile_incoming_3.wav	Evasive action recommended.
+combat/laser_fire.wav	Laser discharged.
+combat/missile_fire.wav	Missile away.
+combat/target_acquired.wav	Target acquired.
+combat/target_lost.wav	Target lost.
+combat/target_destroyed.wav	Target destroyed.
+combat/multiple_targets.wav	Multiple hostiles detected.
+combat/enemy_approaching.wav	Hostile vessel on approach vector.
+combat/enemy_flanking.wav	Hostile attempting to flank.
+combat/weapons_hot.wav	Weapons systems online.
+combat/weapons_offline.wav	Weapons offline.
+combat/ammo_low.wav	Ordnance reserves low.
+combat/ammo_critical.wav	Ordnance critical. Last missile.
+damage/shield_hit.wav	Shield impact.
+damage/shield_hit_2.wav	Shields absorbing impact.
+damage/shields_low.wav	Shield integrity below thirty percent.
+damage/shields_critical.wav	Shields critical.
+damage/shields_down.wav	Shields offline.
+damage/shields_restored.wav	Shields restored.
+damage/armor_hit.wav	Hull impact.
+damage/armor_hit_2.wav	Direct hull breach detected.
+damage/hull_damage_moderate.wav	Hull integrity at sixty percent.
+damage/hull_damage_critical.wav	Hull integrity critical. Structural failure imminent.
+damage/hull_breach.wav	Hull breach. Compartment sealing.
+damage/system_damage.wav	System damage detected.
+damage/engine_damage.wav	Engine array compromised.
+damage/thruster_damage.wav	Thruster response degraded.
+navigation/throttle_up.wav	Thrust increasing.
+navigation/throttle_down.wav	Thrust reducing.
+navigation/full_burn.wav	Maximum thrust engaged.
+navigation/drift_detected.wav	Drift vector detected.
+navigation/course_correction.wav	Course correction applied.
+navigation/velocity_critical.wav	Velocity exceeding safe threshold.
+navigation/proximity_warning.wav	Proximity alert.
+navigation/proximity_critical.wav	Collision imminent.
+navigation/entering_combat_zone.wav	Entering hostile engagement zone.
+navigation/leaving_combat_zone.wav	Exiting engagement zone.
+navigation/waypoint_reached.wav	Waypoint reached.
+navigation/objective_updated.wav	Objective updated.
+system/power_nominal.wav	All systems nominal.
+system/power_low.wav	Power reserves low.
+system/power_critical.wav	Power critical. Non-essential systems offline.
+system/reactor_warning.wav	Reactor temperature elevated.
+system/reactor_critical.wav	Reactor critical. Recommend immediate venting.
+system/sensor_jam.wav	Sensor array interference detected.
+system/sensor_restored.wav	Sensors restored.
+system/radar_contact.wav	Radar contact.
+system/comms_jam.wav	Communications jammed.
+system/nav_offline.wav	Navigation systems offline.
+system/autopilot_engaged.wav	Autopilot engaged.
+system/autopilot_disengaged.wav	Autopilot disengaged.
+system/countermeasures_ready.wav	Countermeasures ready.
+system/countermeasures_deployed.wav	Countermeasures deployed.
+system/countermeasures_empty.wav	Countermeasures depleted.
+ambient/scan_complete.wav	Sector scan complete. No contacts.
+ambient/all_clear.wav	Area clear.
+ambient/long_range_contact.wav	Long range contact. Classification unknown.
+ambient/debris_field.wav	Debris field ahead. Recommend reduced speed.
+ambient/gravity_anomaly.wav	Gravitational anomaly detected.
+ambient/mission_clock.wav	Mission clock running.
+ambient/standby.wav	Standing by.
+ambient/systems_check_ok.wav	All systems check out.
+ambient/fuel_nominal.wav	Fuel reserves nominal.
+ambient/fuel_low.wav	Fuel reserves at twenty percent.
+ambient/fuel_critical.wav	Fuel critical.
+encounter/wave_incoming.wav	New wave incoming.
+encounter/wave_cleared.wav	Wave neutralized.
+encounter/boss_detected.wav	Capital-class vessel detected. Threat level elevated.
+encounter/carrier_detected.wav	Enemy carrier on sensors. Expect fighter deployment.
+encounter/minelayer_detected.wav	Minelayer detected. Watch your six.
+encounter/stealth_contact.wav	Intermittent stealth contact. Active sensors recommended.
+encounter/sniper_contact.wav	Long range sniper contact. Maintain distance or close fast.
+encounter/reinforcements_incoming.wav	Reinforcements detected on approach vector.
+encounter/mission_complete.wav	Mission complete.
+encounter/mission_failed.wav	Mission failed.
+encounter/player_destroyed.wav	Ship destroyed. Hull integrity zero.

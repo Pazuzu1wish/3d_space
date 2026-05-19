@@ -50,8 +50,8 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/enemy.py": {
-    "mtime": 1779143667.3084717,
-    "ast_hash": "753d534591daa946383151b36672a010",
+    "mtime": 1779202169.043369,
+    "ast_hash": "2e5d37b28d1cd2d2e4a3dcccc65f0c3f",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/renderer.py": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/cockpit_geometry.py": {
-    "mtime": 1779177041.679316,
-    "ast_hash": "d0ed41fa255a26e57f592ae116bd3f7d",
+    "mtime": 1779195034.1866717,
+    "ast_hash": "8f87e61cdc655f34fb7a0d3d66deae4d",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/object_pool.py": {
@@ -95,8 +95,8 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/constants.py": {
-    "mtime": 1779176652.2539222,
-    "ast_hash": "3ce8b119e0041991b6c312c38370b7b8",
+    "mtime": 1779195034.1866717,
+    "ast_hash": "9b307b85a96c556aa8d46bdf7d85914a",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/asteroid.py": {
@@ -110,8 +110,8 @@
     "semantic_hash": "742057ec0f817ca334d45e3482af3b7d"
   },
   "/home/tony/antigravity/3d_space/src/game.py": {
-    "mtime": 1779177772.3058772,
-    "ast_hash": "a1b342fde5398fb7f9014d586ac1ff16",
+    "mtime": 1779204873.234413,
+    "ast_hash": "459c6514f5168d2c18c1a88bdf656e70",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/camera.py": {
@@ -125,8 +125,8 @@
     "semantic_hash": "eddfc26ecbc713e39cbfb4cc6adcb53a"
   },
   "/home/tony/antigravity/3d_space/src/cockpit.py": {
-    "mtime": 1779177029.9634342,
-    "ast_hash": "eecf9ebb2171dd07660401c3fe9e6ebc",
+    "mtime": 1779195966.7813108,
+    "ast_hash": "5fcb41699f514d6622e421ea0b161765",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/director.py": {
@@ -205,13 +205,13 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/sound_handler.py": {
-    "mtime": 1779177787.0439873,
+    "mtime": 1779195034.1875548,
     "ast_hash": "ece2dc3cdebedcb0a0e7e41f49b0bb3e",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/tools/generate_sfx.py": {
-    "mtime": 1779177756.8068547,
-    "ast_hash": "cb332a27d7c4c8039991c76940c57a09",
+    "mtime": 1779203962.2196093,
+    "ast_hash": "2c72c601a106368bd89de99f6058132a",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/extra_docs/OPTIMIZATION_RENDERING_FACES.md": {
@@ -220,33 +220,33 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/missile.wav": {
-    "mtime": 1779177768.9228523,
-    "ast_hash": "9520fbe242a2e0095056834985e51529",
+    "mtime": 1779195034.1745167,
+    "ast_hash": "21d94cdba056d74a755054591e7df3c0",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/shield_hit.wav": {
-    "mtime": 1779177768.9242892,
-    "ast_hash": "913c0db038edfcf8c978d98c4ee614c4",
+    "mtime": 1779195034.1749887,
+    "ast_hash": "39a32aa42a646450ea10c8aaf7021928",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/bgm_drone.wav": {
-    "mtime": 1779177768.9308524,
-    "ast_hash": "d034c925c2bd5339d1c96d4959b57d01",
+    "mtime": 1779195034.14329,
+    "ast_hash": "18a7d15afb410d90fd0c55fbe8945852",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/explosion.wav": {
-    "mtime": 1779177768.9237392,
-    "ast_hash": "929ada37d2d5e348e75d883cdbd44feb",
+    "mtime": 1779195034.173376,
+    "ast_hash": "496b853987994fb6b8be0cd395355e2f",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/armor_hit.wav": {
-    "mtime": 1779177768.924625,
-    "ast_hash": "cfd7c324f954217b873ac22f1e91bb90",
+    "mtime": 1779195033.6994712,
+    "ast_hash": "30de8ccaf8754ac09f1ff10ac495d881",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/laser.wav": {
-    "mtime": 1779177768.922583,
-    "ast_hash": "821ca6713419fb29fc1b42d6dd31a001",
+    "mtime": 1779195034.1737597,
+    "ast_hash": "d77cb3ff0d05cd9f8c1d7ea4381ad05c",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/test_run.py": {
@@ -255,28 +255,443 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/engine_hum.wav": {
-    "mtime": 1779177768.934621,
-    "ast_hash": "952b807975b9382e48a7a565ef2297d4",
+    "mtime": 1779195034.1525855,
+    "ast_hash": "daed56538ac4133bf91c16a9fcbbf5be",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/engine_hum_high.wav": {
-    "mtime": 1779177768.9385004,
-    "ast_hash": "914ab19b7c886c6840d8a4d426edb2ba",
+    "mtime": 1779195034.1575327,
+    "ast_hash": "39825ee38179fdd8275748de1246fd6c",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/engine_hum_low.wav": {
-    "mtime": 1779177768.9360695,
-    "ast_hash": "a07bc7f64ec27fdff466af0b72e04da1",
+    "mtime": 1779195034.1616142,
+    "ast_hash": "6f890b530cabaa3deace71a4185f0c06",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/engine_hum_overdrive.wav": {
-    "mtime": 1779177768.9395018,
-    "ast_hash": "42864b2506b2e9b433e86b26e8d41af0",
+    "mtime": 1779195034.1718764,
+    "ast_hash": "bad5af9d441b59812af879249485f616",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/engine_hum_mid.wav": {
-    "mtime": 1779177768.937505,
-    "ast_hash": "861a6e1eea303a4dce376cbc755e5f4b",
+    "mtime": 1779195034.1682258,
+    "ast_hash": "e63e1cc957d27f9443a874a231b00694",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/src/ship_ai.py": {
+    "mtime": 1779204866.1794596,
+    "ast_hash": "c260693c7a5fa2ebcc750fc323b83f7a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/tools/generate_voice_lines": {
+    "mtime": 1779204236.6586115,
+    "ast_hash": "8ac2c51c2cdfa8ef77e5f7763c1d43b6",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/manifest.txt": {
+    "mtime": 1779204253.947566,
+    "ast_hash": "bd910462949354d4e2e04ce77c9b335a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/bgm_drone3.wav": {
+    "mtime": 1779202025.3138552,
+    "ast_hash": "82bb83f882fe3a1c349030212b72b4f6",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/bgm_drone2.wav": {
+    "mtime": 1779201481.3885796,
+    "ast_hash": "4e26499f500eb829a89d8694588abc3e",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/waypoint_reached.wav": {
+    "mtime": 1779204253.158068,
+    "ast_hash": "b4e8aa763c8a7e28420c631ace5f220f",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/throttle_up.wav": {
+    "mtime": 1779204252.8798413,
+    "ast_hash": "cc2427261c8d8ded7f1736321309bf7e",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/drift_detected.wav": {
+    "mtime": 1779204252.9288669,
+    "ast_hash": "b69579ad7ca29e9080536b3214641664",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/leaving_combat_zone.wav": {
+    "mtime": 1779204253.0247812,
+    "ast_hash": "2fce6d751f2f710f7d49f2c55cde140b",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/objective_updated.wav": {
+    "mtime": 1779204253.1844811,
+    "ast_hash": "c912f098c23286e934d4cbbb9eab9c09",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/entering_combat_zone.wav": {
+    "mtime": 1779204253.0066776,
+    "ast_hash": "3b6ca9b3efa7adfa303fca653329f18b",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/velocity_critical.wav": {
+    "mtime": 1779204252.9600017,
+    "ast_hash": "ea3b15131fc455536d4778ea84abfe98",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/full_burn.wav": {
+    "mtime": 1779204252.9118412,
+    "ast_hash": "6a4407dacd0109ae4172d662d763ece2",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/course_correction.wav": {
+    "mtime": 1779204252.9438407,
+    "ast_hash": "8d25a44074a8a3aa5cd1bebb13850d19",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/proximity_warning.wav": {
+    "mtime": 1779204252.9736812,
+    "ast_hash": "42f79f9ee34cc74f5b4a767e4881d321",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/throttle_down.wav": {
+    "mtime": 1779204252.8959484,
+    "ast_hash": "d823f8bafba7c74766b5f6a520956693",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/navigation/proximity_critical.wav": {
+    "mtime": 1779204252.988666,
+    "ast_hash": "70931e8acb30eda64ad3ae9df365d3f4",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/shield_hit.wav": {
+    "mtime": 1779204252.61596,
+    "ast_hash": "3bf39761125d10a4615a62cc5129b1cf",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/hull_damage_critical.wav": {
+    "mtime": 1779204252.8035853,
+    "ast_hash": "3d8cb13e118a8b96a81eb9182df1818e",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/armor_hit_2.wav": {
+    "mtime": 1779204252.7607577,
+    "ast_hash": "f49f925a7496d3da1d77df7ebfd861a8",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/shields_critical.wav": {
+    "mtime": 1779204252.679843,
+    "ast_hash": "2ad69a73723a86ec748ec9ddaf6f15fa",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/shields_low.wav": {
+    "mtime": 1779204252.6566503,
+    "ast_hash": "738bf08af4173df5dd73cedb72119b58",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/system_damage.wav": {
+    "mtime": 1779204252.8355198,
+    "ast_hash": "9d6134d2d9cb53d398975e322439cf9f",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/engine_damage.wav": {
+    "mtime": 1779204252.8498416,
+    "ast_hash": "14c651f6e84f982ac36854052298422b",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/thruster_damage.wav": {
+    "mtime": 1779204252.8645694,
+    "ast_hash": "451d489eb9a9272e883881a51a93b911",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/armor_hit.wav": {
+    "mtime": 1779204252.7415047,
+    "ast_hash": "157efed8fdbd2143860899ba2ac1e0b8",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/shields_down.wav": {
+    "mtime": 1779204252.6988428,
+    "ast_hash": "2fec80daa8010c254155292bbbfbac52",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/shield_hit_2.wav": {
+    "mtime": 1779204252.6323807,
+    "ast_hash": "5b2de4b0979b23d94095da965cc448fd",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/hull_damage_moderate.wav": {
+    "mtime": 1779204252.779877,
+    "ast_hash": "cd7f5e2c553a66b2926734d49851473b",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/hull_breach.wav": {
+    "mtime": 1779204252.8211343,
+    "ast_hash": "27c0aedc9a81e1d0197c7f222323f5c7",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/damage/shields_restored.wav": {
+    "mtime": 1779204252.7188425,
+    "ast_hash": "bd82b3e13413c9491465d24d7e152fba",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/missile_incoming_2.wav": {
+    "mtime": 1779204252.3834362,
+    "ast_hash": "001bd7b0ca041dde69b2b1ed526e3a92",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/missile_incoming.wav": {
+    "mtime": 1779204252.3626382,
+    "ast_hash": "0116b7641f39f7d969fd8507d648cb06",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/enemy_approaching.wav": {
+    "mtime": 1779204252.51825,
+    "ast_hash": "b75152a37b5a4a3a4453c76a8bebbc6c",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/missile_incoming_3.wav": {
+    "mtime": 1779204252.4006655,
+    "ast_hash": "5c05a93fb0c56503d523c202086974d2",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/multiple_targets.wav": {
+    "mtime": 1779204252.5023808,
+    "ast_hash": "827a8f1dc2101b247be1e9325b87626d",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/ammo_critical.wav": {
+    "mtime": 1779204252.6015344,
+    "ast_hash": "96f687d6350bdf68c448f0e254f29a24",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/weapons_hot.wav": {
+    "mtime": 1779204252.550844,
+    "ast_hash": "91f3e94d9252f46463dac60a999cb6f1",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/target_acquired.wav": {
+    "mtime": 1779204252.448537,
+    "ast_hash": "eedcdef7ab595fd8d05adaa8991e5b6e",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/laser_fire.wav": {
+    "mtime": 1779204252.4157662,
+    "ast_hash": "e9b6576fb5e506a3f653379351dcaab8",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/enemy_flanking.wav": {
+    "mtime": 1779204252.534636,
+    "ast_hash": "70502e6015d30e101b9fe0b3e0f05879",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/missile_fire.wav": {
+    "mtime": 1779204252.4316392,
+    "ast_hash": "7b9db77cfe5b52e71010ca404c0afe80",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/weapons_offline.wav": {
+    "mtime": 1779204252.565291,
+    "ast_hash": "9f0a059001fbbeabdd7f31c397116324",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/target_destroyed.wav": {
+    "mtime": 1779204252.4808445,
+    "ast_hash": "991fcf72e5a9b1606a22225f56f81525",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/ammo_low.wav": {
+    "mtime": 1779204252.5807724,
+    "ast_hash": "fac180035ca7f5ad13ba75037f3707c0",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/combat/target_lost.wav": {
+    "mtime": 1779204252.4639244,
+    "ast_hash": "1f253cccd8f2eff98dc9347e35115461",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/minelayer_detected.wav": {
+    "mtime": 1779204253.8230603,
+    "ast_hash": "50e7c3a37d1693eadd728beb97d09a74",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/carrier_detected.wav": {
+    "mtime": 1779204253.8039663,
+    "ast_hash": "605428a5004ee8c04bd045011eff3263",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/player_destroyed.wav": {
+    "mtime": 1779204253.945833,
+    "ast_hash": "d04b62393875f94902d011222f97aac8",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/boss_detected.wav": {
+    "mtime": 1779204253.7761197,
+    "ast_hash": "129aea61e290b6b73f83224567d8360c",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/reinforcements_incoming.wav": {
+    "mtime": 1779204253.895471,
+    "ast_hash": "c45e0687b3d5097c93b85165008df86e",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/mission_failed.wav": {
+    "mtime": 1779204253.9250345,
+    "ast_hash": "ff1e84b1aecfd1539ebafbe9f39e7b2b",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/wave_incoming.wav": {
+    "mtime": 1779204253.7215052,
+    "ast_hash": "79e5e00b59ca7672096b6ecfca236597",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/sniper_contact.wav": {
+    "mtime": 1779204253.8758848,
+    "ast_hash": "2fd2893af239aa9b059ee9a50e9a6a58",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/mission_complete.wav": {
+    "mtime": 1779204253.909689,
+    "ast_hash": "345589d56a3079d78ce37700d7a8b3dc",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/stealth_contact.wav": {
+    "mtime": 1779204253.8480675,
+    "ast_hash": "18f03ef8d77a27adf6b69db1c6ef8082",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/encounter/wave_cleared.wav": {
+    "mtime": 1779204253.7357013,
+    "ast_hash": "b346980054d5ab79daf3a317c35fd143",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/gravity_anomaly.wav": {
+    "mtime": 1779204253.6093705,
+    "ast_hash": "631af519ecd2632e79f737f618efb46b",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/fuel_nominal.wav": {
+    "mtime": 1779204253.672835,
+    "ast_hash": "874dd04c32e2aea565b71bbf1341bf0a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/debris_field.wav": {
+    "mtime": 1779204253.5918565,
+    "ast_hash": "ceaae623fa65b4541b4d833b0e983cc7",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/all_clear.wav": {
+    "mtime": 1779204253.5018363,
+    "ast_hash": "dedba303e59281355af65585ae7291a2",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/mission_clock.wav": {
+    "mtime": 1779204253.6252842,
+    "ast_hash": "baf8e02a44f6bae78f00acc751a1a2e9",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/fuel_critical.wav": {
+    "mtime": 1779204253.7055624,
+    "ast_hash": "74eac4d8a887dc98dc552b827c48739d",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/systems_check_ok.wav": {
+    "mtime": 1779204253.6569347,
+    "ast_hash": "6ceff09a5cc1cbc9935f9f20a72fc5bc",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/fuel_low.wav": {
+    "mtime": 1779204253.6903055,
+    "ast_hash": "323538619637a70965c15bc940685440",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/long_range_contact.wav": {
+    "mtime": 1779204253.5419235,
+    "ast_hash": "859119ac9bf8917200f50478cd41f167",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/scan_complete.wav": {
+    "mtime": 1779204253.4863987,
+    "ast_hash": "0e7cecb28d217ef4eeffe5b70687254a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/ambient/standby.wav": {
+    "mtime": 1779204253.6406677,
+    "ast_hash": "073d5bb74a7d13115b4c82a1fdb6d93a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/reactor_warning.wav": {
+    "mtime": 1779204253.2815983,
+    "ast_hash": "4109b2894b56b4b95fba9cfa64e289dd",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/countermeasures_ready.wav": {
+    "mtime": 1779204253.423773,
+    "ast_hash": "8455c93fe58364bab33a9e7a2002d0e2",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/power_nominal.wav": {
+    "mtime": 1779204253.2218673,
+    "ast_hash": "3a00c0c527fdb8149e5c9eefe3f31a92",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/autopilot_engaged.wav": {
+    "mtime": 1779204253.3915856,
+    "ast_hash": "f82e2985bd8a4042f7fe13e6c0288fcf",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/countermeasures_empty.wav": {
+    "mtime": 1779204253.4609787,
+    "ast_hash": "d483cd18aac1a04278fabece6fc189e3",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/power_low.wav": {
+    "mtime": 1779204253.247031,
+    "ast_hash": "970468e8b5faf2775aa4483aaa67f31a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/reactor_critical.wav": {
+    "mtime": 1779204253.2994153,
+    "ast_hash": "f48f2a30225527cd448f721aca37fb75",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/autopilot_disengaged.wav": {
+    "mtime": 1779204253.4076972,
+    "ast_hash": "09a4017afc2c539286719183da2ce358",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/countermeasures_deployed.wav": {
+    "mtime": 1779204253.4399831,
+    "ast_hash": "6cf214658793edb86a3bf367acbddea6",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/sensor_jam.wav": {
+    "mtime": 1779204253.3152237,
+    "ast_hash": "27bf99ed12afe6bd6bced8a82b3b630e",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/radar_contact.wav": {
+    "mtime": 1779204253.3448517,
+    "ast_hash": "9f7bccf867ab1c40148a8a84e61ce6cc",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/nav_offline.wav": {
+    "mtime": 1779204253.3748374,
+    "ast_hash": "ca6c497f484718b2333b5dcbe78f206a",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/comms_jam.wav": {
+    "mtime": 1779204253.3597498,
+    "ast_hash": "cf2a76c4d676b925213e2f8122d4feca",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/sensor_restored.wav": {
+    "mtime": 1779204253.3298378,
+    "ast_hash": "e7bf058a1df05330666f162caafac67f",
+    "semantic_hash": ""
+  },
+  "/home/tony/antigravity/3d_space/assets/sounds/voice/system/power_critical.wav": {
+    "mtime": 1779204253.2658381,
+    "ast_hash": "0358c7ed18fb425e57711883e5fa6dba",
     "semantic_hash": ""
   }
 }

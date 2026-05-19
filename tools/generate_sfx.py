@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 import os
 import wave
+import pyttsx3
 import numpy as np
+
+
+    
 
 def save_wav(filename, data, sample_rate=44100):
     """
@@ -278,7 +282,7 @@ def main():
     explosion_data = generate_explosion()
     shield_data = generate_shield_hit()
     armor_data = generate_armor_hit()
-    bgm_data = generate_music_drone()
+    #bgm_data = generate_music_drone()
     
     # Generate multiple engine hum layers for dynamic pitch crossfading
     engine_hum_low = generate_engine_hum(25)
@@ -293,7 +297,7 @@ def main():
     save_wav("explosion.wav", explosion_data)
     save_wav("shield_hit.wav", shield_data)
     save_wav("armor_hit.wav", armor_data)
-    save_wav("bgm_drone.wav", bgm_data)
+    #save_wav("bgm_drone.wav", bgm_data)
     save_wav("engine_hum.wav", engine_hum_data)
     save_wav("engine_hum_low.wav", engine_hum_low)
     save_wav("engine_hum_mid.wav", engine_hum_mid)

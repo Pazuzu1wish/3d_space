@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+"""
+generate_voice_lines.py
+
+Procedurally synthesizes onboard AI voice lines using pyttsx3.
+Outputs 16-bit stereo WAV files into assets/sounds/voice/
+organized by state-machine category for easy orchestration.
+
+Voice character: calm, neutral, tactical male
+"""
+
+import os
+import wave
+import tempfile
+import numpy as np
+import pyttsx3
+
+# ---------------------------------------------------------------------------
+# Voice line definitions
+# State machine categories map directly to trigger events in game logic.
+# Each entry: (filename_stem, text)
+# ---------------------------------------------------------------------------
+
+VOICE_LINES = {
+
+    # ── COMBAT ──────────────────────────────────────────────────────────────
+    "combat": [
+        ("missile_incoming",        "Missile incoming."),
+        ("missile_incoming_2",      "Missile lock detected."),
+        ("missile_incoming_3",      "Evasive action recommended."),
+        ("laser_fire",              "Laser discharged."),
+        ("missile_fire",            "Missile away."),
+        ("target_acquired",         "Target acquired."),
+        ("target_lost",             "Target lost."),
+        ("target_destroyed",        "Target destroyed."),
+        ("multiple_targets",        "Multiple hostiles detected."),
+        ("enemy_approaching",       "Hostile vessel on approach vector."),
+        ("enemy_flanking",          "Hostile attempting to flank."),
+        ("weapons_hot",             "Weapons systems online."),
+        ("weapons_offline",         "Weapons offline."),
+        ("ammo_low",                "Ordnance reserves low."),
+        ("ammo_critical",           "Ordnance critical. Last missile."),
+    ],
+
+    # ── DAMAGE / HULL ────────────────────────────────────────────────────────
+    "damage": [
+        ("shield_hit",              "Shield impact."),
+        ("shield_hit_2",            "Shields absorbing impact."),
+        ("shields_low",             "Shield integrity below thirty percent."),
+        ("shields_critical",        "Shields critical."),
+        ("shields_down",            "Shields offline."),
+        ("shields_restored",        "Shields restored."),
+        ("armor_hit",               "Hull impact."),
+        ("armor_hit_2",             "Direct hull breach detected."),
+        ("hull_damage_moderate",    "Hull integrity at sixty percent."),
+        ("hull_damage_critical",    "Hull integrity critical. Structural failure imminent."),
+        ("hull_breach",             "Hull breach. Compartment sealing."),
+        ("system_damage",           "System damage detected."),
+        ("engine_damage",           "Engine array compromised."),
+        ("thruster_damage",         "Thruster response degraded."),
+    ],
+
+    # ── NAVIGATION / STATUS ──────────────────────────────────────────────────
+    "navigation": [
+        ("throttle_up",             "Thrust increasing."),
+        ("throttle_down",           "Thrust reducing."),
+        ("full_burn",               "Maximum thrust engaged."),
+        ("drift_detected",          "Drift vector detected."),
+        ("course_correction",       "Course correction applied."),
+        ("velocity_critical",       "Velocity exceeding safe threshold."),
+        ("proximity_warning",       "Proximity alert."),
+        ("proximity_critical",      "Collision imminent."),
+        ("entering_combat_zone",    "Entering hostile engagement zone."),
+        ("leaving_combat_zone",     "Exiting engagement zone."),
+        ("waypoint_reached",        "Waypoint reached."),
+        ("objective_updated",       "Objective updated."),
+    ],
+
+    # ── SYSTEM WARNINGS ─────────────────────────────────────────────────────
+    "system": [
+        ("power_nominal",           "All systems nominal."),
+        ("power_low",               "Power reserves low."),
+        ("power_critical",          "Power critical. Non-essential systems offline."),
+        ("reactor_warning",         "Reactor temperature elevated."),
+        ("reactor_critical",        "Reactor critical. Recommend immediate venting."),
+        ("sensor_jam",              "Sensor array interference detected."),
+        ("sensor_restored",         "Sensors restored."),
+        ("radar_contact",           "Radar contact."),
+        ("comms_jam",               "Communications jammed."),
+        ("nav_offline",             "Navigation systems offline."),
+        ("autopilot_engaged",       "Autopilot engaged."),
+        ("autopilot_disengaged",    "Autopilot disengaged."),
+        ("countermeasures_ready",   "Countermeasures ready."),
+        ("countermeasures_deployed","Countermeasures deployed."),
+        ("countermeasures_empty",   "Countermeasures depleted."),
+    ],
+
+    # ── AMBIENT / IDLE ───────────────────────────────────────────────────────
+    "ambient": [
+        ("scan_complete",           "Sector scan complete. No contacts."),
+        ("all_clear",               "Area clear."),
+        ("long_range_contact",      "Long range contact. Classification unknown."),
+        ("debris_field",            "Debris field ahead. Recommend reduced speed."),
+        ("gravity_anomaly",         "Gravitational anomaly detected."),
+        ("mission_clock",           "Mission clock running."),
+        ("standby",                 "Standing by."),
+        ("systems_check_ok",        "All systems check out."),
+        ("fuel_nominal",            "Fuel reserves nominal."),
+        ("fuel_low",                "Fuel reserves at twenty percent."),
+        ("fuel_critical",           "Fuel critical."),
+    ],
+
+    # ── WAVE / ENCOUNTER ────────────────────────────────────────────────────
+    "encounter": [
+        ("wave_incoming",           "New wave incoming."),
+        ("wave_cleared",            "Wave neutralized."),
+        ("boss_detected",           "Capital-class vessel detected. Threat level elevated."),
+        ("carrier_detected",        "Enemy carrier on sensors. Expect fighter deployment."),
+        ("minelayer_detected",      "Minelayer detected. Watch your six."),
+        ("stealth_contact",         "Intermittent stealth contact. Active sensors recommended."),
+        ("sniper_contact",          "Long range sniper contact. Maintain distance or close fast."),
+        ("reinforcements_incoming", "Reinforcements detected on approach vector."),
+        ("mission_complete",        "Mission complete."),
+        ("mission_failed",          "Mission failed."),
+        ("player_destroyed",        "Ship destroyed. Hull integrity zero."),
+    ],
+}
+
+# ---------------------------------------------------------------------------
+# Audio helpers (same pattern as generate_sfx.py)
+# ---------------------------------------------------------------------------
+
+def make_centered_stereo(mono_data: np.ndarray) -> np.ndarray:
+    stereo = np.zeros((len(mono_data), 2), dtype=np.float32)
+    stereo[:, 0] = mono_data
+    stereo[:, 1] = mono_data
+    return stereo
+
+
+def save_wav(filepath: str, data: np.ndarray, sample_rate: int = 44100):
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    clipped = np.clip(data, -1.0, 1.0)
+    pcm = (clipped * 32767).astype(np.int16)
+    with wave.open(filepath, 'wb') as w:
+        w.setnchannels(2)
+        w.setsampwidth(2)
+        w.setframerate(sample_rate)
+        w.writeframes(pcm.tobytes())
+
+
+def load_wav_as_float(path: str):
+    """Read a WAV file back as float32 numpy array. Returns (data, sample_rate)."""
+    with wave.open(path, 'rb') as w:
+        sr = w.getframerate()
+        n_channels = w.getnchannels()
+        sampwidth = w.getsampwidth()
+        n_frames = w.getnframes()
+        raw = w.readframes(n_frames)
+
+    dtype_map = {1: np.int8, 2: np.int16, 4: np.int32}
+    dtype = dtype_map.get(sampwidth, np.int16)
+    samples = np.frombuffer(raw, dtype=dtype).astype(np.float32)
+    samples /= float(np.iinfo(dtype).max)
+
+    if n_channels > 1:
+        samples = samples.reshape(-1, n_channels)
+
+    return samples, sr
+
+
+def normalize(data: np.ndarray, target_peak: float = 0.82) -> np.ndarray:
+    """Peak-normalize to target level."""
+    peak = np.max(np.abs(data))
+    if peak > 0:
+        data = data * (target_peak / peak)
+    return data
+
+
+def apply_fade(mono: np.ndarray, fade_ms: float = 8.0, sample_rate: int = 44100) -> np.ndarray:
+    """Apply short fade-in and fade-out to prevent clicks."""
+    fade_n = int(sample_rate * fade_ms / 1000.0)
+    fade_n = min(fade_n, len(mono) // 4)
+    if fade_n > 0:
+        mono[:fade_n] *= np.linspace(0.0, 1.0, fade_n)
+        mono[-fade_n:] *= np.linspace(1.0, 0.0, fade_n)
+    return mono
+
+# ---------------------------------------------------------------------------
+# TTS engine setup
+# ---------------------------------------------------------------------------
+
+def build_engine(rate: int = 155, volume: float = 1.0) -> pyttsx3.Engine:
+    """
+    Configure pyttsx3 engine for calm, neutral, tactical male voice.
+    Rate: slightly below default (175) for authoritative pacing.
+    """
+    engine = pyttsx3.init()
+    engine.setProperty('rate', rate)
+    engine.setProperty('volume', volume)
+
+    # Pick a male voice. pyttsx3 lists voices; we take the first male one found.
+    voices = engine.getProperty('voices')
+    male_voice = None
+    for v in voices:
+        name_lower = v.name.lower()
+        # Common male voice names across platforms
+        if any(k in name_lower for k in ('david', 'mark', 'daniel', 'alex',
+                                          'michael', 'james', 'male', 'en_us')):
+            male_voice = v.id
+            break
+    # Fallback: second voice index (often male on Linux/espeak)
+    if male_voice is None and len(voices) > 1:
+        male_voice = voices[1].id
+    elif male_voice is None and voices:
+        male_voice = voices[0].id
+
+    if male_voice:
+        engine.setProperty('voice', male_voice)
+        print(f"  Voice selected: {male_voice}")
+    else:
+        print("  Warning: no male voice found, using system default.")
+
+    return engine
+
+
+def synthesize_line(engine: pyttsx3.Engine, text: str, sample_rate: int = 44100) -> np.ndarray:
+    """
+    Render text to a temp WAV via pyttsx3, reload it, resample if needed,
+    normalize, apply fade, and return as float32 mono numpy array.
+    """
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tf:
+        tmp_path = tf.name
+
+    try:
+        engine.save_to_file(text, tmp_path)
+        engine.runAndWait()
+
+        data, sr = load_wav_as_float(tmp_path)
+
+        # Flatten to mono if stereo
+        if data.ndim == 2:
+            mono = data.mean(axis=1)
+        else:
+            mono = data.copy()
+
+        # Resample to 44100 if engine produced a different rate
+        if sr != sample_rate:
+            ratio = sample_rate / sr
+            new_len = int(len(mono) * ratio)
+            indices = np.linspace(0, len(mono) - 1, new_len)
+            mono = np.interp(indices, np.arange(len(mono)), mono)
+
+        mono = apply_fade(mono.astype(np.float32))
+        mono = normalize(mono)
+        return mono
+
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+
+# ---------------------------------------------------------------------------
+# Main generation loop
+# ---------------------------------------------------------------------------
+
+def main():
+    print("=" * 60)
+    print("Onboard AI Voice Line Generator")
+    print("Character: calm / neutral / tactical / male")
+    print("=" * 60)
+
+    engine = build_engine(rate=155)
+    base_dir = os.path.join("assets", "sounds", "voice")
+    total = 0
+    errors = []
+
+    for category, lines in VOICE_LINES.items():
+        cat_dir = os.path.join(base_dir, category)
+        os.makedirs(cat_dir, exist_ok=True)
+        print(f"\n[{category.upper()}] — {len(lines)} lines")
+
+        for stem, text in lines:
+            filepath = os.path.join(cat_dir, f"{stem}.wav")
+            try:
+                mono = synthesize_line(engine, text)
+                stereo = make_centered_stereo(mono)
+                save_wav(filepath, stereo)
+                print(f"  ✓  {stem}.wav  \"{text}\"")
+                total += 1
+            except Exception as e:
+                msg = f"  ✗  {stem}.wav  ERROR: {e}"
+                print(msg)
+                errors.append((stem, str(e)))
+
+    print("\n" + "=" * 60)
+    print(f"Done. {total} lines generated → {base_dir}/")
+    if errors:
+        print(f"{len(errors)} error(s):")
+        for stem, err in errors:
+            print(f"  {stem}: {err}")
+
+    # Emit a manifest for the state machine to consume
+    manifest_path = os.path.join(base_dir, "manifest.txt")
+    with open(manifest_path, 'w') as mf:
+        for category, lines in VOICE_LINES.items():
+            for stem, text in lines:
+                mf.write(f"{category}/{stem}.wav\t{text}\n")
+    print(f"Manifest written → {manifest_path}")
+
+
+if __name__ == "__main__":
+    main()
