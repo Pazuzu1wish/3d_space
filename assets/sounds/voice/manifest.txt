@@ -54,6 +54,8 @@ system/autopilot_disengaged.wav	Autopilot disengaged.
 system/countermeasures_ready.wav	Countermeasures ready.
 system/countermeasures_deployed.wav	Countermeasures deployed.
 system/countermeasures_empty.wav	Countermeasures depleted.
+system/drift_mode_engaged.wav	Drift mode engaged.
+system/drift_mode_disengaged.wav	Thrusters re-engaged.
 ambient/scan_complete.wav	Sector scan complete. No contacts.
 ambient/all_clear.wav	Area clear.
 ambient/long_range_contact.wav	Long range contact. Classification unknown.

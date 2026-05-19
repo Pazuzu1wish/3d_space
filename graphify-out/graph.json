@@ -43,7 +43,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L1",
       "id": "tests_benchmark_realistic_py",
-      "community": 15,
+      "community": 63,
       "norm_label": "benchmark_realistic.py"
     },
     {
@@ -52,7 +52,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L13",
       "id": "tests_benchmark_realistic_benchmark_realistic",
-      "community": 15,
+      "community": 63,
       "norm_label": "benchmark_realistic()"
     },
     {
@@ -61,7 +61,7 @@
       "source_file": "tests/benchmark_realistic.py",
       "source_location": "L14",
       "id": "tests_benchmark_realistic_rationale_14",
-      "community": 15,
+      "community": 63,
       "norm_label": "benchmark actual game rendering pipeline."
     },
     {
@@ -70,7 +70,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_py",
-      "community": 29,
+      "community": 23,
       "norm_label": "test_optimizations.py"
     },
     {
@@ -232,7 +232,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L196",
       "id": "tests_test_optimizations_testspatialhash",
-      "community": 10,
+      "community": 23,
       "norm_label": "testspatialhash"
     },
     {
@@ -241,7 +241,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L199",
       "id": "tests_test_optimizations_testspatialhash_test_insert_and_query",
-      "community": 10,
+      "community": 23,
       "norm_label": ".test_insert_and_query()"
     },
     {
@@ -250,7 +250,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L217",
       "id": "tests_test_optimizations_testspatialhash_test_clear",
-      "community": 10,
+      "community": 23,
       "norm_label": ".test_clear()"
     },
     {
@@ -331,7 +331,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L310",
       "id": "tests_test_optimizations_run_tests",
-      "community": 29,
+      "community": 23,
       "norm_label": "run_tests()"
     },
     {
@@ -340,7 +340,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L1",
       "id": "tests_test_optimizations_rationale_1",
-      "community": 29,
+      "community": 23,
       "norm_label": "unit tests for object pooling and spatial partitioning systems. run with: python"
     },
     {
@@ -502,7 +502,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L197",
       "id": "tests_test_optimizations_rationale_197",
-      "community": 10,
+      "community": 23,
       "norm_label": "tests for spatial hash grid."
     },
     {
@@ -511,7 +511,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L200",
       "id": "tests_test_optimizations_rationale_200",
-      "community": 10,
+      "community": 23,
       "norm_label": "test inserting and querying with spatial hash."
     },
     {
@@ -520,7 +520,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L218",
       "id": "tests_test_optimizations_rationale_218",
-      "community": 10,
+      "community": 23,
       "norm_label": "test clearing spatial hash."
     },
     {
@@ -592,7 +592,7 @@
       "source_file": "tests/test_optimizations.py",
       "source_location": "L311",
       "id": "tests_test_optimizations_rationale_311",
-      "community": 29,
+      "community": 23,
       "norm_label": "run all tests manually (for environments without pytest)."
     },
     {
@@ -799,7 +799,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L61",
       "id": "src_projectile_machinegunbolt",
-      "community": 9,
+      "community": 5,
       "norm_label": "machinegunbolt"
     },
     {
@@ -844,7 +844,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L99",
       "id": "src_projectile_sniperbeam",
-      "community": 13,
+      "community": 9,
       "norm_label": "sniperbeam"
     },
     {
@@ -880,7 +880,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L115",
       "id": "src_projectile_mine",
-      "community": 61,
+      "community": 9,
       "norm_label": "mine"
     },
     {
@@ -889,7 +889,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L116",
       "id": "src_projectile_mine_init",
-      "community": 61,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -898,7 +898,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L122",
       "id": "src_projectile_mine_submit_to_renderer",
-      "community": 61,
+      "community": 9,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -907,7 +907,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L128",
       "id": "src_projectile_mine_check_player_collision",
-      "community": 61,
+      "community": 9,
       "norm_label": ".check_player_collision()"
     },
     {
@@ -916,7 +916,7 @@
       "source_file": "src/projectile.py",
       "source_location": "L144",
       "id": "src_projectile_stealthshotgun",
-      "community": 5,
+      "community": 32,
       "norm_label": "stealthshotgun"
     },
     {
@@ -1204,7 +1204,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L220",
       "id": "src_math_engine_project_to_screen_batch",
-      "community": 16,
+      "community": 1,
       "norm_label": "project_to_screen_batch()"
     },
     {
@@ -1375,7 +1375,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L221",
       "id": "src_math_engine_rationale_221",
-      "community": 16,
+      "community": 1,
       "norm_label": "numba-optimized batch projection.     cam_verts: (n, 3) float64 array     return"
     },
     {
@@ -1654,7 +1654,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L169",
       "id": "src_enemy_enemy_approaching_too_fast",
-      "community": 5,
+      "community": 20,
       "norm_label": "._approaching_too_fast()"
     },
     {
@@ -1708,7 +1708,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L254",
       "id": "src_enemy_enemy_dist_to_player",
-      "community": 20,
+      "community": 5,
       "norm_label": ".dist_to_player()"
     },
     {
@@ -1834,7 +1834,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L466",
       "id": "src_enemy_suicidedrone_detonate",
-      "community": 20,
+      "community": 5,
       "norm_label": ".detonate()"
     },
     {
@@ -1852,7 +1852,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L489",
       "id": "src_enemy_dogfighter",
-      "community": 9,
+      "community": 5,
       "norm_label": "dogfighter"
     },
     {
@@ -1870,7 +1870,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L588",
       "id": "src_enemy_dogfighter_player_forward",
-      "community": 9,
+      "community": 5,
       "norm_label": "._player_forward()"
     },
     {
@@ -1879,7 +1879,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L591",
       "id": "src_enemy_dogfighter_update",
-      "community": 9,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -1888,7 +1888,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L694",
       "id": "src_enemy_dogfighter_fire_projectile",
-      "community": 9,
+      "community": 5,
       "norm_label": "._fire_projectile()"
     },
     {
@@ -1897,7 +1897,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L724",
       "id": "src_enemy_dogfighter_on_hit",
-      "community": 9,
+      "community": 5,
       "norm_label": ".on_hit()"
     },
     {
@@ -1906,7 +1906,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L735",
       "id": "src_enemy_sniper",
-      "community": 27,
+      "community": 9,
       "norm_label": "sniper"
     },
     {
@@ -1915,7 +1915,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L740",
       "id": "src_enemy_sniper_init",
-      "community": 27,
+      "community": 9,
       "norm_label": ".__init__()"
     },
     {
@@ -1933,7 +1933,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L934",
       "id": "src_enemy_sniper_on_hit",
-      "community": 27,
+      "community": 9,
       "norm_label": ".on_hit()"
     },
     {
@@ -1978,7 +1978,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1120",
       "id": "src_enemy_minelayer",
-      "community": 61,
+      "community": 32,
       "norm_label": "minelayer"
     },
     {
@@ -1996,7 +1996,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1183",
       "id": "src_enemy_minelayer_pick_flank_offset",
-      "community": 61,
+      "community": 32,
       "norm_label": "._pick_flank_offset()"
     },
     {
@@ -2014,7 +2014,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1293",
       "id": "src_enemy_minelayer_on_hit",
-      "community": 61,
+      "community": 32,
       "norm_label": ".on_hit()"
     },
     {
@@ -2023,7 +2023,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1305",
       "id": "src_enemy_stealthinterceptor",
-      "community": 5,
+      "community": 32,
       "norm_label": "stealthinterceptor"
     },
     {
@@ -2041,7 +2041,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1359",
       "id": "src_enemy_stealthinterceptor_pick_flank_offset",
-      "community": 5,
+      "community": 32,
       "norm_label": "._pick_flank_offset()"
     },
     {
@@ -2050,7 +2050,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1377",
       "id": "src_enemy_stealthinterceptor_update",
-      "community": 5,
+      "community": 32,
       "norm_label": ".update()"
     },
     {
@@ -2059,7 +2059,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1453",
       "id": "src_enemy_stealthinterceptor_on_hit",
-      "community": 5,
+      "community": 32,
       "norm_label": ".on_hit()"
     },
     {
@@ -2068,7 +2068,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1463",
       "id": "src_enemy_carrier",
-      "community": 35,
+      "community": 27,
       "norm_label": "carrier"
     },
     {
@@ -2086,7 +2086,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1535",
       "id": "src_enemy_carrier_is_hit",
-      "community": 35,
+      "community": 27,
       "norm_label": ".is_hit()"
     },
     {
@@ -2104,7 +2104,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L1632",
       "id": "src_enemy_carrier_on_hit",
-      "community": 35,
+      "community": 27,
       "norm_label": ".on_hit()"
     },
     {
@@ -2122,7 +2122,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L170",
       "id": "src_enemy_rationale_170",
-      "community": 5,
+      "community": 20,
       "norm_label": "true when close to target and still closing fast \u2014 signal to flip and brake."
     },
     {
@@ -2140,7 +2140,7 @@
       "source_file": "src/enemy.py",
       "source_location": "L467",
       "id": "src_enemy_rationale_467",
-      "community": 20,
+      "community": 5,
       "norm_label": "triggers proximity explosion and deals radial damage to player."
     },
     {
@@ -2815,7 +2815,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L1",
       "id": "src_spatial_partition_py",
-      "community": 10,
+      "community": 66,
       "norm_label": "spatial_partition.py"
     },
     {
@@ -2824,7 +2824,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L9",
       "id": "src_spatial_partition_spatialhash",
-      "community": 10,
+      "community": 66,
       "norm_label": "spatialhash"
     },
     {
@@ -2833,7 +2833,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L15",
       "id": "src_spatial_partition_spatialhash_init",
-      "community": 10,
+      "community": 66,
       "norm_label": ".__init__()"
     },
     {
@@ -2905,7 +2905,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L94",
       "id": "src_spatial_partition_spatialpartition_init",
-      "community": 10,
+      "community": 66,
       "norm_label": ".__init__()"
     },
     {
@@ -2977,7 +2977,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L1",
       "id": "src_spatial_partition_rationale_1",
-      "community": 10,
+      "community": 66,
       "norm_label": "spatial partitioning system efficient collision detection and entity culling usi"
     },
     {
@@ -2986,7 +2986,7 @@
       "source_file": "src/spatial_partition.py",
       "source_location": "L10",
       "id": "src_spatial_partition_rationale_10",
-      "community": 10,
+      "community": 66,
       "norm_label": "efficient spatial partitioning using a hash grid.     optimized for fast inserti"
     },
     {
@@ -3103,7 +3103,7 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L1",
       "id": "src_ship_ai_py",
-      "community": 59,
+      "community": 32,
       "norm_label": "ship_ai.py"
     },
     {
@@ -3112,7 +3112,7 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L6",
       "id": "src_ship_ai_shipai",
-      "community": 59,
+      "community": 32,
       "norm_label": "shipai"
     },
     {
@@ -3128,7 +3128,7 @@
       "label": "._load_sounds()",
       "file_type": "code",
       "source_file": "src/ship_ai.py",
-      "source_location": "L72",
+      "source_location": "L83",
       "id": "src_ship_ai_shipai_load_sounds",
       "community": 59,
       "norm_label": "._load_sounds()"
@@ -3137,26 +3137,26 @@
       "label": ".announce()",
       "file_type": "code",
       "source_file": "src/ship_ai.py",
-      "source_location": "L98",
+      "source_location": "L109",
       "id": "src_ship_ai_shipai_announce",
-      "community": 59,
+      "community": 62,
       "norm_label": ".announce()"
     },
     {
       "label": ".update()",
       "file_type": "code",
       "source_file": "src/ship_ai.py",
-      "source_location": "L120",
+      "source_location": "L131",
       "id": "src_ship_ai_shipai_update",
-      "community": 59,
+      "community": 62,
       "norm_label": ".update()"
     },
     {
       "label": "Preload the voice SFX assets into Pygame, validating headers.",
       "file_type": "rationale",
       "source_file": "src/ship_ai.py",
-      "source_location": "L73",
-      "id": "src_ship_ai_rationale_73",
+      "source_location": "L84",
+      "id": "src_ship_ai_rationale_84",
       "community": 59,
       "norm_label": "preload the voice sfx assets into pygame, validating headers."
     },
@@ -3164,18 +3164,18 @@
       "label": "Triggers a voice announcement if priority conditions are met.",
       "file_type": "rationale",
       "source_file": "src/ship_ai.py",
-      "source_location": "L99",
-      "id": "src_ship_ai_rationale_99",
-      "community": 59,
+      "source_location": "L110",
+      "id": "src_ship_ai_rationale_110",
+      "community": 62,
       "norm_label": "triggers a voice announcement if priority conditions are met."
     },
     {
       "label": "Update loop to monitor gameplay state changes and trigger voice warnings.",
       "file_type": "rationale",
       "source_file": "src/ship_ai.py",
-      "source_location": "L121",
-      "id": "src_ship_ai_rationale_121",
-      "community": 59,
+      "source_location": "L132",
+      "id": "src_ship_ai_rationale_132",
+      "community": 62,
       "norm_label": "update loop to monitor gameplay state changes and trigger voice warnings."
     },
     {
@@ -3400,7 +3400,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_py",
-      "community": 4,
+      "community": 17,
       "norm_label": "object_pool.py"
     },
     {
@@ -3634,7 +3634,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L1",
       "id": "src_object_pool_rationale_1",
-      "community": 4,
+      "community": 17,
       "norm_label": "object pooling system efficiently manages reusable game objects to avoid frequen"
     },
     {
@@ -3850,7 +3850,7 @@
       "source_file": "src/asteroid.py",
       "source_location": "L1",
       "id": "src_asteroid_py",
-      "community": 3,
+      "community": 35,
       "norm_label": "asteroid.py"
     },
     {
@@ -3940,7 +3940,7 @@
       "source_file": "src/asteroid.py",
       "source_location": "L192",
       "id": "src_asteroid_asteroidfield",
-      "community": 3,
+      "community": 35,
       "norm_label": "asteroidfield"
     },
     {
@@ -3949,7 +3949,7 @@
       "source_file": "src/asteroid.py",
       "source_location": "L193",
       "id": "src_asteroid_asteroidfield_init",
-      "community": 3,
+      "community": 35,
       "norm_label": ".__init__()"
     },
     {
@@ -4012,7 +4012,7 @@
       "source_file": "src/controller.py",
       "source_location": "L156",
       "id": "src_controller_ds4input_process_event",
-      "community": 32,
+      "community": 61,
       "norm_label": ".process_event()"
     },
     {
@@ -4039,7 +4039,7 @@
       "source_file": "src/controller.py",
       "source_location": "L232",
       "id": "src_controller_ds4input_just_pressed",
-      "community": 23,
+      "community": 10,
       "norm_label": ".just_pressed()"
     },
     {
@@ -4048,7 +4048,7 @@
       "source_file": "src/controller.py",
       "source_location": "L236",
       "id": "src_controller_ds4input_just_released",
-      "community": 23,
+      "community": 10,
       "norm_label": ".just_released()"
     },
     {
@@ -4183,7 +4183,7 @@
       "source_file": "src/controller.py",
       "source_location": "L341",
       "id": "src_controller_btn_name",
-      "community": 32,
+      "community": 61,
       "norm_label": "_btn_name()"
     },
     {
@@ -4210,7 +4210,7 @@
       "source_file": "src/controller.py",
       "source_location": "L364",
       "id": "src_controller_buttongrid",
-      "community": 23,
+      "community": 10,
       "norm_label": "buttongrid"
     },
     {
@@ -4219,7 +4219,7 @@
       "source_file": "src/controller.py",
       "source_location": "L365",
       "id": "src_controller_buttongrid_init",
-      "community": 23,
+      "community": 10,
       "norm_label": ".__init__()"
     },
     {
@@ -4228,7 +4228,7 @@
       "source_file": "src/controller.py",
       "source_location": "L371",
       "id": "src_controller_buttongrid_press",
-      "community": 23,
+      "community": 10,
       "norm_label": ".press()"
     },
     {
@@ -4237,7 +4237,7 @@
       "source_file": "src/controller.py",
       "source_location": "L376",
       "id": "src_controller_buttongrid_release",
-      "community": 23,
+      "community": 10,
       "norm_label": ".release()"
     },
     {
@@ -4246,7 +4246,7 @@
       "source_file": "src/controller.py",
       "source_location": "L380",
       "id": "src_controller_buttongrid_update",
-      "community": 23,
+      "community": 10,
       "norm_label": ".update()"
     },
     {
@@ -4336,7 +4336,7 @@
       "source_file": "src/controller.py",
       "source_location": "L484",
       "id": "src_controller_eventlog",
-      "community": 32,
+      "community": 61,
       "norm_label": "eventlog"
     },
     {
@@ -4345,7 +4345,7 @@
       "source_file": "src/controller.py",
       "source_location": "L485",
       "id": "src_controller_eventlog_init",
-      "community": 32,
+      "community": 61,
       "norm_label": ".__init__()"
     },
     {
@@ -4354,7 +4354,7 @@
       "source_file": "src/controller.py",
       "source_location": "L490",
       "id": "src_controller_eventlog_add",
-      "community": 32,
+      "community": 61,
       "norm_label": ".add()"
     },
     {
@@ -4408,7 +4408,7 @@
       "source_file": "src/controller.py",
       "source_location": "L555",
       "id": "src_controller_main",
-      "community": 23,
+      "community": 10,
       "norm_label": "main()"
     },
     {
@@ -4435,7 +4435,7 @@
       "source_file": "src/controller.py",
       "source_location": "L157",
       "id": "src_controller_rationale_157",
-      "community": 32,
+      "community": 61,
       "norm_label": "feed a pygame event to the handler.         returns true if the event was consum"
     },
     {
@@ -4462,7 +4462,7 @@
       "source_file": "src/controller.py",
       "source_location": "L233",
       "id": "src_controller_rationale_233",
-      "community": 23,
+      "community": 10,
       "norm_label": "true only on the frame the button went down."
     },
     {
@@ -4471,7 +4471,7 @@
       "source_file": "src/controller.py",
       "source_location": "L237",
       "id": "src_controller_rationale_237",
-      "community": 23,
+      "community": 10,
       "norm_label": "true only on the frame the button came up."
     },
     {
@@ -4633,7 +4633,7 @@
       "source_file": "src/game.py",
       "source_location": "L37",
       "id": "src_game_game",
-      "community": 17,
+      "community": 35,
       "norm_label": "game"
     },
     {
@@ -4642,7 +4642,7 @@
       "source_file": "src/game.py",
       "source_location": "L38",
       "id": "src_game_game_init",
-      "community": 17,
+      "community": 35,
       "norm_label": ".__init__()"
     },
     {
@@ -4651,7 +4651,7 @@
       "source_file": "src/game.py",
       "source_location": "L139",
       "id": "src_game_game_update_entities",
-      "community": 17,
+      "community": 35,
       "norm_label": ".update_entities()"
     },
     {
@@ -4660,7 +4660,7 @@
       "source_file": "src/game.py",
       "source_location": "L266",
       "id": "src_game_game_draw_game",
-      "community": 14,
+      "community": 35,
       "norm_label": ".draw_game()"
     },
     {
@@ -4669,7 +4669,7 @@
       "source_file": "src/game.py",
       "source_location": "L376",
       "id": "src_game_game_render_magnified_window",
-      "community": 14,
+      "community": 65,
       "norm_label": "._render_magnified_window()"
     },
     {
@@ -4678,7 +4678,7 @@
       "source_file": "src/game.py",
       "source_location": "L488",
       "id": "src_game_game_main",
-      "community": 17,
+      "community": 35,
       "norm_label": ".main()"
     },
     {
@@ -4687,7 +4687,7 @@
       "source_file": "src/game.py",
       "source_location": "L377",
       "id": "src_game_rationale_377",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window."
     },
     {
@@ -4768,7 +4768,7 @@
       "source_file": "src/camera.py",
       "source_location": "L76",
       "id": "src_camera_camera_project_batch",
-      "community": 16,
+      "community": 1,
       "norm_label": ".project_batch()"
     },
     {
@@ -4840,7 +4840,7 @@
       "source_file": "src/camera.py",
       "source_location": "L77",
       "id": "src_camera_rationale_77",
-      "community": 16,
+      "community": 1,
       "norm_label": "project batch of camera-space points to screen space using numba."
     },
     {
@@ -4885,7 +4885,7 @@
       "source_file": "src/star.py",
       "source_location": "L72",
       "id": "src_star_star",
-      "community": 15,
+      "community": 63,
       "norm_label": "star"
     },
     {
@@ -4894,7 +4894,7 @@
       "source_file": "src/star.py",
       "source_location": "L73",
       "id": "src_star_star_init",
-      "community": 15,
+      "community": 63,
       "norm_label": ".__init__()"
     },
     {
@@ -4903,7 +4903,7 @@
       "source_file": "src/star.py",
       "source_location": "L76",
       "id": "src_star_star_spawn_around",
-      "community": 15,
+      "community": 63,
       "norm_label": ".spawn_around()"
     },
     {
@@ -4912,7 +4912,7 @@
       "source_file": "src/star.py",
       "source_location": "L102",
       "id": "src_star_star_submit_to_renderer",
-      "community": 15,
+      "community": 63,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -7477,7 +7477,7 @@
       "source_file": "extra_docs/INTEGRATION_EXAMPLE.md",
       "source_location": "L6",
       "id": "extra_docs_integration_example",
-      "community": 17,
+      "community": 8,
       "norm_label": "============================================================================="
     },
     {
@@ -7553,6 +7553,114 @@
       "norm_label": "============================================================================="
     },
     {
+      "label": "Preload the voice SFX assets into Pygame, validating headers.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L83",
+      "community": 59,
+      "norm_label": "preload the voice sfx assets into pygame, validating headers.",
+      "id": "src_ship_ai_rationale_83"
+    },
+    {
+      "label": "Triggers a voice announcement if priority conditions are met.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L109",
+      "community": 62,
+      "norm_label": "triggers a voice announcement if priority conditions are met.",
+      "id": "src_ship_ai_rationale_109"
+    },
+    {
+      "label": "Update loop to monitor gameplay state changes and trigger voice warnings.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L131",
+      "community": 62,
+      "norm_label": "update loop to monitor gameplay state changes and trigger voice warnings.",
+      "id": "src_ship_ai_rationale_131"
+    },
+    {
+      "label": "Preload the voice SFX assets into Pygame, validating headers.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L79",
+      "community": 59,
+      "norm_label": "preload the voice sfx assets into pygame, validating headers.",
+      "id": "src_ship_ai_rationale_79"
+    },
+    {
+      "label": "Triggers a voice announcement if priority conditions are met.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L105",
+      "community": 62,
+      "norm_label": "triggers a voice announcement if priority conditions are met.",
+      "id": "src_ship_ai_rationale_105"
+    },
+    {
+      "label": "Update loop to monitor gameplay state changes and trigger voice warnings.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L127",
+      "community": 62,
+      "norm_label": "update loop to monitor gameplay state changes and trigger voice warnings.",
+      "id": "src_ship_ai_rationale_127"
+    },
+    {
+      "label": "Preload the voice SFX assets into Pygame, validating headers.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L80",
+      "community": 59,
+      "norm_label": "preload the voice sfx assets into pygame, validating headers.",
+      "id": "src_ship_ai_rationale_80"
+    },
+    {
+      "label": "Triggers a voice announcement if priority conditions are met.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L106",
+      "community": 62,
+      "norm_label": "triggers a voice announcement if priority conditions are met.",
+      "id": "src_ship_ai_rationale_106"
+    },
+    {
+      "label": "Update loop to monitor gameplay state changes and trigger voice warnings.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L128",
+      "community": 62,
+      "norm_label": "update loop to monitor gameplay state changes and trigger voice warnings.",
+      "id": "src_ship_ai_rationale_128"
+    },
+    {
+      "label": "Preload the voice SFX assets into Pygame, validating headers.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L73",
+      "community": 59,
+      "norm_label": "preload the voice sfx assets into pygame, validating headers.",
+      "id": "src_ship_ai_rationale_73"
+    },
+    {
+      "label": "Triggers a voice announcement if priority conditions are met.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L99",
+      "community": 62,
+      "norm_label": "triggers a voice announcement if priority conditions are met.",
+      "id": "src_ship_ai_rationale_99"
+    },
+    {
+      "label": "Update loop to monitor gameplay state changes and trigger voice warnings.",
+      "file_type": "rationale",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L121",
+      "community": 62,
+      "norm_label": "update loop to monitor gameplay state changes and trigger voice warnings.",
+      "id": "src_ship_ai_rationale_121"
+    },
+    {
       "label": "Main entry point to draw the cockpit and HUD overlays.          Handles static g",
       "file_type": "rationale",
       "source_file": "src/cockpit_geometry.py",
@@ -7566,7 +7674,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L367",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_367"
     },
@@ -7737,7 +7845,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L364",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_364"
     },
@@ -7908,7 +8016,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L362",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_362"
     },
@@ -7953,7 +8061,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L360",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_360"
     },
@@ -8043,7 +8151,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L359",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_359"
     },
@@ -8205,7 +8313,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L356",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_356"
     },
@@ -8232,7 +8340,7 @@
       "file_type": "rationale",
       "source_file": "src/enemy.py",
       "source_location": "L461",
-      "community": 20,
+      "community": 5,
       "norm_label": "triggers proximity explosion and deals radial damage to player.",
       "id": "src_enemy_rationale_461"
     },
@@ -8439,7 +8547,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L354",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_354"
     },
@@ -8673,7 +8781,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L338",
-      "community": 14,
+      "community": 65,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_338"
     },
@@ -8747,7 +8855,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 17,
+      "community": 8,
       "norm_label": "optimization_summary.md",
       "id": "extra_docs_optimization_summary"
     },
@@ -8773,7 +8881,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 35,
+      "community": 27,
       "norm_label": "collision_fix_summary.md",
       "id": "extra_docs_collision_fix_summary"
     },
@@ -8815,7 +8923,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Pre-allocates game entities (Particles and Lasers) to eliminate garbage collection spikes and runtime allocation overhead, boosting FPS by 10-30%.",
-      "community": 4,
+      "community": 8,
       "norm_label": "object pooling",
       "id": "concept_object_pooling"
     },
@@ -8829,7 +8937,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Uses hierarchical octrees and spatial hashing to reduce collision detection complexity from O(n\u00b2) to O(n log n) or O(n), saving 50-80% CPU.",
-      "community": 4,
+      "community": 8,
       "norm_label": "spatial partitioning",
       "id": "concept_spatial_partitioning"
     },
@@ -8843,7 +8951,7 @@
       "author": null,
       "contributor": null,
       "rationale": "Implements rotated 3D bounding box checks in local space to perfectly handle the massive 800-unit wedge Carrier, resolving spatial partition lookup boundaries.",
-      "community": 35,
+      "community": 27,
       "norm_label": "carrier collision box fix",
       "id": "concept_massive_enemy_collision"
     }
@@ -13642,9 +13750,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L210",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "src_ship_ai_shipai",
-      "target": "src_enemy_sniper",
-      "confidence_score": 0.5
+      "target": "src_enemy_sniper"
     },
     {
       "relation": "uses",
@@ -13714,9 +13822,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L210",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "src_ship_ai_shipai",
-      "target": "src_enemy_corvette",
-      "confidence_score": 0.5
+      "target": "src_enemy_corvette"
     },
     {
       "relation": "uses",
@@ -13827,9 +13935,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L210",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "src_ship_ai_shipai",
-      "target": "src_enemy_minelayer",
-      "confidence_score": 0.5
+      "target": "src_enemy_minelayer"
     },
     {
       "relation": "uses",
@@ -13920,9 +14028,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L210",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "src_ship_ai_shipai",
-      "target": "src_enemy_stealthinterceptor",
-      "confidence_score": 0.5
+      "target": "src_enemy_stealthinterceptor"
     },
     {
       "relation": "uses",
@@ -14013,9 +14121,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L210",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "src_ship_ai_shipai",
-      "target": "src_enemy_carrier",
-      "confidence_score": 0.5
+      "target": "src_enemy_carrier"
     },
     {
       "relation": "uses",
@@ -15737,9 +15845,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_py",
-      "target": "src_ship_ai_shipai",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai"
     },
     {
       "relation": "method",
@@ -15747,9 +15855,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_shipai",
-      "target": "src_ship_ai_shipai_init",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai_init"
     },
     {
       "relation": "method",
@@ -15757,9 +15865,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_shipai",
-      "target": "src_ship_ai_shipai_load_sounds",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai_load_sounds"
     },
     {
       "relation": "method",
@@ -15767,9 +15875,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L98",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_shipai",
-      "target": "src_ship_ai_shipai_announce",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai_announce"
     },
     {
       "relation": "method",
@@ -15777,9 +15885,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L120",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_shipai",
-      "target": "src_ship_ai_shipai_update",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai_update"
     },
     {
       "relation": "uses",
@@ -15787,9 +15895,9 @@
       "source_file": "src/game.py",
       "source_location": "L31",
       "weight": 0.8,
+      "confidence_score": 0.5,
       "source": "src_game_game",
-      "target": "src_ship_ai_shipai",
-      "confidence_score": 0.5
+      "target": "src_ship_ai_shipai"
     },
     {
       "relation": "calls",
@@ -15809,7 +15917,17 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L70",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_shipai_init",
+      "target": "src_ship_ai_shipai_load_sounds"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_ship_ai_rationale_84",
       "target": "src_ship_ai_shipai_load_sounds",
       "confidence_score": 1.0
     },
@@ -15817,11 +15935,41 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/ship_ai.py",
+      "source_location": "L83",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_83",
+      "target": "src_ship_ai_shipai_load_sounds"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L79",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_79",
+      "target": "src_ship_ai_shipai_load_sounds"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L80",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_80",
+      "target": "src_ship_ai_shipai_load_sounds"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
       "source_location": "L73",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_rationale_73",
-      "target": "src_ship_ai_shipai_load_sounds",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai_load_sounds"
     },
     {
       "relation": "calls",
@@ -15830,9 +15978,49 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L125",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_shipai_update",
+      "target": "src_ship_ai_shipai_announce"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L110",
+      "weight": 1.0,
+      "source": "src_ship_ai_rationale_110",
       "target": "src_ship_ai_shipai_announce",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L109",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_109",
+      "target": "src_ship_ai_shipai_announce"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L105",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_105",
+      "target": "src_ship_ai_shipai_announce"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L106",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_106",
+      "target": "src_ship_ai_shipai_announce"
     },
     {
       "relation": "rationale_for",
@@ -15840,9 +16028,49 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L99",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_rationale_99",
-      "target": "src_ship_ai_shipai_announce",
+      "target": "src_ship_ai_shipai_announce"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "src_ship_ai_rationale_132",
+      "target": "src_ship_ai_shipai_update",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L131",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_131",
+      "target": "src_ship_ai_shipai_update"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L127",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_127",
+      "target": "src_ship_ai_shipai_update"
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/ship_ai.py",
+      "source_location": "L128",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_ship_ai_rationale_128",
+      "target": "src_ship_ai_shipai_update"
     },
     {
       "relation": "rationale_for",
@@ -15850,9 +16078,9 @@
       "source_file": "src/ship_ai.py",
       "source_location": "L121",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_ship_ai_rationale_121",
-      "target": "src_ship_ai_shipai_update",
-      "confidence_score": 1.0
+      "target": "src_ship_ai_shipai_update"
     },
     {
       "relation": "contains",
@@ -16357,9 +16585,9 @@
       "source_file": "src/cockpit_geometry.py",
       "source_location": "L683",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_geometry_rationale_683",
-      "target": "src_cockpit_geometry_draw_cockpit_frame",
-      "confidence_score": 1.0
+      "target": "src_cockpit_geometry_draw_cockpit_frame"
     },
     {
       "relation": "calls",
@@ -18477,9 +18705,9 @@
       "source_file": "src/game.py",
       "source_location": "L104",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_game_rationale_104",
-      "target": "src_game_py",
-      "confidence_score": 1.0
+      "target": "src_game_py"
     },
     {
       "relation": "rationale_for",
@@ -18704,9 +18932,9 @@
       "source_file": "src/game.py",
       "source_location": "L377",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_game_rationale_377",
-      "target": "src_game_game_render_magnified_window",
-      "confidence_score": 1.0
+      "target": "src_game_game_render_magnified_window"
     },
     {
       "relation": "rationale_for",
@@ -19377,9 +19605,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1051",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_py",
-      "target": "src_cockpit_shield_label",
-      "confidence_score": 1.0
+      "target": "src_cockpit_shield_label"
     },
     {
       "relation": "contains",
@@ -19387,9 +19615,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1057",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_py",
-      "target": "src_cockpit_shield_percentage",
-      "confidence_score": 1.0
+      "target": "src_cockpit_shield_percentage"
     },
     {
       "relation": "contains",
@@ -19441,9 +19669,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1053",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_shield_label",
-      "target": "src_cockpit_interpolate_color",
-      "confidence_score": 1.0
+      "target": "src_cockpit_interpolate_color"
     },
     {
       "relation": "calls",
@@ -19452,9 +19680,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1059",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_shield_percentage",
-      "target": "src_cockpit_interpolate_color",
-      "confidence_score": 1.0
+      "target": "src_cockpit_interpolate_color"
     },
     {
       "relation": "rationale_for",
@@ -19583,9 +19811,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1052",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_shield_label",
-      "target": "src_cockpit_custom_font",
-      "confidence_score": 1.0
+      "target": "src_cockpit_custom_font"
     },
     {
       "relation": "calls",
@@ -19594,9 +19822,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1058",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_shield_percentage",
-      "target": "src_cockpit_custom_font",
-      "confidence_score": 1.0
+      "target": "src_cockpit_custom_font"
     },
     {
       "relation": "calls",
@@ -19877,9 +20105,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L577",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_577",
-      "target": "src_cockpit_draw_prograde_marker",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_prograde_marker"
     },
     {
       "relation": "rationale_for",
@@ -19918,9 +20146,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L649",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_649",
-      "target": "src_cockpit_draw_coordinates",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_coordinates"
     },
     {
       "relation": "rationale_for",
@@ -19959,9 +20187,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L700",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_700",
-      "target": "src_cockpit_draw_dim_bracket",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_dim_bracket"
     },
     {
       "relation": "rationale_for",
@@ -20030,9 +20258,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L714",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_714",
-      "target": "src_cockpit_draw_active_bracket",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_active_bracket"
     },
     {
       "relation": "rationale_for",
@@ -20101,9 +20329,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L741",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_741",
-      "target": "src_cockpit_draw_target_brackets",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_target_brackets"
     },
     {
       "relation": "rationale_for",
@@ -20227,9 +20455,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L967",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_967",
-      "target": "src_cockpit_draw_temp_meter",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_temp_meter"
     },
     {
       "relation": "rationale_for",
@@ -20310,9 +20538,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1136",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_cockpit_hud",
-      "target": "src_cockpit_shield_label",
-      "confidence_score": 1.0
+      "target": "src_cockpit_shield_label"
     },
     {
       "relation": "calls",
@@ -20321,9 +20549,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1140",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_cockpit_hud",
-      "target": "src_cockpit_shield_percentage",
-      "confidence_score": 1.0
+      "target": "src_cockpit_shield_percentage"
     },
     {
       "relation": "contains",
@@ -21017,9 +21245,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L11",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_11",
-      "target": "tools_generate_sfx_save_wav",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_save_wav"
     },
     {
       "relation": "rationale_for",
@@ -21037,9 +21265,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L30",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_30",
-      "target": "tools_generate_sfx_make_stereo_with_haas",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_stereo_with_haas"
     },
     {
       "relation": "rationale_for",
@@ -21178,9 +21406,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L46",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_46",
-      "target": "tools_generate_sfx_make_centered_stereo",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_make_centered_stereo"
     },
     {
       "relation": "rationale_for",
@@ -21209,9 +21437,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L53",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_53",
-      "target": "tools_generate_sfx_generate_laser",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_laser"
     },
     {
       "relation": "rationale_for",
@@ -21250,9 +21478,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L82",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_82",
-      "target": "tools_generate_sfx_generate_missile",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_missile"
     },
     {
       "relation": "rationale_for",
@@ -21311,9 +21539,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L112",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_112",
-      "target": "tools_generate_sfx_generate_explosion",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_explosion"
     },
     {
       "relation": "rationale_for",
@@ -21372,9 +21600,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L138",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_138",
-      "target": "tools_generate_sfx_generate_shield_hit",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_shield_hit"
     },
     {
       "relation": "rationale_for",
@@ -21433,9 +21661,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L166",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_166",
-      "target": "tools_generate_sfx_generate_armor_hit",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_armor_hit"
     },
     {
       "relation": "rationale_for",
@@ -21483,9 +21711,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L192",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_192",
-      "target": "tools_generate_sfx_generate_music_drone",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_music_drone"
     },
     {
       "relation": "calls",
@@ -21555,9 +21783,9 @@
       "source_file": "tools/generate_sfx.py",
       "source_location": "L240",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tools_generate_sfx_rationale_240",
-      "target": "tools_generate_sfx_generate_engine_hum",
-      "confidence_score": 1.0
+      "target": "tools_generate_sfx_generate_engine_hum"
     },
     {
       "relation": "rationale_for",
@@ -24087,5 +24315,5 @@
       "source_file": "extra_docs/OPTIMIZATION_SUMMARY.md"
     }
   ],
-  "built_at_commit": "06a08e0bc27d0d23bb5ecfb00e265b7e439a6f7e"
+  "built_at_commit": "c379731de1f05aeb7ef3f08417f2a2bf9863b975"
 }

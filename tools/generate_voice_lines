@@ -93,6 +93,8 @@ VOICE_LINES = {
         ("countermeasures_ready",   "Countermeasures ready."),
         ("countermeasures_deployed","Countermeasures deployed."),
         ("countermeasures_empty",   "Countermeasures depleted."),
+        ("drift_mode_engaged",      "Drift mode engaged."),
+        ("drift_mode_disengaged",   "Thrusters re-engaged.")
     ],
 
     # ── AMBIENT / IDLE ───────────────────────────────────────────────────────

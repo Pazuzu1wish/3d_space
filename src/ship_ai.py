@@ -27,6 +27,8 @@ class ShipAI:
             "combat/target_acquired": self.PRIORITY_INFO,
             "combat/target_lost": self.PRIORITY_INFO,
             "combat/target_destroyed": self.PRIORITY_INFO,
+            "combat/ammo_low": self.PRIORITY_WARNING,
+            "combat/ammo_critical": self.PRIORITY_CRITICAL,
             
             "damage/shields_low": self.PRIORITY_WARNING,
             "damage/shields_critical": self.PRIORITY_CRITICAL,
@@ -34,6 +36,8 @@ class ShipAI:
             "damage/shields_restored": self.PRIORITY_INFO,
             "damage/hull_damage_moderate": self.PRIORITY_WARNING,
             "damage/hull_damage_critical": self.PRIORITY_CRITICAL,
+            "combat/weapons_offline": self.PRIORITY_CRITICAL,
+            "combat/weapons_hot": self.PRIORITY_INFO,
             
             "encounter/wave_incoming": self.PRIORITY_INFO,
             "encounter/wave_cleared": self.PRIORITY_INFO,
@@ -44,7 +48,10 @@ class ShipAI:
             "encounter/sniper_contact": self.PRIORITY_INFO,
             "encounter/player_destroyed": self.PRIORITY_CRITICAL,
             
-            "system/power_nominal": self.PRIORITY_LOW
+            "system/power_nominal": self.PRIORITY_LOW,
+            "system/drift_mode_engaged": self.PRIORITY_LOW,
+            "system/drift_mode_disengaged": self.PRIORITY_LOW,
+
         }
 
         # Cache of loaded Sound objects
@@ -56,6 +63,13 @@ class ShipAI:
         self.last_shield_pct = 1.0
         self.last_hp_pct = 1.0
         self.last_target = None
+        self.gun_overheated = False
+        self.last_gun_heat = 0.0
+        self.last_missile_count = 0
+        self.last_drift_mode = False
+        self.announced_ammo_low = False
+        self.announced_ammo_critical = False
+
         
         self.last_pending_waves = None
         self.last_filler_suppressed = False
@@ -165,28 +179,52 @@ class ShipAI:
         self.last_target = target
 
         # ── 4. MISSILE WARNING STATE MACHINE ──
+        self.missile_warning_cooldown = max(0.0, self.missile_warning_cooldown - dt)
+        
         incoming_missile = False
         for proj in projectiles:
             if getattr(proj, 'homing', False) and proj.life > 0:
                 dist = math.dist((proj.x, proj.y, proj.z), player.pos)
-                if dist < 5000.0:  # Within 5000 meters
+                if dist < 5000.0:
                     incoming_missile = True
                     break
 
-        if incoming_missile:
-            if self.missile_warning_cooldown <= 0:
-                # Cycle through warning lines
-                warning = random.choice([
-                    "combat/missile_incoming",
-                    "combat/missile_incoming_2",
-                    "combat/missile_incoming_3"
-                ])
-                self.announce(warning)
-                self.missile_warning_cooldown = 5.0  # Cooldown between missile warnings
-        else:
-            self.missile_warning_cooldown = max(0.0, self.missile_warning_cooldown - dt)
+        if incoming_missile and self.missile_warning_cooldown <= 0:
+            warning = random.choice([
+                "combat/missile_incoming",
+                "combat/missile_incoming_2",
+                "combat/missile_incoming_3"
+            ])
+            self.announce(warning)
+            self.missile_warning_cooldown = 5.0
 
-        # ── 5. WAVE & ENCOUNTER STATE MACHINE ──
+        # ── 5. PLAYER GUN HEAT STATE MACHINE ──
+
+        if player.laser_heat > 0.99 and self.last_gun_heat < 0.95:
+            self.announce("combat/weapons_offline")
+            self.gun_overheated = True
+        elif player.laser_heat < 0.10 and self.last_gun_heat >= 0.10:
+            if self.gun_overheated:
+                self.announce("combat/weapons_hot")
+                self.gun_overheated = False
+        self.last_gun_heat = player.laser_heat    
+
+        # ── 6. MISSILE AMMO STATE MACHINE ──
+        if player.missile_ammo > 4:
+            self.announced_ammo_low = False
+            self.announced_ammo_critical = False
+        elif player.missile_ammo > 1:
+            self.announced_ammo_critical = False
+
+        if player.missile_ammo == 1 and not self.announced_ammo_critical:
+            if self.announce("combat/ammo_critical"):
+                self.announced_ammo_critical = True
+        elif 0 < player.missile_ammo <= 4 and not self.announced_ammo_low:
+            if self.announce("combat/ammo_low"):
+                self.announced_ammo_low = True
+        self.last_missile_count = player.missile_ammo
+
+        # ── 7. WAVE & ENCOUNTER STATE MACHINE ──
         pending_waves = len(wave_director.pending)
         if self.last_pending_waves is None:
             self.last_pending_waves = pending_waves
@@ -206,7 +244,7 @@ class ShipAI:
 
         self.last_filler_suppressed = wave_director.filler_suppressed
 
-        # ── 6. SPECIAL ENEMY DETECTION ──
+        # ── 8. SPECIAL ENEMY DETECTION ──
         from src.enemy import Carrier, StealthInterceptor, Minelayer, Sniper, Corvette
         for enemy in enemies:
             if enemy not in self.seen_enemies:
@@ -231,6 +269,15 @@ class ShipAI:
                     elif etype is Corvette and "corvette" not in self.announced_enemy_types:
                         self.announce("encounter/boss_detected")
                         self.announced_enemy_types.add("corvette")
+                    
 
+        # ── 9. DRIFT MODE STATE MACHINE ──
+        if player.drift_mode and not self.last_drift_mode:
+            self.announce("system/drift_mode_engaged")
+        elif not player.drift_mode and self.last_drift_mode:
+            self.announce("system/drift_mode_disengaged")
+        self.last_drift_mode = player.drift_mode
+
+            
         # Clean up seen_enemies to prevent memory leaks as enemies are destroyed/removed
         self.seen_enemies = {e for e in self.seen_enemies if e in enemies}
