@@ -423,9 +423,24 @@ def _build_static(W, H):
 
         (W - 8, 450)
     ]
+    _inset_panel(s, outer_plate_r, 7, _LIGHT, _MID, _EDGE_DIM)
 
     _inset_panel(s, outer_plate_r, 7, _LIGHT, _MID, _EDGE_DIM)
+    
+    # Recessed panel behind the dodge and thrust bars (right side)
+    _p(s, _DARK, [(W-30, 140), (W-25, 350), (W-130, 350), (W-125, 140)], 0)
+
+    groove_thrust = [
+        (W-35, 150),
+        (W-30, 345),
+        (W-125, 345),
+        (W-120, 150)
+    ]
+    _poly(s, _CYAN, groove_thrust, 2)
+
     _poly(s, _EDGE_DIM, outer_plate_r + [outer_plate_r[0]], 1)
+
+    
 
     # asymmetrical detail (moved down to clear HUD bars)
     _hex_plate(s, W - 70, 390, 32)
