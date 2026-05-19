@@ -944,7 +944,7 @@ def draw_waypoints(surface, player_pos, player_orientation, waypoints, W, H):
 def draw_missile_ammo(surface, x, y, ammo, max_ammo):
     f = custom_font(12)
 
-    val_col = HUD_GREEN if ammo > 5 else HUD_RED if ammo >= 1 else HUD_AMBER
+    val_col = HUD_GREEN if ammo > 5 else HUD_AMBER if ammo > 2 else HUD_RED
 
     lbl = f.render("MISSILE", True, val_col)
     surface.blit(lbl, (x + 10, y))
@@ -952,7 +952,7 @@ def draw_missile_ammo(surface, x, y, ammo, max_ammo):
     val = f.render(f"{ammo:02d}", True, val_col)
     surface.blit(val, (x + 45, y + 35))
 
-    for i in range(max_ammo):
+    for i in range(ammo):
         mx = x + i * 8
         my = y + 20
         col = HUD_GREEN if i < ammo else HUD_DIM
