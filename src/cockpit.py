@@ -1049,53 +1049,66 @@ def draw_hull_fill(surface, W, H, player_hp, max_hp=100,
                        bar_y + bar_h // 2 - val.get_height() // 2))
 
     # ── SHIELD BRACKETS ──────────────────────────────────────────
-    if shield_charge <= 0:
-        return   # no brackets when fully depleted
+    # if shield_charge <= 0:
+    #     return   # no brackets when fully depleted
 
-    # Bracket colour — cyan, shifts amber when low, pulses when recharging
-    if shield_recharging:
-        pulse = int((math.sin(pygame.time.get_ticks() * 0.006) + 1) * 60)
-        s_col = (0, min(255, 180 + pulse), min(255, 200 + pulse))
-    elif shield_charge > 0.5:
-        s_col = (0, 200, 255)       # cyan
-    else:
-        s_col = HUD_AMBER           # amber when low
+    # # Bracket colour — cyan, shifts amber when low, pulses when recharging
+    # if shield_recharging:
+    #     pulse = int((math.sin(pygame.time.get_ticks() * 0.006) + 1) * 60)
+    #     s_col = (0, min(255, 180 + pulse), min(255, 200 + pulse))
+    # elif shield_charge > 0.5:
+    #     s_col = (0, 200, 255)       # cyan
+    # else:
+    #     s_col = HUD_AMBER           # amber when low
 
-    # Brackets shrink inward from both ends toward center
-    # At full charge bracket tips are at the bar edges
-    # At 0 charge brackets would meet at center (but we return early above)
-    bracket_reach = int((bar_w // 2) * shield_charge)
-    pad   = 4    # pixels outside the hull bar
-    thick = 2
-    bx_l  = bar_x - pad                          # left edge
-    bx_r  = bar_x + bar_w + pad                  # right edge
-    by_t  = bar_y - pad                           # top edge
-    by_b  = bar_y + bar_h + pad                   # bottom edge
-    arm   = 6                                     # length of horizontal serifs
+    # # Brackets shrink inward from both ends toward center
+    # # At full charge bracket tips are at the bar edges
+    # # At 0 charge brackets would meet at center (but we return early above)
+    # bracket_reach = int((bar_w // 2) * shield_charge)
+    # pad   = 4    # pixels outside the hull bar
+    # thick = 2
+    # bx_l  = bar_x - pad                          # left edge
+    # bx_r  = bar_x + bar_w + pad                  # right edge
+    # by_t  = bar_y - pad                           # top edge
+    # by_b  = bar_y + bar_h + pad                   # bottom edge
+    # arm   = 6                                     # length of horizontal serifs
 
-    # Left bracket — extends rightward by bracket_reach
-    lx_inner = bx_l + bracket_reach
-    # vertical bar
-    pygame.draw.line(surface, s_col, (bx_l, by_t), (bx_l, by_b), thick)
-    # top serif
-    pygame.draw.line(surface, s_col, (bx_l, by_t), (min(bx_l + arm, lx_inner), by_t), thick)
-    # bottom serif
-    pygame.draw.line(surface, s_col, (bx_l, by_b), (min(bx_l + arm, lx_inner), by_b), thick)
+    # # Left bracket — extends rightward by bracket_reach
+    # lx_inner = bx_l + bracket_reach
+    # # vertical bar
+    # pygame.draw.line(surface, s_col, (bx_l, by_t), (bx_l, by_b), thick)
+    # # top serif
+    # pygame.draw.line(surface, s_col, (bx_l, by_t), (min(bx_l + arm, lx_inner), by_t), thick)
+    # # bottom serif
+    # pygame.draw.line(surface, s_col, (bx_l, by_b), (min(bx_l + arm, lx_inner), by_b), thick)
 
-    # Right bracket — extends leftward by bracket_reach
-    rx_inner = bx_r - bracket_reach
-    # vertical bar
-    pygame.draw.line(surface, s_col, (bx_r, by_t), (bx_r, by_b), thick)
-    # top serif
-    pygame.draw.line(surface, s_col, (bx_r, by_t), (max(bx_r - arm, rx_inner), by_t), thick)
-    # bottom serif
-    pygame.draw.line(surface, s_col, (bx_r, by_b), (max(bx_r - arm, rx_inner), by_b), thick)
+    # # Right bracket — extends leftward by bracket_reach
+    # rx_inner = bx_r - bracket_reach
+    # # vertical bar
+    # pygame.draw.line(surface, s_col, (bx_r, by_t), (bx_r, by_b), thick)
+    # # top serif
+    # pygame.draw.line(surface, s_col, (bx_r, by_t), (max(bx_r - arm, rx_inner), by_t), thick)
+    # # bottom serif
+    # pygame.draw.line(surface, s_col, (bx_r, by_b), (max(bx_r - arm, rx_inner), by_b), thick)
 
-    # Shield percentage — only show when not full
+    # # Shield percentage — only show when not full
+    # if shield_charge < 1.0:
+    #     shld_val = _cached_label(10, f"SHD {int(shield_charge * 100):3d}%", s_col)
+    #     surface.blit(shld_val, (bar_x + bar_w // 2 - shld_val.get_width() // 2,
+    #                             bar_y - shld_val.get_height() - 4))
+
+def shield_label(surface, text, shield_charge, x, y):
+    font = custom_font(14)
+    col = interpolate_color(shield_charge, HUD_RED, HUD_AMBER, HUD_GREEN)
+    lbl = font.render(text, True, col)
+    surface.blit(lbl, (x, y))
+
+def shield_percentage(surface, shield_charge, x, y):
+    font = custom_font(12)
+    col = interpolate_color(shield_charge, HUD_RED, HUD_AMBER, HUD_GREEN)
+    lbl = font.render(f"{int(shield_charge * 100):3d}%", True, col)
     if shield_charge < 1.0:
-        shld_val = _cached_label(10, f"SHD {int(shield_charge * 100):3d}%", s_col)
-        surface.blit(shld_val, (bar_x + bar_w // 2 - shld_val.get_width() // 2,
-                                bar_y - shld_val.get_height() - 4))
+        surface.blit(lbl, (x, y))
 
 # ──────────────────────────────────────────────
 #  MASTER DRAW CALL
@@ -1168,6 +1181,13 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
 
     from src.constants import PLAYER_MISSILE_MAX_AMMO
     draw_missile_ammo(_HUD_OVERLAY, W - 122, 565, missile_ammo, PLAYER_MISSILE_MAX_AMMO)
+
+    shield_label(_HUD_OVERLAY, "S", shield_charge, 20, 500)
+    shield_label(_HUD_OVERLAY, "H", shield_charge, 20, 524)
+    shield_label(_HUD_OVERLAY, "D", shield_charge, 20, 548)
+
+    shield_percentage(_HUD_OVERLAY, shield_charge, 74, 524)
+    
 
     draw_waypoints(_HUD_OVERLAY, player_pos or [0,0,0], orientation or (1,0,0,0), waypoints, W, H)
 
