@@ -116,6 +116,7 @@ class Game:
             {'pos': (-6000, -1500, 3000), 'label': 'COMM RELAY', 'active': True, 'color': (255, 200, 0, 200)},
             {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)}
         ]
+        self.show_prograde = True
 
 # -------------------------------------------------------------------------
 # Game Loop Methods
@@ -328,6 +329,7 @@ class Game:
             missile_lock_timer=player.missile_lock_timer,
             missile_locked=player.missile_locked,
             drift_mode=player.drift_mode,
+            show_prograde=self.show_prograde,
         )
 
         # ── MAGNIFIED AIM WINDOW (L2) ──────────────────────────
@@ -480,6 +482,8 @@ class Game:
                     self.running = False
                 if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
                     self.paused = not self.paused
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_h:
+                    self.show_prograde = not self.show_prograde
                 self.handler.process_event(event)
 
             if self.handler.just_pressed('Options'):
@@ -487,6 +491,9 @@ class Game:
 
             if self.handler.just_pressed('DPad Left'):
                 self.show_waypoints = not self.show_waypoints
+
+            if self.handler.just_pressed('DPad Right'):
+                self.show_prograde = not self.show_prograde
 
             keys = pygame.key.get_pressed()
 

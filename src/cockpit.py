@@ -1069,7 +1069,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      hit_flash_ratio=0.0, explosion_glow=0.0,
                      missile_lock=False, alert_active=False,
                      missile_ammo=0, missile_lock_timer=0.0, missile_locked=False,
-                     drift_mode=False):
+                     drift_mode=False,
+                     show_prograde=True):
 
     global _HUD_OVERLAY, _HUD_STATIC_GLASS, _LAST_SIZE
 
@@ -1132,7 +1133,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
         draw_pitch_ladder(_HUD_OVERLAY, cx, cy, orientation, basis=basis)
 
         # Prograde / retrograde velocity marker
-        if player_vel is not None:
+        if player_vel is not None and show_prograde:
             draw_prograde_marker(_HUD_OVERLAY, cx, cy, orientation, player_vel, W, H)
 
         r_cx, r_cy, r_r = 90, H - 95, 75

@@ -1204,7 +1204,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L220",
       "id": "src_math_engine_project_to_screen_batch",
-      "community": 63,
+      "community": 16,
       "norm_label": "project_to_screen_batch()"
     },
     {
@@ -1375,7 +1375,7 @@
       "source_file": "src/math_engine.py",
       "source_location": "L221",
       "id": "src_math_engine_rationale_221",
-      "community": 63,
+      "community": 16,
       "norm_label": "numba-optimized batch projection.     cam_verts: (n, 3) float64 array     return"
     },
     {
@@ -2428,7 +2428,7 @@
       "source_file": "src/utils.py",
       "source_location": "L151",
       "id": "src_utils_draw_damage_overlay",
-      "community": 5,
+      "community": 3,
       "norm_label": "draw_damage_overlay()"
     },
     {
@@ -2509,7 +2509,7 @@
       "source_file": "src/utils.py",
       "source_location": "L152",
       "id": "src_utils_rationale_152",
-      "community": 5,
+      "community": 3,
       "norm_label": "red vignette that fades in when the player is hit."
     },
     {
@@ -2698,7 +2698,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L1",
       "id": "src_nebula_py",
-      "community": 59,
+      "community": 3,
       "norm_label": "nebula.py"
     },
     {
@@ -2707,7 +2707,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L4",
       "id": "src_nebula_nebulacloud",
-      "community": 59,
+      "community": 3,
       "norm_label": "nebulacloud"
     },
     {
@@ -2716,7 +2716,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L5",
       "id": "src_nebula_nebulacloud_init",
-      "community": 59,
+      "community": 3,
       "norm_label": ".__init__()"
     },
     {
@@ -2725,7 +2725,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L37",
       "id": "src_nebula_nebulacloud_submit_to_renderer",
-      "community": 59,
+      "community": 3,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -2734,7 +2734,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L44",
       "id": "src_nebula_nebulasystem",
-      "community": 59,
+      "community": 3,
       "norm_label": "nebulasystem"
     },
     {
@@ -2743,7 +2743,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L45",
       "id": "src_nebula_nebulasystem_init",
-      "community": 59,
+      "community": 3,
       "norm_label": ".__init__()"
     },
     {
@@ -2752,7 +2752,7 @@
       "source_file": "src/nebula.py",
       "source_location": "L55",
       "id": "src_nebula_nebulasystem_submit_to_renderer",
-      "community": 59,
+      "community": 3,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -3418,7 +3418,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L116",
       "id": "src_object_pool_particlepool_spawn",
-      "community": 74,
+      "community": 12,
       "norm_label": ".spawn()"
     },
     {
@@ -3427,7 +3427,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L138",
       "id": "src_object_pool_particlepool_update",
-      "community": 76,
+      "community": 12,
       "norm_label": ".update()"
     },
     {
@@ -3436,7 +3436,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L157",
       "id": "src_object_pool_particlepool_submit_to_renderer",
-      "community": 75,
+      "community": 12,
       "norm_label": ".submit_to_renderer()"
     },
     {
@@ -3445,7 +3445,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L166",
       "id": "src_object_pool_particlepool_get_active_particles",
-      "community": 73,
+      "community": 12,
       "norm_label": ".get_active_particles()"
     },
     {
@@ -3499,7 +3499,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L225",
       "id": "src_object_pool_laserpool_update",
-      "community": 71,
+      "community": 17,
       "norm_label": ".update()"
     },
     {
@@ -3508,7 +3508,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L239",
       "id": "src_object_pool_laserpool_get_active",
-      "community": 65,
+      "community": 17,
       "norm_label": ".get_active()"
     },
     {
@@ -3517,7 +3517,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L243",
       "id": "src_object_pool_laserpool_get_active_count",
-      "community": 70,
+      "community": 17,
       "norm_label": ".get_active_count()"
     },
     {
@@ -3643,7 +3643,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L120",
       "id": "src_object_pool_rationale_120",
-      "community": 74,
+      "community": 12,
       "norm_label": "spawn a particle at the given position."
     },
     {
@@ -3652,7 +3652,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L139",
       "id": "src_object_pool_rationale_139",
-      "community": 76,
+      "community": 12,
       "norm_label": "update all active particles using numpy vectorization and recycle dead ones."
     },
     {
@@ -3661,7 +3661,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L158",
       "id": "src_object_pool_rationale_158",
-      "community": 75,
+      "community": 12,
       "norm_label": "batch submit active particles to the renderer with frustum culling."
     },
     {
@@ -3670,7 +3670,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L167",
       "id": "src_object_pool_rationale_167",
-      "community": 73,
+      "community": 12,
       "norm_label": "legacy shim for compatibility with existing game.py loops."
     },
     {
@@ -3706,7 +3706,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L226",
       "id": "src_object_pool_rationale_226",
-      "community": 71,
+      "community": 17,
       "norm_label": "update all active lasers and recycle expired ones."
     },
     {
@@ -3715,7 +3715,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L240",
       "id": "src_object_pool_rationale_240",
-      "community": 65,
+      "community": 17,
       "norm_label": "get list of active lasers."
     },
     {
@@ -3724,7 +3724,7 @@
       "source_file": "src/object_pool.py",
       "source_location": "L244",
       "id": "src_object_pool_rationale_244",
-      "community": 70,
+      "community": 17,
       "norm_label": "get number of active lasers."
     },
     {
@@ -4525,7 +4525,7 @@
       "source_file": "src/game.py",
       "source_location": "L1",
       "id": "src_game_py",
-      "community": 61,
+      "community": 3,
       "norm_label": "game.py"
     },
     {
@@ -4534,7 +4534,7 @@
       "source_file": "src/game.py",
       "source_location": "L35",
       "id": "src_game_game",
-      "community": 5,
+      "community": 3,
       "norm_label": "game"
     },
     {
@@ -4543,52 +4543,52 @@
       "source_file": "src/game.py",
       "source_location": "L36",
       "id": "src_game_game_init",
-      "community": 59,
+      "community": 3,
       "norm_label": ".__init__()"
     },
     {
       "label": ".update_entities()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L124",
+      "source_location": "L125",
       "id": "src_game_game_update_entities",
-      "community": 5,
+      "community": 3,
       "norm_label": ".update_entities()"
     },
     {
       "label": ".draw_game()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L251",
+      "source_location": "L252",
       "id": "src_game_game_draw_game",
-      "community": 5,
+      "community": 3,
       "norm_label": ".draw_game()"
     },
     {
       "label": "._render_magnified_window()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L359",
+      "source_location": "L361",
       "id": "src_game_game_render_magnified_window",
-      "community": 5,
+      "community": 3,
       "norm_label": "._render_magnified_window()"
     },
     {
       "label": ".main()",
       "file_type": "code",
       "source_file": "src/game.py",
-      "source_location": "L471",
+      "source_location": "L473",
       "id": "src_game_game_main",
-      "community": 5,
+      "community": 3,
       "norm_label": ".main()"
     },
     {
       "label": "Render a secondary pass for the magnified aim window.",
       "file_type": "rationale",
       "source_file": "src/game.py",
-      "source_location": "L360",
-      "id": "src_game_rationale_360",
-      "community": 5,
+      "source_location": "L362",
+      "id": "src_game_rationale_362",
+      "community": 3,
       "norm_label": "render a secondary pass for the magnified aim window."
     },
     {
@@ -4597,7 +4597,7 @@
       "source_file": "src/game.py",
       "source_location": "L91",
       "id": "src_game_rationale_91",
-      "community": 61,
+      "community": 3,
       "norm_label": "# todo: refactor asteroid field creation logic"
     },
     {
@@ -4669,7 +4669,7 @@
       "source_file": "src/camera.py",
       "source_location": "L76",
       "id": "src_camera_camera_project_batch",
-      "community": 63,
+      "community": 16,
       "norm_label": ".project_batch()"
     },
     {
@@ -4741,7 +4741,7 @@
       "source_file": "src/camera.py",
       "source_location": "L77",
       "id": "src_camera_rationale_77",
-      "community": 63,
+      "community": 16,
       "norm_label": "project batch of camera-space points to screen space using numba."
     },
     {
@@ -7324,7 +7324,7 @@
       "source_file": "extra_docs/INTEGRATION_EXAMPLE.md",
       "source_location": "L6",
       "id": "extra_docs_integration_example",
-      "community": 17,
+      "community": 8,
       "norm_label": "============================================================================="
     },
     {
@@ -7398,6 +7398,15 @@
       "id": "extra_docs_integration_example_202",
       "community": 53,
       "norm_label": "============================================================================="
+    },
+    {
+      "label": "Render a secondary pass for the magnified aim window.",
+      "file_type": "rationale",
+      "source_file": "src/game.py",
+      "source_location": "L360",
+      "community": 3,
+      "norm_label": "render a secondary pass for the magnified aim window.",
+      "id": "src_game_rationale_360"
     },
     {
       "label": "Faint corner-bracket [ ] for an untargeted enemy.",
@@ -7485,7 +7494,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L359",
-      "community": 5,
+      "community": 3,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_359"
     },
@@ -7647,7 +7656,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L356",
-      "community": 5,
+      "community": 3,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_356"
     },
@@ -7656,7 +7665,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L88",
-      "community": 61,
+      "community": 3,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_88"
     },
@@ -7746,7 +7755,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L121",
-      "community": 74,
+      "community": 12,
       "norm_label": "spawn a particle at the given position.",
       "id": "src_object_pool_rationale_121"
     },
@@ -7755,7 +7764,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L140",
-      "community": 76,
+      "community": 12,
       "norm_label": "update all active particles and recycle dead ones.",
       "id": "src_object_pool_rationale_140"
     },
@@ -7764,7 +7773,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L157",
-      "community": 75,
+      "community": 12,
       "norm_label": "batch submit active particles to the renderer with frustum culling.",
       "id": "src_object_pool_rationale_157"
     },
@@ -7773,7 +7782,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L168",
-      "community": 73,
+      "community": 12,
       "norm_label": "legacy shim for compatibility with existing game.py loops.",
       "id": "src_object_pool_rationale_168"
     },
@@ -7809,7 +7818,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L227",
-      "community": 71,
+      "community": 17,
       "norm_label": "update all active lasers and recycle expired ones.",
       "id": "src_object_pool_rationale_227"
     },
@@ -7818,7 +7827,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L241",
-      "community": 65,
+      "community": 17,
       "norm_label": "get list of active lasers.",
       "id": "src_object_pool_rationale_241"
     },
@@ -7827,7 +7836,7 @@
       "file_type": "rationale",
       "source_file": "src/object_pool.py",
       "source_location": "L245",
-      "community": 70,
+      "community": 17,
       "norm_label": "get number of active lasers.",
       "id": "src_object_pool_rationale_245"
     },
@@ -7881,7 +7890,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L354",
-      "community": 5,
+      "community": 3,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_354"
     },
@@ -7890,7 +7899,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L86",
-      "community": 61,
+      "community": 3,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_86"
     },
@@ -8115,7 +8124,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L338",
-      "community": 5,
+      "community": 3,
       "norm_label": "render a secondary pass for the magnified aim window.",
       "id": "src_game_rationale_338"
     },
@@ -8124,7 +8133,7 @@
       "file_type": "rationale",
       "source_file": "src/game.py",
       "source_location": "L72",
-      "community": 61,
+      "community": 3,
       "norm_label": "# todo: refactor asteroid field creation logic",
       "id": "src_game_rationale_72"
     },
@@ -8189,7 +8198,7 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 17,
+      "community": 8,
       "norm_label": "optimization_summary.md",
       "id": "extra_docs_optimization_summary"
     },
@@ -17800,6 +17809,16 @@
       "relation": "rationale_for",
       "confidence": "EXTRACTED",
       "source_file": "src/game.py",
+      "source_location": "L362",
+      "weight": 1.0,
+      "source": "src_game_rationale_362",
+      "target": "src_game_game_render_magnified_window",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "source_file": "src/game.py",
       "source_location": "L360",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -18295,9 +18314,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L556",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_py",
-      "target": "src_cockpit_draw_prograde_marker",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_prograde_marker"
     },
     {
       "relation": "contains",
@@ -18470,9 +18489,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L602",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_prograde_marker",
-      "target": "src_cockpit_custom_font",
-      "confidence_score": 1.0
+      "target": "src_cockpit_custom_font"
     },
     {
       "relation": "calls",
@@ -18766,9 +18785,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L1136",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_draw_cockpit_hud",
-      "target": "src_cockpit_draw_prograde_marker",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_prograde_marker"
     },
     {
       "relation": "rationale_for",
@@ -18776,9 +18795,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L557",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_557",
-      "target": "src_cockpit_draw_prograde_marker",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_prograde_marker"
     },
     {
       "relation": "calls",
@@ -18797,9 +18816,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L645",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_645",
-      "target": "src_cockpit_draw_dim_bracket",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_dim_bracket"
     },
     {
       "relation": "rationale_for",
@@ -18838,9 +18857,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L659",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_659",
-      "target": "src_cockpit_draw_active_bracket",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_active_bracket"
     },
     {
       "relation": "rationale_for",
@@ -18879,9 +18898,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L686",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_686",
-      "target": "src_cockpit_draw_target_brackets",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_target_brackets"
     },
     {
       "relation": "rationale_for",
@@ -18975,9 +18994,9 @@
       "source_file": "src/cockpit.py",
       "source_location": "L910",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_cockpit_rationale_910",
-      "target": "src_cockpit_draw_temp_meter",
-      "confidence_score": 1.0
+      "target": "src_cockpit_draw_temp_meter"
     },
     {
       "relation": "rationale_for",
@@ -22683,5 +22702,5 @@
       "source_file": "extra_docs/OPTIMIZATION_SUMMARY.md"
     }
   ],
-  "built_at_commit": "26261751ddf295594192a0a77988ff95e7083c39"
+  "built_at_commit": "b8b12b9fd05de09c99e746737a3fdaca3b54d889"
 }
