@@ -7,10 +7,10 @@ ENCOUNTER_SCRIPT = [
         'formation': 'gauntlet',
         'enemies': [
             # The Snipers (Rear Guard)
-            ('sniper', (-1200, -1200, -500)),
+            ('stealth', (-1200, -1200, -500)),
             ('sniper', ( 1200, -1200, -500)),
-            ('sniper', (-1200,  1200, -500)),
-            ('sniper', ( 1200,  1200, -500)),
+            ('stealth', (-1200,  1200, -500)),
+            ('stealth', ( 1200,  1200, -500)),
             # The Drone Screen (Vanguard)
             ('drone',  (-400,  200, 800)),
             ('drone',  ( 400,  200, 800)),

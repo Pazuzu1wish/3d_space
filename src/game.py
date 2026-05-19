@@ -126,8 +126,8 @@ class Game:
         self.show_waypoints = True
         # List of {'pos': (x,y,z), 'label': str, 'active': bool, 'color': (R,G,B,A)}
         self.waypoints = [
-            {'pos': (4000, 2000, 8000), 'label': 'SECTOR ALPHA', 'active': True, 'color': (0, 255, 100, 200)},
-            {'pos': (-6000, -1500, 3000), 'label': 'COMM RELAY', 'active': True, 'color': (255, 200, 0, 200)},
+            {'pos': (0, 0, 75000), 'label': 'Enemy Stronghold', 'active': True, 'color': (0, 255, 100, 200)},
+            {'pos': (2000, -500, 25000), 'label': 'CARRIER STRIKE GROUP', 'active': True, 'color': (255, 200, 0, 200)},
             {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)}
         ]
         self.show_prograde = True

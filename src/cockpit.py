@@ -208,7 +208,7 @@ def draw_pitch_ladder(surface, cx, cy, orientation, basis=None):
 _RADAR_CACHE = {}
 
 
-def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=6000, basis=None, player_vel=None):
+def draw_radar(surface, cx, cy, radius, orientation, player_pos, enemies, radar_range=10000, basis=None, player_vel=None):
     global _RADAR_CACHE
 
     forward, right, up = basis if basis else get_basis_from_quat(orientation)
