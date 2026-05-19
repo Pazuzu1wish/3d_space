@@ -54,7 +54,7 @@ class Game:
         self.sound.start_engine_hum()
         
         # Stream seamless deep space ambient loop from disk (saves memory and CPU)
-        #self.sound.play_music("assets/sounds/bgm_drone.wav", loops=-1, volume=0.35)
+        self.sound.play_music("assets/sounds/bgm_drone.wav", loops=-1, volume=0.35)
 
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT # Set Screen size
         flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
