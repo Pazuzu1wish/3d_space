@@ -50,6 +50,7 @@ class Player:
         self.missile_ammo = PLAYER_MISSILE_MAX_AMMO
         self.missile_lock_timer = 0.0
         self.missile_locked = False
+        self.drift_mode = False
 
     @property
     def shield_charge(self):
@@ -94,9 +95,17 @@ class Player:
             if self._target_key_cd <= 0:
                 self._target_key_cd = 0.25   # 250 ms debounce
 
+        # ── THROTTLE INPUT & DRIFT MODE ───────────
+        if keys[pygame.K_UP] or keys[pygame.K_DOWN] or handler.held('R1') or handler.held('L1'):
+            self.drift_mode = False
+
         if handler.held('R1'): self.throttle = min(1.0, self.throttle + dt * 2.8)
         if handler.held('L1'): self.throttle = max(-1.0, self.throttle - dt * 2.8)
-        if handler.just_pressed('R3'): self.throttle = 0.0
+
+        if handler.just_pressed('R3') or keys[pygame.K_f]:
+            self.drift_mode = not self.drift_mode
+            if self.drift_mode:
+                self.throttle = 0.0
 
         # ── DODGE ─────────────────────────────────
         self.dodge_cooldown = max(0.0, self.dodge_cooldown - dt)
@@ -168,14 +177,30 @@ class Player:
         # ── MOVEMENT ──────────────────────────────
         fx, fy, fz = get_forward_from_quat(self.orientation)
         
-        if self.throttle > 0:
-            thrust = self.throttle * MAX_THRUST
+        if self.drift_mode:
+            accel = 0.0
         else:
-            thrust = self.throttle * MAX_RETRO_THRUST
+            # Target speed along the ship's forward axis
+            target_fwd_speed = self.throttle * MAX_SPEED
             
-        self.vel[0] += fx * thrust * dt
-        self.vel[1] += fy * thrust * dt
-        self.vel[2] += fz * thrust * dt
+            # Current velocity projected onto the forward vector
+            current_fwd_speed = self.vel[0] * fx + self.vel[1] * fy + self.vel[2] * fz
+            
+            # Proportional controller to match target speed
+            time_constant = 0.25  # 250ms response time
+            
+            # Include drag compensation to ensure we hit the target speed precisely
+            required_accel = (target_fwd_speed - current_fwd_speed) / time_constant + current_fwd_speed * DRAG
+            
+            # Clamp acceleration by engine thrust capabilities
+            if required_accel >= 0:
+                accel = min(required_accel, MAX_THRUST)
+            else:
+                accel = max(required_accel, -MAX_RETRO_THRUST)
+            
+        self.vel[0] += fx * accel * dt
+        self.vel[1] += fy * accel * dt
+        self.vel[2] += fz * accel * dt
         
         self.vel[0] -= self.vel[0] * DRAG * dt
         self.vel[1] -= self.vel[1] * DRAG * dt

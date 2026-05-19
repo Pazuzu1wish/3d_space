@@ -327,6 +327,7 @@ class Game:
             missile_ammo=player.missile_ammo,
             missile_lock_timer=player.missile_lock_timer,
             missile_locked=player.missile_locked,
+            drift_mode=player.drift_mode,
         )
 
         # ── MAGNIFIED AIM WINDOW (L2) ──────────────────────────

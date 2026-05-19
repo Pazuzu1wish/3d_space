@@ -45,8 +45,8 @@
     "semantic_hash": "12d2be9fd1255f39bb490134473d3278"
   },
   "/home/tony/antigravity/3d_space/src/player.py": {
-    "mtime": 1779166052.9180586,
-    "ast_hash": "bf809487af7ce3d8a5a7d55a745bdc2f",
+    "mtime": 1779170808.2583349,
+    "ast_hash": "f34eef43a64e745c92fc3013e7e0a879",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/enemy.py": {
@@ -85,7 +85,7 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/cockpit_geometry.py": {
-    "mtime": 1779166052.9175,
+    "mtime": 1779169428.3658051,
     "ast_hash": "e63ed064140ba895318b2bad5e71a8da",
     "semantic_hash": ""
   },
@@ -95,9 +95,9 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/constants.py": {
-    "mtime": 1778960397.919427,
-    "ast_hash": "4c7a1686f392cb3ba6c63de4f10c5652",
-    "semantic_hash": "4c7a1686f392cb3ba6c63de4f10c5652"
+    "mtime": 1779170331.4959671,
+    "ast_hash": "3ce8b119e0041991b6c312c38370b7b8",
+    "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/asteroid.py": {
     "mtime": 1779143106.60095,
@@ -110,8 +110,8 @@
     "semantic_hash": "742057ec0f817ca334d45e3482af3b7d"
   },
   "/home/tony/antigravity/3d_space/src/game.py": {
-    "mtime": 1779166052.9178493,
-    "ast_hash": "95d468deed6ecde4306c0a818ba4320a",
+    "mtime": 1779170829.172978,
+    "ast_hash": "f74057fdcb17bfca9fe893cae8107e01",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/camera.py": {
@@ -125,9 +125,9 @@
     "semantic_hash": "eddfc26ecbc713e39cbfb4cc6adcb53a"
   },
   "/home/tony/antigravity/3d_space/src/cockpit.py": {
-    "mtime": 1778960397.919427,
-    "ast_hash": "9b343118dd4cbf557372801a75dca530",
-    "semantic_hash": "9b343118dd4cbf557372801a75dca530"
+    "mtime": 1779170822.3137677,
+    "ast_hash": "33a02e79bc8fe276f5eb470d3d6a43f9",
+    "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/director.py": {
     "mtime": 1778519491.542551,
@@ -205,12 +205,12 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/src/sound_handler.py": {
-    "mtime": 1779166052.9182985,
+    "mtime": 1779169428.3708053,
     "ast_hash": "b803910646ef047abbe0511424d5582a",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/tools/generate_sfx.py": {
-    "mtime": 1779167555.5162015,
+    "mtime": 1779169428.372805,
     "ast_hash": "00f75da9bc980eb30e0fcbce9904b430",
     "semantic_hash": ""
   },
@@ -220,32 +220,32 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/missile.wav": {
-    "mtime": 1779167564.1874828,
+    "mtime": 1779169428.3078055,
     "ast_hash": "9481ee38bbcb9d9bb168f86a4bcc8690",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/shield_hit.wav": {
-    "mtime": 1779167564.1889288,
+    "mtime": 1779169428.3119318,
     "ast_hash": "dba1f1bce006dcfd6c67ca50e8880ba7",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/bgm_drone.wav": {
-    "mtime": 1779167564.1959033,
+    "mtime": 1779169428.2858744,
     "ast_hash": "d034c925c2bd5339d1c96d4959b57d01",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/explosion.wav": {
-    "mtime": 1779167564.1882477,
+    "mtime": 1779169428.2999587,
     "ast_hash": "f7a19eeccb8c480109123e8919fc9932",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/armor_hit.wav": {
-    "mtime": 1779167564.1894863,
+    "mtime": 1779169428.2608056,
     "ast_hash": "5d818a6fee7c13236d619188ee94c534",
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/laser.wav": {
-    "mtime": 1779167564.1866438,
+    "mtime": 1779169428.3038056,
     "ast_hash": "2944a0eb85a4bafb739ca3a5db8dc3f2",
     "semantic_hash": ""
   },
@@ -255,7 +255,7 @@
     "semantic_hash": ""
   },
   "/home/tony/antigravity/3d_space/assets/sounds/engine_hum.wav": {
-    "mtime": 1779167564.1979992,
+    "mtime": 1779169428.2921355,
     "ast_hash": "7f02362ed40bd6452b17cda52719d01b",
     "semantic_hash": ""
   }

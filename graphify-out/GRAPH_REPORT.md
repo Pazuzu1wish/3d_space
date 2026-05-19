@@ -1,16 +1,16 @@
-# Graph Report - 3d_space  (2026-05-18)
+# Graph Report - 3d_space  (2026-05-19)
 
 ## Corpus Check
-- 44 files · ~48,466 words
+- 44 files · ~48,698 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 894 nodes · 1378 edges · 73 communities (55 shown, 18 thin omitted)
+- 907 nodes · 1389 edges · 71 communities (55 shown, 16 thin omitted)
 - Extraction: 84% EXTRACTED · 16% INFERRED · 0% AMBIGUOUS · INFERRED: 222 edges (avg confidence: 0.65)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d0d2bd80`
+- Built from commit: `be2c24cd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -75,8 +75,6 @@
 - [[_COMMUNITY_Community 66|Community 66]]
 - [[_COMMUNITY_Community 68|Community 68]]
 - [[_COMMUNITY_Community 69|Community 69]]
-- [[_COMMUNITY_Community 70|Community 70]]
-- [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
 
 ## God Nodes (most connected - your core abstractions)
@@ -92,10 +90,10 @@
 10. `DebugViewer` - 20 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Spatial Partitioning` --rationale_for--> `SpatialPartition`  [INFERRED]
-  extra_docs/OPTIMIZATION_SUMMARY.md → src/spatial_partition.py
 - `Object Pooling` --rationale_for--> `ObjectPool`  [INFERRED]
   extra_docs/OPTIMIZATION_SUMMARY.md → src/object_pool.py
+- `Spatial Partitioning` --rationale_for--> `SpatialPartition`  [INFERRED]
+  extra_docs/OPTIMIZATION_SUMMARY.md → src/spatial_partition.py
 - `Numba JIT Position Wrapping` --rationale_for--> `wrap_star_positions_batch()`  [INFERRED]
   extra_docs/STAR_OPTIMIZATION_SUMMARY.md → src/star.py
 - `Batch Star Submission` --rationale_for--> `submit_batch_to_renderer()`  [INFERRED]
@@ -106,27 +104,31 @@
 ## Hyperedges (group relationships)
 - **Game Engine Optimization Framework** — src_object_pool_objectpool, src_spatial_partition_spatialpartition, src_star_wrap_star_positions_batch [INFERRED 0.85]
 
-## Communities (73 total, 18 thin omitted)
+## Communities (71 total, 16 thin omitted)
 
 ### Community 0 - "3D Debug Rendering & Viewers"
 Cohesion: 0.08
 Nodes (29): _cross(), DebugViewer, _dot(), face_normal_and_center(), _FallbackShip, mesh_centroid(), _project(), _quat_conj() (+21 more)
 
 ### Community 1 - "3D Mathematics & Matrix Engine"
-Cohesion: 0.06
-Nodes (34): basis_from_forward(), calculate_lead_position(), get_basis_vectors(), get_forward_from_quat(), get_forward_vector(), get_right_from_quat(), get_right_vector(), project_to_screen() (+26 more)
+Cohesion: 0.14
+Nodes (19): get_basis_vectors(), get_right_from_quat(), quat_from_axis_angle(), quat_mul(), quat_normalise(), Extract just the right (X) vector from a quaternion., Numba-optimized batch world-to-camera transformation.     verts: (N, 3) float64, Create a unit quaternion representing a rotation of `angle` radians     around t (+11 more)
 
 ### Community 2 - "HUD Drawing & Instrument Renderers"
 Cohesion: 0.13
-Nodes (33): _cached_label(), custom_font(), _draw_active_bracket(), draw_cockpit_hud(), draw_crosshair(), _draw_dim_bracket(), draw_dodge_bg(), draw_dodge_fill() (+25 more)
+Nodes (34): _cached_label(), custom_font(), _draw_active_bracket(), draw_cockpit_hud(), draw_crosshair(), _draw_dim_bracket(), draw_dodge_bg(), draw_dodge_fill() (+26 more)
 
 ### Community 3 - "Asteroid Generation & Mesh Rendering"
-Cohesion: 0.24
-Nodes (7): Game, Render a secondary pass for the magnified aim window., Render a secondary pass for the magnified aim window., Render a secondary pass for the magnified aim window., Render a secondary pass for the magnified aim window., draw_damage_overlay(), Red vignette that fades in when the player is hit.
+Cohesion: 0.07
+Nodes (17): Asteroid, AsteroidField, Create smaller fragments that explode away from each other., Game, Render a secondary pass for the magnified aim window., Render a secondary pass for the magnified aim window., Render a secondary pass for the magnified aim window., Render a secondary pass for the magnified aim window. (+9 more)
 
 ### Community 4 - "Core Object Pooling Infrastructure"
-Cohesion: 0.10
-Nodes (13): Object Pooling, Spatial Partitioning, ObjectPool, Generic object pool for managing reusable entities., Initialize the object pool.                  Args:             factory: Function, Default reset does nothing - override for specific types., Acquire an object from the pool.                  Returns None if pool is exhaus, Return an object to the pool for reuse. (+5 more)
+Cohesion: 0.08
+Nodes (17): ObjectPool, Generic object pool for managing reusable entities., Initialize the object pool.                  Args:             factory: Function, Default reset does nothing - override for specific types., Acquire an object from the pool.                  Returns None if pool is exhaus, Return an object to the pool for reuse., Return all in-use objects to the pool., Get number of objects currently in use. (+9 more)
+
+### Community 5 - "Homing Missile Weapons System"
+Cohesion: 0.17
+Nodes (11): get_forward_from_quat(), Extract just the forward (Z) vector from a quaternion — avoids full basis build., Lock onto the nearest living, non-stealthed enemy within field of view., Lock onto the nearest living, non-stealthed enemy within field of view., Lock onto the nearest living, non-stealthed enemy within field of view., Lock onto the nearest living, non-stealthed enemy within field of view., Lock onto the nearest living, non-stealthed enemy within field of view., Advance to the next non-stealthed enemy in FOV (wraps around). (+3 more)
 
 ### Community 6 - "Enemy Ships & Visual Trails"
 Cohesion: 0.13
@@ -137,8 +139,8 @@ Cohesion: 0.16
 Nodes (21): _build_static(), _c(), draw_cockpit_frame(), _hex_plate(), _inset_panel(), _l(), _p(), _poly() (+13 more)
 
 ### Community 8 - "Engine Optimization Documentation"
-Cohesion: 0.15
-Nodes (10): Remove an entity from the system., Remove an entity from the system., Clear all entities from the hash., Clear all entities from the hash., Main spatial partitioning manager for the game.     Manages entity lifecycle and, SpatialPartition, Tests for combined spatial partition system., Test registering and unregistering entities. (+2 more)
+Cohesion: 0.13
+Nodes (12): Object Pooling, Spatial Partitioning, Query all entities that might be visible to the camera.         Uses cell-level, Query all entities that might be visible to the camera.         Uses cell-level, Clear all entities from the hash., Clear all entities from the hash., Main spatial partitioning manager for the game.     Manages entity lifecycle and, SpatialPartition (+4 more)
 
 ### Community 9 - "Enemy Projectiles & Weapon Behaviors"
 Cohesion: 0.20
@@ -146,15 +148,15 @@ Nodes (4): Dogfighter, HomingBolt, MachineGunBolt, SniperBeam
 
 ### Community 10 - "Spatial Hash Grid Implementation"
 Cohesion: 0.20
-Nodes (7): Unit tests for object pooling and spatial partitioning systems. Run with: python, Tests for spatial hash grid., Test inserting and querying with spatial hash., Test clearing spatial hash., Run all tests manually (for environments without pytest)., run_tests(), TestSpatialHash
+Nodes (7): Spatial Partitioning System Efficient collision detection and entity culling usi, Efficient spatial partitioning using a hash grid.     Optimized for fast inserti, SpatialHash, Tests for spatial hash grid., Test inserting and querying with spatial hash., Test clearing spatial hash., TestSpatialHash
 
 ### Community 11 - "DS4 Input Controller Handler"
 Cohesion: 0.11
 Nodes (11): DS4Input, Clear single-frame sets. Call exactly ONCE per frame,         AFTER processing a, True every frame the button is down., All buttons currently held., Left stick (x, y) with deadzone applied, –1..1., Right stick (x, y) with deadzone applied, –1..1., Raw hat value: (dx, dy) where each component is –1, 0, or 1., Human-readable D-pad direction, or 'neutral'. (+3 more)
 
 ### Community 12 - "Particle Effects Spawning & Pools"
-Cohesion: 0.11
-Nodes (12): ParticlePool, Object Pooling System Efficiently manages reusable game objects to avoid frequen, Spawn a particle at the given position., Spawn a particle at the given position., Update all active particles using NumPy vectorization and recycle dead ones., Update all active particles and recycle dead ones., Batch submit active particles to the renderer with frustum culling., Batch submit active particles to the renderer with frustum culling. (+4 more)
+Cohesion: 0.08
+Nodes (17): ParticlePool, Object Pooling System Efficiently manages reusable game objects to avoid frequen, Spawn a particle at the given position., Spawn a particle at the given position., Update all active particles using NumPy vectorization and recycle dead ones., Update all active particles and recycle dead ones., Batch submit active particles to the renderer with frustum culling., Batch submit active particles to the renderer with frustum culling. (+9 more)
 
 ### Community 13 - "Player Ship Flight Mechanics"
 Cohesion: 0.21
@@ -165,12 +167,12 @@ Cohesion: 0.16
 Nodes (16): _forward_spawn_pos(), Carriers are boss-scale — spawn far ahead and slightly above so     they dominat, Generic factory — maps a string type to the right spawn function., Shared geometry for all forward-arc spawns.     Returns (x, y, z) — a world posi, Snipers hang back further than normal enemies so their railgun     has room to t, Corvettes spawn at standard range but with a tighter yaw cone     so they appear, Minelayers enter from the side (large yaw offset) so they can     cut across the, Stealth Interceptors sneak in from the flanks at close-ish range     so their de (+8 more)
 
 ### Community 15 - "3D Face Transform & Screen Projection"
-Cohesion: 0.06
-Nodes (28): Batch Star Submission, Numba JIT Position Wrapping, process_faces_batch_numba(), Submit a whole mesh for optimized rendering.         Uses Numba-optimized batch, Submit a single polygon., Submit a single polygon., Submit a 2D circle sprite., Submit a soft, semi-transparent nebula puff. (+20 more)
+Cohesion: 0.09
+Nodes (16): process_faces_batch_numba(), Submit a whole mesh for optimized rendering.         Uses Numba-optimized batch, Submit a single polygon., Submit a single polygon., Submit a 2D circle sprite., Submit a soft, semi-transparent nebula puff., Submit a 2D circle sprite., Submit a soft, semi-transparent nebula puff. (+8 more)
 
 ### Community 16 - "Camera Navigation & Render Loop"
-Cohesion: 0.10
-Nodes (9): test_batch_projection(), Camera, Fast frustum culling using a bounding sphere.         Returns (visible, cx, cy,, Transform world point to camera space using pre-computed rotation matrix., Transform batch of world points to camera space using Numba., Project batch of camera-space points to screen space using Numba., sphere_in_frustum_batch(), project_to_screen_batch() (+1 more)
+Cohesion: 0.06
+Nodes (21): Batch Star Submission, Numba JIT Position Wrapping, test_batch_projection(), Camera, Fast frustum culling using a bounding sphere.         Returns (visible, cx, cy,, Transform world point to camera space using pre-computed rotation matrix., Transform batch of world points to camera space using Numba., Project batch of camera-space points to screen space using Numba. (+13 more)
 
 ### Community 17 - "Laser Pooling & Fire Management"
 Cohesion: 0.12
@@ -204,10 +206,6 @@ Nodes (5): Gradually tighten spawn rate over time (6 s → 2 s floor)., Instanti
 Cohesion: 0.05
 Nodes (36): Advanced Integration (Full Benefits), code:python (from .object_pool import ParticlePool, LaserPool), code:python (self.particle_pool = ParticlePool(None, initial_size=500, ma), code:python (# Old: self.particles.append(Particle(x, y, z))), code:python (# Old: self.lasers.append(Laser(self.pos, self.orientation))), code:python (# Old: for p in self.particles: p.draw(...)), code:python (# Create a particle pool), code:python (# Create spatial partition) (+28 more)
 
-### Community 26 - "Corvette Heavy Fighter AI"
-Cohesion: 0.20
-Nodes (6): Tests for generic object pool., Test pool creates initial objects., Test acquiring and releasing objects., Test pool respects max size limit., Test custom reset function is called., TestObjectPool
-
 ### Community 28 - "Star Rendering Optimization Docs"
 Cohesion: 0.08
 Nodes (23): 1. **src/star.py** - Added Optimized Batch Processing, 2. **src/game.py** - Updated Rendering Pipeline, Architecture Benefits, Benchmark: 100 frames at 1920x1080, Changes Made, code:python (@njit(cache=True, fastmath=True)), code:python (@njit(cache=True, fastmath=True)), code:python (@classmethod) (+15 more)
@@ -217,8 +215,8 @@ Cohesion: 0.25
 Nodes (5): Tests for octree spatial partition., Test inserting and querying entities., Test removing entities., Test clearing all entities., TestOctreeNode
 
 ### Community 30 - "Bounding Box Geometry Tests"
-Cohesion: 0.25
-Nodes (5): Tests for bounding box utilities., Test point containment., Test box intersection., Test box subdivision into octants., TestBoundingBox
+Cohesion: 0.17
+Nodes (8): Unit tests for object pooling and spatial partitioning systems. Run with: python, Tests for bounding box utilities., Test point containment., Test box intersection., Test box subdivision into octants., Run all tests manually (for environments without pytest)., run_tests(), TestBoundingBox
 
 ### Community 31 - "Star Rendering & Lifecycle"
 Cohesion: 0.06
@@ -261,47 +259,47 @@ Cohesion: 0.33
 Nodes (4): Clear all active particles., Clear all active particles., Clear all active lasers., Clear all active lasers.
 
 ### Community 59 - "Community 59"
+Cohesion: 0.29
+Nodes (4): project_to_screen(), quat_rotate_vec(), Rotate vector v = (vx, vy, vz) by unit quaternion q.     Uses direct rotation ma, Viewer
+
+### Community 60 - "Community 60"
+Cohesion: 0.18
+Nodes (7): quat_identity(), Player, Nullify the active target if it has been destroyed., Nullify the active target if it has been destroyed., Nullify the active target if it has been destroyed., Nullify the active target if it has been destroyed., Nullify the active target if it has been destroyed.
+
+### Community 61 - "Community 61"
 Cohesion: 0.25
 Nodes (3): EnemyProjectile, Check if this projectile hits the player. Returns True if collision occurred., Check if this projectile hits an asteroid. Returns True if collision occurred.
 
-### Community 60 - "Community 60"
-Cohesion: 0.25
-Nodes (5): Tests for particle pool., Test spawning particles., Test that dead particles are recycled., Test clearing all particles., TestParticlePool
-
 ### Community 63 - "Community 63"
 Cohesion: 0.50
-Nodes (3): Nullify the active target if it has been destroyed., Nullify the active target if it has been destroyed., Nullify the active target if it has been destroyed.
+Nodes (4): get_forward_vector(), get_right_vector(), Legacy: forward from Euler pitch/yaw (no roll)., Legacy: right from Euler pitch/yaw.
 
 ### Community 64 - "Community 64"
-Cohesion: 0.20
-Nodes (7): Player, Lock onto the nearest living, non-stealthed enemy within field of view., Lock onto the nearest living, non-stealthed enemy within field of view., Lock onto the nearest living, non-stealthed enemy within field of view., Advance to the next non-stealthed enemy in FOV (wraps around)., Advance to the next non-stealthed enemy in FOV (wraps around)., Advance to the next non-stealthed enemy in FOV (wraps around).
+Cohesion: 0.19
+Nodes (3): basis_from_forward(), HomingMissile, PlayerMissile
 
 ### Community 65 - "Community 65"
-Cohesion: 0.33
-Nodes (4): Register a new entity., Update an entity's position incrementally.         Call this every frame for mov, Update an entity's position incrementally.         Call this every frame for mov, Register a new entity.
+Cohesion: 0.50
+Nodes (4): is_in_front_of_camera(), Transform world-space point (x,y,z) into camera space.      px,py,pz  – camera/p, Returns True if world_pos is in the positive-Z half of camera space     (i.e. th, world_to_camera()
 
 ### Community 66 - "Community 66"
-Cohesion: 0.17
-Nodes (8): Spatial Partitioning System Efficient collision detection and entity culling usi, Efficient spatial partitioning using a hash grid.     Optimized for fast inserti, Convert world position to grid cell coordinates using fast truncation., Insert an entity into the spatial hash., Remove an entity from the spatial hash., Incrementally move an entity between cells., Query all entities within a sphere., SpatialHash
-
-### Community 68 - "Community 68"
-Cohesion: 0.40
-Nodes (4): # TODO: Refactor asteroid field creation logic, # TODO: Refactor asteroid field creation logic, # TODO: Refactor asteroid field creation logic, # TODO: Refactor asteroid field creation logic
+Cohesion: 0.10
+Nodes (13): Register a new entity., Remove an entity from the system., Remove an entity from the system., Update an entity's position incrementally.         Call this every frame for mov, Update an entity's position incrementally.         Call this every frame for mov, Query entities near a position., Query entities near a position., Convert world position to grid cell coordinates using fast truncation. (+5 more)
 
 ## Knowledge Gaps
 - **78 isolated node(s):** `Workflow: graphify`, `graphify`, `Overview`, `code:python (def process_faces_batch_numba(cam_verts, projected, face_ind)`, `code:python (def process_faces_batch_numba(cam_verts, projected, face_ind)` (+73 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Game` connect `Asteroid Generation & Mesh Rendering` to `Community 64`, `Community 68`, `Community 69`, `Engine Optimization Documentation`, `DS4 Input Controller Handler`, `Particle Effects Spawning & Pools`, `3D Face Transform & Screen Projection`, `Camera Navigation & Render Loop`, `Laser Pooling & Fire Management`, `Laser Projectile Reinitialization`, `Scripted Encounter Timelines`, `Community 61`, `Star Rendering & Lifecycle`?**
-  _High betweenness centrality (0.248) - this node is a cross-community bridge._
-- **Why does `WaveDirector` connect `Scripted Encounter Timelines` to `Stealth Interceptor Enemy AI`, `Asteroid Generation & Mesh Rendering`, `Carrier Bounding Box Collision`, `Community 69`, `Enemy Projectiles & Weapon Behaviors`, `Player Ship Flight Mechanics`, `Encounter Spawn Director & AI`, `Sniper Flank Enemy AI`?**
-  _High betweenness centrality (0.156) - this node is a cross-community bridge._
-- **Why does `DS4Input` connect `DS4 Input Controller Handler` to `HUD Controller Event Logger`, `Trigger Input Normalisation`, `3D Mathematics & Matrix Engine`, `Asteroid Generation & Mesh Rendering`, `Community 69`, `Controller Haptics & Vibration`, `Controller D-Pad HUD Widget`, `Controller Button HUD Grid`?**
-  _High betweenness centrality (0.129) - this node is a cross-community bridge._
+- **Why does `Game` connect `Asteroid Generation & Mesh Rendering` to `Engine Optimization Documentation`, `DS4 Input Controller Handler`, `Particle Effects Spawning & Pools`, `3D Face Transform & Screen Projection`, `Camera Navigation & Render Loop`, `Laser Pooling & Fire Management`, `Laser Projectile Reinitialization`, `Scripted Encounter Timelines`, `Community 60`, `Star Rendering & Lifecycle`?**
+  _High betweenness centrality (0.249) - this node is a cross-community bridge._
+- **Why does `WaveDirector` connect `Scripted Encounter Timelines` to `Stealth Interceptor Enemy AI`, `Asteroid Generation & Mesh Rendering`, `Carrier Bounding Box Collision`, `Enemy Projectiles & Weapon Behaviors`, `Player Ship Flight Mechanics`, `Encounter Spawn Director & AI`, `Sniper Flank Enemy AI`?**
+  _High betweenness centrality (0.153) - this node is a cross-community bridge._
+- **Why does `DS4Input` connect `DS4 Input Controller Handler` to `HUD Controller Event Logger`, `Trigger Input Normalisation`, `Asteroid Generation & Mesh Rendering`, `Controller Haptics & Vibration`, `Controller D-Pad HUD Widget`, `Controller Button HUD Grid`, `Community 59`, `Community 60`?**
+  _High betweenness centrality (0.127) - this node is a cross-community bridge._
 - **Are the 6 inferred relationships involving `Enemy` (e.g. with `MachineGunBolt` and `HomingBolt`) actually correct?**
   _`Enemy` has 6 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 4 inferred relationships involving `DS4Input` (e.g. with `Game` and `Viewer`) actually correct?**

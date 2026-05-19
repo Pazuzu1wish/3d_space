@@ -401,27 +401,43 @@ def draw_throttle_bg(surface, x, y, h):
 
     surface.blit(_cached_label(10, "THR", HUD_GREEN), (x - 8, y - 14))
 
-def draw_throttle_fill(surface, x, y, h, throttle):
+def draw_throttle_fill(surface, x, y, h, throttle, drift_mode=False):
     w = 14
     half_h = h // 2
     center_y = y + half_h
     
-    if throttle > 0:
-        fill_h = int(half_h * throttle)
-        col = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
-        pygame.draw.rect(surface, col, (x, center_y - fill_h, w, fill_h))
-    elif throttle < 0:
-        fill_h = int(half_h * abs(throttle))
-        col = (0, 200, 255, 160) # Cyan for retro
-        pygame.draw.rect(surface, col, (x, center_y, w, fill_h))
-
-    f = custom_font(10)
-    if throttle >= 0:
-        col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
-        txt = f"{int(throttle * 100):3d}%"
+    if drift_mode:
+        # Gauge is forced to zero position, show blinking indicators
+        blink = (pygame.time.get_ticks() // 250) % 2 == 0
+        if blink:
+            # Render a premium flashing indicator lamp next to the "THR" label
+            lamp_x = x + w + 12
+            lamp_y = y - 8
+            pygame.draw.circle(surface, HUD_AMBER, (lamp_x, lamp_y), 4)
+            pygame.draw.circle(surface, (255, 255, 255, 220), (lamp_x, lamp_y), 2)  # Glowing core
+            
+            # Print blinking "DRIFT" status text below the speedometer section
+            surface.blit(_cached_label(10, "DRIFT", HUD_AMBER), (x - 16, y + h + 24))
+            
+        txt = "  0%"
+        col_throttle_per = HUD_DIM
     else:
-        col_throttle_per = (0, 200, 255, 160)
-        txt = f"{int(abs(throttle) * 100):3d}%"
+        # Standard active thruster fill
+        if throttle > 0:
+            fill_h = int(half_h * throttle)
+            col = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+            pygame.draw.rect(surface, col, (x, center_y - fill_h, w, fill_h))
+        elif throttle < 0:
+            fill_h = int(half_h * abs(throttle))
+            col = (0, 200, 255, 160) # Cyan for retro
+            pygame.draw.rect(surface, col, (x, center_y, w, fill_h))
+
+        if throttle >= 0:
+            col_throttle_per = HUD_RED if throttle > 0.85 else HUD_AMBER if throttle > 0.5 else HUD_GREEN
+            txt = f"{int(throttle * 100):3d}%"
+        else:
+            col_throttle_per = (0, 200, 255, 160)
+            txt = f"{int(abs(throttle) * 100):3d}%"
         
     surface.blit(_cached_label(10, txt, col_throttle_per),
                  (x - 10, y + h + 10))
@@ -935,7 +951,8 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
                      shake_offset=(0.0, 0.0),
                      hit_flash_ratio=0.0, explosion_glow=0.0,
                      missile_lock=False, alert_active=False,
-                     missile_ammo=0, missile_lock_timer=0.0, missile_locked=False):
+                     missile_ammo=0, missile_lock_timer=0.0, missile_locked=False,
+                     drift_mode=False):
 
     global _HUD_OVERLAY, _HUD_STATIC_GLASS, _LAST_SIZE
 
@@ -975,7 +992,7 @@ def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
     # Draw dynamic fills onto the cached transparent overlay
     draw_crosshair(_HUD_OVERLAY, cx, cy, weapons_ready)
 
-    draw_throttle_fill(_HUD_OVERLAY, W - 60, 180, 160, throttle)
+    draw_throttle_fill(_HUD_OVERLAY, W - 60, 180, 160, throttle, drift_mode=drift_mode)
     draw_dodge_fill(_HUD_OVERLAY, 46, 180, 160,
                     dodge_charge, dodge_ready, dodge_flash)
     draw_speed(_HUD_OVERLAY, W - 130, 672, current_speed)
