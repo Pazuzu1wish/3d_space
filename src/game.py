@@ -29,6 +29,7 @@ from src.encounters import ENCOUNTER_SCRIPT
 from src.object_pool import ParticlePool, LaserPool
 from src.sound_handler import SoundHandler
 from src.ship_ai import ShipAI
+from src.title_screen import TitleCinematic
 
 # ──────────────────────────────────────────────
 # Game Class
@@ -62,9 +63,6 @@ class Game:
             self.sound_folder + "bgm_drone2.wav",
             self.sound_folder + "bgm_drone3.wav"
         ])
-        
-        # Stream seamless deep space ambient loop from disk (saves memory and CPU)
-        self.sound.play_music(self.music_file, loops=-1, volume=0.55)
 
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT # Set Screen size
         flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
@@ -110,8 +108,11 @@ class Game:
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
         
         # Initialize game state flags
+        self.state = 'STATE_TITLE'
         self.running = True # Set game state flag to True
         self.paused = False # Set game state flag to False
+        
+        self.title_cinematic = TitleCinematic(self.W, self.H, self.sound)
 
         # Initialize pause font
         self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72) # TODO add cache for this font
@@ -496,52 +497,65 @@ class Game:
                     event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
                 ):
                     self.running = False
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                
+                if self.state == 'STATE_TITLE':
+                    if event.type == pygame.KEYDOWN and self.title_cinematic.cinematic_done:
+                        self.state = 'STATE_PLAYING'
+                        self.sound.play_music(self.music_file, loops=-1, volume=0.55)
+                        
+                elif self.state == 'STATE_PLAYING':
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
+                        self.paused = not self.paused
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_h:
+                        self.show_prograde = not self.show_prograde
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+                        self.show_coords = not self.show_coords
+                    self.handler.process_event(event)
+
+            if self.state == 'STATE_TITLE':
+                self.title_cinematic.update(dt)
+                self.title_cinematic.draw(self.screen)
+            
+            elif self.state == 'STATE_PLAYING':
+                if self.handler.just_pressed('Options'):
                     self.paused = not self.paused
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_h:
+    
+                if self.handler.just_pressed('DPad Left'):
+                    self.show_waypoints = not self.show_waypoints
+    
+                if self.handler.just_pressed('DPad Right'):
                     self.show_prograde = not self.show_prograde
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_c:
+    
+                if self.handler.just_pressed('DPad Down'):
                     self.show_coords = not self.show_coords
-                self.handler.process_event(event)
-
-            if self.handler.just_pressed('Options'):
-                self.paused = not self.paused
-
-            if self.handler.just_pressed('DPad Left'):
-                self.show_waypoints = not self.show_waypoints
-
-            if self.handler.just_pressed('DPad Right'):
-                self.show_prograde = not self.show_prograde
-
-            if self.handler.just_pressed('DPad Down'):
-                self.show_coords = not self.show_coords
-
-            keys = pygame.key.get_pressed()
-
-            if not self.paused:
-                # ── UPDATE ────────────────────────────────
-                self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles, self.player_missiles, self.sound)
-                self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
-                self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
-                self.ship_ai.update(self.player, self.enemies, self.enemy_projectiles, self.director, dt)
-
-                # ── TARGETING ──────────────────────────────────────
-                # Keep target valid after kills/culls
-                self.player.clear_dead_target(self.enemies)
-                if self.player._key_target_closest:
-                    self.player.target_closest(self.enemies)
-                elif self.player._key_cycle_target:
-                    self.player.cycle_targets(self.enemies)
-
-            # ── DRAW ──────────────────────────────────
-            if self.player.shake_queued > 0:
-                self.camera.trigger_shake(self.player.shake_queued)
-                self.player.shake_queued = 0.0
-
-            self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.enemy_projectiles, dt)
+    
+                keys = pygame.key.get_pressed()
+    
+                if not self.paused:
+                    # ── UPDATE ────────────────────────────────
+                    self.player.update(dt, self.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles, self.player_missiles, self.sound)
+                    self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
+                    self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
+                    self.ship_ai.update(self.player, self.enemies, self.enemy_projectiles, self.director, dt)
+    
+                    # ── TARGETING ──────────────────────────────────────
+                    # Keep target valid after kills/culls
+                    self.player.clear_dead_target(self.enemies)
+                    if self.player._key_target_closest:
+                        self.player.target_closest(self.enemies)
+                    elif self.player._key_cycle_target:
+                        self.player.cycle_targets(self.enemies)
+    
+                # ── DRAW ──────────────────────────────────
+                if self.player.shake_queued > 0:
+                    self.camera.trigger_shake(self.player.shake_queued)
+                    self.player.shake_queued = 0.0
+    
+                self.draw_game(self.screen, self.W, self.H, self.player, self.stars, self.enemies, self.enemy_projectiles, dt)
+    
+                self.handler.update()
 
             pygame.display.flip()
-            self.handler.update()
 
         self.sound.stop_music()
         pygame.quit()

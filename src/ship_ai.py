@@ -2,6 +2,8 @@ import math
 import os
 import random
 import pygame
+from src.constants import PLAYER_MAX_HP
+from src.enemy import Carrier, StealthInterceptor, Minelayer, Sniper, Corvette, SuicideDrone
 
 class ShipAI:
     def __init__(self, sound_handler, voice_folder="assets/sounds/voice"):
@@ -155,7 +157,6 @@ class ShipAI:
         self.last_shield_pct = shield_pct
 
         # ── 2. HULL HP STATE MACHINE ──
-        from src.constants import PLAYER_MAX_HP
         hp_pct = player.hp / PLAYER_MAX_HP
 
         if hp_pct < 0.30 and self.last_hp_pct >= 0.30:
@@ -245,7 +246,6 @@ class ShipAI:
         self.last_filler_suppressed = wave_director.filler_suppressed
 
         # ── 8. SPECIAL ENEMY DETECTION ──
-        from src.enemy import Carrier, StealthInterceptor, Minelayer, Sniper, Corvette
         for enemy in enemies:
             if enemy not in self.seen_enemies:
                 self.seen_enemies.add(enemy)
