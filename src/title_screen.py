@@ -10,6 +10,7 @@ from src.camera import Camera
 from src.renderer import RenderPipeline
 from src.object_pool import ParticlePool
 from src.constants import SCREEN_WIDTH, SCREEN_HEIGHT
+from src.cinematic_motion import CinematicScript, CinematicStep
 
 # ─────────────────────────────────────────────────────────────────
 # TIMING CONSTANTS  (tweak these to feel right)
@@ -129,6 +130,16 @@ class TitleCinematic:
         self.debug = True   # set False to hide projection readout
         self._debug_font = pygame.font.Font(None, 20)
 
+        
+
+        self.dogfighter.cinematic_script = CinematicScript(
+            CinematicStep(1.5, CinematicScript.linear(-1800, 0, 0)),
+            CinematicStep(1.4, CinematicScript.barrel_roll(-1800, 0, 0,
+                                                            roll_speed=1.2,
+                                                            direction=-1.0)),
+            CinematicStep(None, CinematicScript.linear(-1800, 0, 0)),   # None = runs forever
+        )
+
     # ─────────────────────────────────────────────────────────────
     # UPDATE
     # ─────────────────────────────────────────────────────────────
@@ -151,7 +162,7 @@ class TitleCinematic:
         # ── DOGFIGHTER FLYBY ──────────────────────────────────
         dog_alive = self.dogfighter.hp > 0
         if t >= T_DOGFIGHTER_IN and dog_alive:
-            self.dogfighter.update(dt, cam_pos, (1, 0, 0, 0))
+            self.dogfighter.cinematic_update(dt)
 
             # Project to screen space and record trail
             cx, cy, cz = self.camera.world_to_camera(

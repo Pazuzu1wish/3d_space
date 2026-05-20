@@ -11,7 +11,8 @@ from src.math_engine import (
 )
 from src.constants import (
     MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR,
-    DRONE_DETONATION_RANGE, DRONE_EXPLOSION_RADIUS, DRONE_MAX_DAMAGE
+    DRONE_DETONATION_RANGE, DRONE_EXPLOSION_RADIUS, DRONE_MAX_DAMAGE,
+    BARREL_ROLL_DURATION
 )
 from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
@@ -100,6 +101,72 @@ class Enemy:
 
         self.up = (ux, uy, uz)
         self.right = (rx, ry, rz)
+
+    # ── BARREL ROLL ────────────────────────────────────────────────
+
+    def _barrel_roll(self, dt, roll_speed=1.0):
+        """Rapid roll maneuver – useful for dodging shots and evading pursuit.
+
+        To trigger:
+            roll_speed = random.choice([-1.0, 1.0])  # left or right
+            self._roll_direction = roll_speed
+            self._roll_timer = BARREL_ROLL_DURATION
+
+        Call this at the top of update(), right after self.engine_time += dt
+        """
+
+        if not hasattr(self, "_roll_timer"):
+            self._roll_timer = 0.0
+            self._roll_direction = 0.0
+
+        if self._roll_timer > 0:
+            self._roll_timer -= dt * roll_speed
+
+            # Roll speed should curve so it doesn’t zip to full rotation instantly
+            roll_amount = 0.0
+            if self._roll_timer > BARREL_ROLL_DURATION - 0.25:
+                # smooth ease-in
+                roll_amount = (1.0 - (self._roll_timer / BARREL_ROLL_DURATION))**2
+            else:
+                # easy-out (constant roll for middle portion, not used in this version)
+                roll_amount = 1.0
+
+            roll = math.sin(math.radians(180.0 * roll_amount)) * self._roll_direction
+
+            ux, uy, uz = self.up
+            rx, ry, rz = self.right
+
+            # Apply rotation around forward axis (roll)
+            new_ux = ux * math.cos(roll) - rx * math.sin(roll)
+            new_uy = uy * math.cos(roll) - ry * math.sin(roll)
+            new_uz = uz * math.cos(roll) - rz * math.sin(roll)
+
+            new_rx = rx * math.cos(roll) + ux * math.sin(roll)
+            new_ry = ry * math.cos(roll) + uy * math.sin(roll)
+            new_rz = rz * math.cos(roll) + uz * math.sin(roll)
+
+            self.up = (new_ux, new_uy, new_uz)
+            self.right = (new_rx, new_ry, new_rz)
+
+    # ── CINEMATIC UPDATE ──────────────────────────────────────────
+
+    def cinematic_update(self, dt):
+        """Drive this enemy from a scripted sequence instead of AI.
+        Call from the cinematic instead of update().
+        Scripts are set via enemy.cinematic_script = CinematicScript(...)
+        """
+        if not hasattr(self, 'cinematic_script') or self.cinematic_script is None:
+            # fallback: pure kinematic, no orientation update
+            self.x += self.vx * dt
+            self.y += self.vy * dt
+            self.z += self.vz * dt
+            return
+
+        self.engine_time += dt
+        self.cinematic_script.step(self, dt)
+        self._spawn_engine_trail()
+        self._update_engine_trail(dt)
+
 
     # ── NEWTONIAN PHYSICS ──────────────────────────────────────────
 

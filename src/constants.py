@@ -34,6 +34,7 @@ PARTICLES_ON_HIT = 12                # particles spawned when enemy hit
 PARTICLES_ON_DESTROY = 25           # particles spawned when enemy destroyed
 PARTICLES_ON_PLAYER_HIT = 10        # particles spawned when player hit
 COLLISION_DAMAGE = 20               # damage taken from enemy collision
+BARREL_ROLL_DURATION = 2.5          # seconds for a full barrel roll
 
 # ──────────────────────────────────────────────
 # CONTROLLER CONSTANTS
