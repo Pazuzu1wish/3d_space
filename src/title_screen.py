@@ -1,4 +1,5 @@
 # pyrefly: ignore [missing-import]
+from src.asteroid import Asteroid
 import pygame
 import math
 import random
@@ -53,6 +54,17 @@ TRAIL_MAX_LEN  = 60      # screen-space position history frames
 TRAIL_HOT      = (255, 255, 220)   # newest = near-white hot
 TRAIL_COOL     = (0, 255, 128)     # oldest = green ember (brand color)
 
+CINEMATIC_ASTEROIDS = [
+        # (x,      y,     z,      scale)
+        ( 3700,  -3000,  5000,   400),
+        (-2900,   600,  3000,   280),
+        # ( -120,  1400,  9000,   520),
+        # (-3800,  100,  6500,   350),
+        # (  800,  -1600, 8000,   180),
+        # ( -250,  -150,  4500,   600),
+        ( 4200,   500,  4500,   220)
+    ]
+
 
 class TitleCinematic:
     def __init__(self, W, H, sound):
@@ -67,9 +79,13 @@ class TitleCinematic:
         # ── ENVIRONMENT ───────────────────────────────────────
         self.stars = [Star((0, 0, 0)) for _ in range(300)]
         self.nebulae = NebulaSystem(count=15, area_radius=50000)
+
+        # in title_cinematic.py, replace the AsteroidField block
+
         self.asteroids = []
-        field = AsteroidField((0, 200, 4000), count=40, radius=25000)
-        for a in field.asteroids:
+        for x, y, z, scale in CINEMATIC_ASTEROIDS:
+            a = Asteroid(x, y, z, scale=scale)
+            a.vx = a.vy = a.vz = 0.0   # pin in place, rotation only
             self.asteroids.append(a)
 
         # ── DOGFIGHTER ────────────────────────────────────────
@@ -167,6 +183,9 @@ class TitleCinematic:
         self.cam_z = t * 30.0
         cam_pos = (0.0, self.cam_y, self.cam_z)
         self.camera.update(cam_pos, (1, 0, 0, 0))   # identity quaternion = looking forward
+        
+        for asteroid in self.asteroids:
+            asteroid.update(dt)
 
         # ── DOGFIGHTER FLYBY ──────────────────────────────────
         dog_alive = self.dogfighter.hp > 0
