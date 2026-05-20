@@ -10,8 +10,7 @@ from src.camera import Camera
 from src.renderer import RenderPipeline
 from src.object_pool import ParticlePool
 from src.constants import SCREEN_WIDTH, SCREEN_HEIGHT
-from src.cinematic_motion import CinematicScript, CinematicStep
-
+from src.cinematic_motion import CinematicScript, CinematicStep, make_ring_swarm
 # ─────────────────────────────────────────────────────────────────
 # TIMING CONSTANTS  (tweak these to feel right)
 # ─────────────────────────────────────────────────────────────────
@@ -25,20 +24,25 @@ T_SUBTITLE_DROP  = 6.9    # DIVIDED SNAKES resolves under it
 T_MENU_FADE      = 7.2    # menu items stagger in
 T_DONE           = 8.0    # cinematic_done flag, enables keypress to continue
 
+CAM_DETONATE_Z = -400   # world Z; negative = in front of camera origin
+                         # tune closer to 0 for earlier pop, more negative
+                         # for a deeper in-your-face hit
+ 
+
 # ─────────────────────────────────────────────────────────────────
 # DOGFIGHTER SPAWN  (tune X until ship enters from right edge)
 # ─────────────────────────────────────────────────────────────────
-DOG_SPAWN_X   =  2000    # positive X = screen right in camera space
-DOG_SPAWN_Y   =  -200    # slightly above center
-DOG_SPAWN_Z   =  1600    # comfortable Z depth
-DOG_VELOCITY  = -1800    # negative X = flies left; tune speed here
+DOG_SPAWN_X   =  1000    # positive X = screen right in camera space
+DOG_SPAWN_Y   =  -300    # slightly above center
+DOG_SPAWN_Z   =  450    # comfortable Z depth
+DOG_VELOCITY  = -400    # negative X = flies left; tune speed here
 
 # ─────────────────────────────────────────────────────────────────
 # DRONE SPAWN
 # ─────────────────────────────────────────────────────────────────
 DRONE_COUNT   = 12
 DRONE_Z_START = 6000     # deep behind camera, punches forward
-DRONE_VZ      = -9000    # fast inward velocity
+DRONE_VZ      = -5000    # fast inward velocity
 
 # ─────────────────────────────────────────────────────────────────
 # TRAIL CONFIG
@@ -76,7 +80,10 @@ class TitleCinematic:
         self.dogfighter.up      = (0, 1, 0)
 
         # ── DRONES ────────────────────────────────────────────
-        self.drones = []
+        self.drones = []          # active drones (list of SuicideDrone)
+        self._pending_drones = [] # (drone, spawn_time) waiting to activate
+        self._swarm_origin_time = None  # wall time when swarm was queued
+ 
 
         # ── STATE ─────────────────────────────────────────────
         self.elapsed_time       = 0.0
@@ -133,11 +140,11 @@ class TitleCinematic:
         
 
         self.dogfighter.cinematic_script = CinematicScript(
-            CinematicStep(1.5, CinematicScript.linear(-1800, 0, 0)),
-            CinematicStep(1.4, CinematicScript.barrel_roll(-1800, 0, 0,
+            CinematicStep(0.7, CinematicScript.linear(-1000, 0, 0)),
+            CinematicStep(1.4, CinematicScript.barrel_roll(-1000, 0, 0,
                                                             roll_speed=1.2,
                                                             direction=-1.0)),
-            CinematicStep(None, CinematicScript.linear(-1800, 0, 0)),   # None = runs forever
+            CinematicStep(None, CinematicScript.linear(-1800, 0, 0)),   
         )
 
     # ─────────────────────────────────────────────────────────────
@@ -179,42 +186,57 @@ class TitleCinematic:
         if t >= T_LOGO_START and t < T_TITLE_DROP :
             self.logo_alpha = min(255.0, self.logo_alpha + 280.0 * dt)
 
-        # ── DRONE SWARM SPAWN ─────────────────────────────────
+         # ── DRONE SWARM SPAWN ─────────────────────────────────
         if t >= T_SWARM_SPAWN and not self.drones_spawned:
             self.drones_spawned = True
-            for i in range(DRONE_COUNT):
-                spread_x = (i - DRONE_COUNT // 2) * 180
-                spread_y = random.uniform(-300, 300)
-                dx = self.dogfighter.x + spread_x
-                dy = self.dogfighter.y + spread_y
-                dz = self.dogfighter.z + DRONE_Z_START + i * 400
-                drone = SuicideDrone(dx, dy, dz)
-                drone.vx = spread_x * 0.3
-                drone.vy = spread_y * 0.3
-                drone.vz = DRONE_VZ
-                drone.did_detonate = False
-                self.drones.append(drone)
-
-        # ── DRONE UPDATE + COLLISION ───────────────────────────
+            self._swarm_origin_time = t
+ 
+            swarm = make_ring_swarm(
+                drone_class     = SuicideDrone,
+                count           = DRONE_COUNT,
+                center_x        = 0.0,
+                center_y        = 0.0,
+                spawn_z         = DRONE_Z_START,
+                vz              = DRONE_VZ,
+                radius          = 500,        # 1000 world units wide
+                rotation_speed  = 1.5,        # rotations/sec — tune for speed
+                spawn_stagger   = 0.06,       # seconds between activations
+            )
+            self._pending_drones = [(drone, self._swarm_origin_time + delay)
+                                    for drone, delay in swarm]
+ 
+        # ── ACTIVATE STAGGERED DRONES ─────────────────────────
+        if self._pending_drones:
+            still_pending = []
+            for drone, activate_at in self._pending_drones:
+                if t >= activate_at:
+                    self.drones.append(drone)
+                else:
+                    still_pending.append((drone, activate_at))
+            self._pending_drones = still_pending
+ 
+        # ── DRONE UPDATE + DETONATION CHAIN ───────────────────
+        first_detonator = None
         for drone in self.drones:
-            if not drone.did_detonate:
-                drone.x += drone.vx * dt
-                drone.y += drone.vy * dt
-                drone.z += drone.vz * dt
-
-                # Hit check: within range of dogfighter
-                dist_sq = (
-                    (drone.x - self.dogfighter.x) ** 2 +
-                    (drone.y - self.dogfighter.y) ** 2 +
-                    (drone.z - self.dogfighter.z) ** 2
-                )
-                if dist_sq < 600 ** 2 and not self.explosion_triggered:
-                    self._trigger_explosion()
-                    drone.did_detonate = True
-
-        # ── MANUAL EXPLOSION FALLBACK ─────────────────────────
-        if t >= T_EXPLOSION and not self.explosion_triggered:
+            if drone.did_detonate:
+                continue
+ 
+            drone.cinematic_update(dt)
+ 
+            # Z threshold — blow up just in front of camera
+            if drone.z < CAM_DETONATE_Z and not self.explosion_triggered:
+                first_detonator = drone
+                break   # chain fires below, no need to check rest
+ 
+        if first_detonator is not None:
+            # Detonate every active drone simultaneously for swarm flash
+            for drone in self.drones:
+                drone.did_detonate = True
             self._trigger_explosion()
+ 
+        # ── MANUAL EXPLOSION FALLBACK ─────────────────────────
+        # if t >= T_EXPLOSION:
+        #     self._trigger_explosion()
 
         # ── SHOCKWAVE UPDATE ──────────────────────────────────
         if self.shockwave_active:
@@ -225,7 +247,7 @@ class TitleCinematic:
 
         # ── FLASH FADE ────────────────────────────────────────
         if self.flash_alpha > 0:
-            self.flash_alpha = max(0.0, self.flash_alpha - 600.0 * dt)
+            self.flash_alpha = max(0.0, self.flash_alpha - 300.0 * dt)
 
         # ── TITLE DROP ────────────────────────────────────────
         if t >= T_TITLE_DROP:
@@ -408,8 +430,9 @@ class TitleCinematic:
         # LOGO TEXT — anchored to oldest (leftmost) trail point
         # Only show while logo_alpha > 0 and we have enough trail
         if self.logo_alpha > 4 and n >= TRAIL_MAX_LEN // 3:
-            anchor_x, anchor_y = self.trail_history[0]
-            logo_surf = self.logo_font.render("AAA GAMES", True, (0, 255, 128))
+            anchor_x, anchor_y = self.W // 2, self.H // 3
+
+            logo_surf = self.logo_font.render("A.A.A. GAMES", True, (0, 255, 128))
             logo_surf.set_alpha(int(self.logo_alpha))
             # Position: left of anchor, slightly above trail line
             lx = int(anchor_x - logo_surf.get_width() // 2)
