@@ -11,6 +11,8 @@ from src.renderer import RenderPipeline
 from src.object_pool import ParticlePool
 from src.constants import SCREEN_WIDTH, SCREEN_HEIGHT
 from src.cinematic_motion import CinematicScript, CinematicStep, make_ring_swarm
+from src.controller import DS4Input
+
 # ─────────────────────────────────────────────────────────────────
 # TIMING CONSTANTS  (tweak these to feel right)
 # ─────────────────────────────────────────────────────────────────
@@ -64,9 +66,9 @@ class TitleCinematic:
 
         # ── ENVIRONMENT ───────────────────────────────────────
         self.stars = [Star((0, 0, 0)) for _ in range(300)]
-        self.nebulae = NebulaSystem(count=15, area_radius=40000)
+        self.nebulae = NebulaSystem(count=15, area_radius=50000)
         self.asteroids = []
-        field = AsteroidField((0, 0, 4000), count=30, radius=15000)
+        field = AsteroidField((0, 200, 4000), count=40, radius=25000)
         for a in field.asteroids:
             self.asteroids.append(a)
 
