@@ -19,7 +19,7 @@ from src.controller import DS4Input
 # ─────────────────────────────────────────────────────────────────
 T_MUSIC_START    = 0.0    # ambient music fires immediately
 T_DOGFIGHTER_IN  = 2.0    # ship enters frame
-T_LOGO_START     = 2.8    # AAA Studios text starts resolving from trail
+T_LOGO_START     = 3.3   # AAA Studios text starts resolving from trail
 T_SWARM_SPAWN    = 4.8    # drone swarm punches in from deep Z
 T_EXPLOSION      = 5.8    # manual explosion fallback if drones miss
 T_TITLE_DROP     = 6.4    # REDSHIFT SERPENS slams in
