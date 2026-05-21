@@ -152,7 +152,7 @@ class TitleCinematic:
         self.shockwave_screen_pos = None   # (sx, sy) where it fires
 
         # ── DEBUG ─────────────────────────────────────────────
-        self.debug = True   # set False to hide projection readout
+        self.debug = False   # set False to hide projection readout
         self._debug_font = pygame.font.Font(None, 20)
 
         
@@ -174,7 +174,7 @@ class TitleCinematic:
 
         # ── MUSIC ─────────────────────────────────────────────
         if not self.music_started:
-            self.sound.play_music("assets/sounds/Rust-Orbit.wav", loops=-1, volume=0.45)
+            self.sound.play_music("assets/sounds/Rust-Orbit.wav", loops=-1, volume=0.85)
             self.music_started = True
 
         # ── CAMERA DRIFT (gentle upward pan) ──────────────────
@@ -453,7 +453,7 @@ class TitleCinematic:
         if self.logo_alpha > 4 and n >= TRAIL_MAX_LEN // 3:
             anchor_x, anchor_y = self.W // 2, self.H // 3
 
-            logo_surf = self.logo_font.render("A.A.A. GAMES", True, (0, 255, 128))
+            logo_surf = self.logo_font.render("A.A.A. GAMES", True, (0, 255, 58))
             logo_surf.set_alpha(int(self.logo_alpha))
             # Position: left of anchor, slightly above trail line
             lx = int(anchor_x - logo_surf.get_width() // 2)
