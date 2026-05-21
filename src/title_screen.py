@@ -268,7 +268,7 @@ class TitleCinematic:
 
         # ── FLASH FADE ────────────────────────────────────────
         if self.flash_alpha > 0:
-            self.flash_alpha = max(0.0, self.flash_alpha - 300.0 * dt)
+            self.flash_alpha = max(0.0, self.flash_alpha - 100.0 * dt)
 
         # ── TITLE DROP ────────────────────────────────────────
         if t >= T_TITLE_DROP:
