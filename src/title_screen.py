@@ -486,7 +486,7 @@ class TitleCinematic:
         # Scanline glow layer — second blit offset + dimmed for depth
         if self.title_scale < 1.05:   # only once settled
             glow_surf = pygame.Surface((w, h), pygame.SRCALPHA)
-            glow_raw = self.title_font.render("REDSHIFT  SERPENS", True, (255, 90, 90))
+            glow_raw = self.title_font.render("REDSHIFT  SERPENS", True, (255, 0, 0))
             glow_scaled = pygame.transform.scale(glow_raw, (w, h))
             glow_scaled.set_alpha(int(self.title_alpha * 0.25))
             screen.blit(glow_scaled, (cx - w // 2 + 2, cy - h // 2 + 2))
