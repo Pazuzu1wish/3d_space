@@ -174,7 +174,7 @@ class TitleCinematic:
 
         # ── MUSIC ─────────────────────────────────────────────
         if not self.music_started:
-            self.sound.play_music("assets/sounds/bgm_drone.wav", loops=-1, volume=0.45)
+            self.sound.play_music("assets/sounds/Rust-Orbit.wav", loops=-1, volume=0.45)
             self.music_started = True
 
         # ── CAMERA DRIFT (gentle upward pan) ──────────────────
@@ -297,7 +297,7 @@ class TitleCinematic:
     def _trigger_explosion(self):
         self.explosion_triggered = True
         self.sound.play_sfx("explosion")
-        self.sound.play_music("assets/sounds/bgm_drone3.wav", loops=-1, volume=0.7)
+        #self.sound.play_music("assets/sounds/bgm_drone3.wav", loops=-1, volume=0.7)
 
         # Big particle burst at dogfighter position
         for _ in range(250):
