@@ -30,6 +30,7 @@ from src.object_pool import ParticlePool, LaserPool
 from src.sound_handler import SoundHandler
 from src.ship_ai import ShipAI
 from src.title_screen import TitleCinematic
+from src.hud_data import HUDData
 
 # ──────────────────────────────────────────────
 # Game Class
@@ -323,8 +324,12 @@ class Game:
                     if glare > 0:
                         pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
 
-        draw_cockpit_hud(
-            screen, W, H, player.throttle, player.current_speed, player.weapons_cooldown <= 0,
+        hud = HUDData(
+            W=W,
+            H=H,
+            throttle=player.throttle,
+            current_speed=player.current_speed,
+            weapons_ready=player.weapons_cooldown <= 0,
             orientation=player.orientation,
             player_pos=player.pos,
             player_vel=tuple(player.vel),
@@ -348,6 +353,7 @@ class Game:
             show_prograde=self.show_prograde,
             show_coords=self.show_coords,
         )
+        draw_cockpit_hud(screen, hud)
 
         # ── MAGNIFIED AIM WINDOW (L2) ──────────────────────────
         l2_val = self.handler.trigger_left()

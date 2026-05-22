@@ -9,6 +9,7 @@ from src.math_engine import (
     calculate_lead_position,
     is_in_front_of_camera,
 )
+from src.hud_data import HUDData
 
 # ── Palette (R, G, B, Alpha) ──────────────────
 from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION, PLAYER_LASER_SPEED
@@ -1070,22 +1071,39 @@ _HUD_OVERLAY = None
 _HUD_STATIC_GLASS = None
 _LAST_SIZE = (0, 0)
 
-def draw_cockpit_hud(surface, W, H, throttle, current_speed, weapons_ready,
-                     orientation=None, player_pos=None, player_vel=None,
-                     enemies=None, radar_enemies=None, player_hp=100, active_target=None,
-                     dodge_charge=1.0, dodge_ready=True, dodge_flash=0.0,
-                     shield_charge=1.0, shield_recharging=False,
-                     laser_heat=0.0, laser_overheated=False,
-                     waypoints=None,
-                     shake_offset=(0.0, 0.0),
-                     hit_flash_ratio=0.0, explosion_glow=0.0,
-                     missile_lock=False, alert_active=False,
-                     missile_ammo=0, missile_lock_timer=0.0, missile_locked=False,
-                     drift_mode=False,
-                     show_prograde=True,
-                     show_coords=False):
-
+def draw_cockpit_hud(surface, hud: HUDData):
     global _HUD_OVERLAY, _HUD_STATIC_GLASS, _LAST_SIZE
+    W = hud.W
+    H = hud.H
+    throttle = hud.throttle
+    current_speed = hud.current_speed
+    weapons_ready = hud.weapons_ready
+    orientation = hud.orientation
+    player_pos = hud.player_pos
+    player_vel = hud.player_vel
+    enemies = hud.enemies
+    radar_enemies = hud.radar_enemies
+    player_hp = hud.player_hp
+    active_target = hud.active_target
+    dodge_charge = hud.dodge_charge
+    dodge_ready = hud.dodge_ready
+    dodge_flash = hud.dodge_flash
+    shield_charge = hud.shield_charge
+    shield_recharging = hud.shield_recharging
+    laser_heat = hud.laser_heat
+    laser_overheated = hud.laser_overheated
+    waypoints = hud.waypoints
+    shake_offset = hud.shake_offset
+    hit_flash_ratio = hud.hit_flash_ratio
+    explosion_glow = hud.explosion_glow
+    missile_lock = hud.missile_lock
+    alert_active = hud.alert_active
+    missile_ammo = hud.missile_ammo
+    missile_lock_timer = hud.missile_lock_timer
+    missile_locked = hud.missile_locked
+    drift_mode = hud.drift_mode
+    show_prograde = hud.show_prograde
+    show_coords = hud.show_coords
 
     # ── 1. Draw pre-baked cockpit geometry directly onto the game surface ──
     ticks = pygame.time.get_ticks()
