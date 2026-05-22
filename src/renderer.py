@@ -3,6 +3,7 @@ import math
 import numpy as np
 from numba import njit
 
+
 @njit(fastmath=True, cache=True)
 def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
     """
@@ -13,81 +14,93 @@ def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
     valid = np.zeros(N_faces, dtype=np.bool_)
     shaded_colors = np.zeros((N_faces, 3), dtype=np.int32)
     avg_zs = np.zeros(N_faces, dtype=np.float64)
-    
+
     for i in range(N_faces):
         idx0 = face_indices[i, 0]
         idx1 = face_indices[i, 1]
         idx2 = face_indices[i, 2]
-        
+
         # Early skip if any vertex is out of frustum
         if projected[idx0, 0] <= -900000.0 or projected[idx1, 0] <= -900000.0 or projected[idx2, 0] <= -900000.0:
             continue
-            
-        v1x = cam_verts[idx0, 0]; v1y = cam_verts[idx0, 1]; v1z = cam_verts[idx0, 2]
-        v2x = cam_verts[idx1, 0]; v2y = cam_verts[idx1, 1]; v2z = cam_verts[idx1, 2]
-        v3x = cam_verts[idx2, 0]; v3y = cam_verts[idx2, 1]; v3z = cam_verts[idx2, 2]
-        
+
+        v1x = cam_verts[idx0, 0];
+        v1y = cam_verts[idx0, 1];
+        v1z = cam_verts[idx0, 2]
+        v2x = cam_verts[idx1, 0];
+        v2y = cam_verts[idx1, 1];
+        v2z = cam_verts[idx1, 2]
+        v3x = cam_verts[idx2, 0];
+        v3y = cam_verts[idx2, 1];
+        v3z = cam_verts[idx2, 2]
+
         # Edge vectors
-        ux = v2x - v1x; uy = v2y - v1y; uz = v2z - v1z
-        vx = v3x - v1x; vy = v3y - v1y; vz = v3z - v1z
-        
+        ux = v2x - v1x;
+        uy = v2y - v1y;
+        uz = v2z - v1z
+        vx = v3x - v1x;
+        vy = v3y - v1y;
+        vz = v3z - v1z
+
         # Cross product for normal (Z component determines facing)
         fnz = ux * vy - uy * vx
         if fnz >= 0:  # Backfacing
             continue
-            
+
         # Normal vector
         nx = uy * vz - uz * vy
         ny = uz * vx - ux * vz
-        
+
         # Normalize and compute shade
-        length = math.sqrt(nx*nx + ny*ny + fnz*fnz)
+        length = math.sqrt(nx * nx + ny * ny + fnz * fnz)
         if length > 0.0001:
             normalized_z = fnz / length
         else:
             normalized_z = 0.0
-            
+
         shade = 255.0 * max(0.2, -normalized_z)
-        if shade < 0: shade = 0
-        elif shade > 255: shade = 255
-        
+        if shade < 0:
+            shade = 0
+        elif shade > 255:
+            shade = 255
+
         shade_int = int(shade)
-        
+
         # Apply shade to base color
         base_r = face_colors[i, 0]
         base_g = face_colors[i, 1]
         base_b = face_colors[i, 2]
-        
+
         shaded_colors[i, 0] = int(base_r * (shade_int / 255.0))
         shaded_colors[i, 1] = int(base_g * (shade_int / 255.0))
         shaded_colors[i, 2] = int(base_b * (shade_int / 255.0))
 
         valid[i] = True
         avg_zs[i] = (v1z + v2z + v3z) / 3.0
-        
+
     return valid, shaded_colors, avg_zs
 
 
 class RenderPipeline:
     def __init__(self, camera):
         self.camera = camera
-        
+
         # Layered primitives
         self._layers = {
             'background': [],  # Stars
-            'opaque': [],      # Ships, Asteroids
-            'alpha': [],       # Nebula, Particles, Lasers
-            'overlay': []      # HUD
+            'opaque': [],  # Ships, Asteroids
+            'alpha': [],  # Nebula, Particles, Lasers
+            'overlay': []  # HUD
         }
-        
+
         # Cache for nebula/soft sprite rendering
         self._puff_cache = self._create_puff_texture(128)
-        
+
         # Color tinted cache to avoid re-tinting every frame
-        self._tinted_puffs = {} # (r, g, b, alpha) -> surface
-        
+        self._tinted_puffs = {}  # (r, g, b, alpha) -> surface
+
         # Scale cache for nebulae to avoid expensive transform.scale every frame
-        self._scaled_nebulae = {} # (cache_key, size) -> surface
+        self._scaled_nebulae = {}  # (cache_key, size) -> surface
         self._mesh_cache = {}
         # Per-frame mesh submissions to be processed in a single batched numba call
         self._mesh_submissions = []  # list of (face_indices, face_colors, cam_verts, projected, layer)
@@ -99,7 +112,7 @@ class RenderPipeline:
         surf = pygame.Surface((size, size), pygame.SRCALPHA)
         center = size // 2
         for r in range(center, 0, -1):
-            alpha = int(180 * (1.0 - (r / center)**1.5))
+            alpha = int(180 * (1.0 - (r / center) ** 1.5))
             pygame.draw.circle(surf, (255, 255, 255, alpha), (center, center), r)
         return surf
 
@@ -115,7 +128,7 @@ class RenderPipeline:
             self._mesh_cache.clear()
         if len(self._static_mesh_cache) > 1000:
             self._static_mesh_cache.clear()
-        
+
     def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None, static=False):
         """
         Submit a whole mesh for optimized rendering.
@@ -132,13 +145,25 @@ class RenderPipeline:
             v_data = np.array([verts[vid] for vid in v_ids], dtype=np.float64)
         else:
             v_data = np.asanyarray(verts, dtype=np.float64)
-            v_ids = None # Use indices directly
+            v_ids = None  # Use indices directly
+
+        n_verts = len(v_ids) if v_ids is not None else len(v_data)
+
+        # Unique identifier that remains safe from Python address recycling collisions
+        if len(faces) > 0:
+            first_f = faces[0]
+            first_v = tuple(first_f.get('v', ()))
+            first_c = tuple(first_f.get('color', ()))
+            mesh_id = (id(faces), len(faces), n_verts, first_v, first_c)
+        else:
+            mesh_id = (id(faces), 0, n_verts, (), ())
 
         # Local to World (Vectorized)
         basis = np.array([right, up, forward], dtype=np.float64)
         if static:
             # Cache world_verts for static meshes keyed by mesh_id and transform
-            transform_key = (mesh_id, tuple(map(float, pos)), tuple(map(float, right)), tuple(map(float, up)), tuple(map(float, forward)))
+            transform_key = (mesh_id, tuple(map(float, pos)), tuple(map(float, right)), tuple(map(float, up)),
+                             tuple(map(float, forward)))
             if transform_key in self._static_mesh_cache:
                 world_verts = self._static_mesh_cache[transform_key]
             else:
@@ -147,15 +172,13 @@ class RenderPipeline:
                 self._static_mesh_cache[transform_key] = world_verts.copy()
         else:
             world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
-        
+
         # World to Camera (Batch Numba)
         cam_verts = self.camera.world_to_camera_batch(world_verts)
-        
+
         # Project (Batch Numba)
         projected = self.camera.project_batch(cam_verts)
-        
-        n_verts = len(v_ids) if v_ids is not None else len(v_data)
-        mesh_id = (id(faces), n_verts)
+
         if mesh_id not in self._mesh_cache:
             if v_ids is not None:
                 vid_map = {vid: i for i, vid in enumerate(v_ids)}
@@ -171,60 +194,58 @@ class RenderPipeline:
                         f_idx.append([f['v'][0], f['v'][1], f['v'][2]])
                     f_col.append(f['color'])
             self._mesh_cache[mesh_id] = (np.array(f_idx, dtype=np.int32), np.array(f_col, dtype=np.int32))
-            
+
         face_indices, face_colors = self._mesh_cache[mesh_id]
         # Enqueue submission for batched processing later in render
-        # We store the cam_verts/projected so the heavy work (face culling/shading)
-        # can be done once for all submitted meshes in a single numba call.
         self._mesh_submissions.append((face_indices, face_colors, cam_verts, projected, layer))
 
     def submit_polygon(self, world_verts, color, layer='opaque'):
         """Submit a single polygon."""
         if len(world_verts) < 3:
             return
-            
+
         v_data = np.array(world_verts, dtype=np.float64)
         cam_verts = self.camera.world_to_camera_batch(v_data)
-            
+
         # Backface culling
         v1, v2, v3 = cam_verts[0], cam_verts[1], cam_verts[2]
         ux, uy, uz = v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]
         vx2, vy2, vz2 = v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]
         fnz = ux * vy2 - uy * vx2
-        
-        if fnz >= 0: 
-            return 
-            
+
+        if fnz >= 0:
+            return
+
         projected = self.camera.project_batch(cam_verts)
-        
+
         pts = []
         avg_z = 0.0
         for i in range(len(cam_verts)):
             if projected[i, 0] <= -900000.0:
-                return 
+                return
             pts.append((projected[i, 0], projected[i, 1]))
             avg_z += cam_verts[i, 2]
-            
+
         avg_z /= len(cam_verts)
-        
-        length = math.sqrt(fnz ** 2 + (ux*vz2 - uz*vx2)**2 + (uy*vz2 - uz*vy2)**2)
+
+        length = math.sqrt(fnz ** 2 + (ux * vz2 - uz * vx2) ** 2 + (uy * vz2 - uz * vy2) ** 2)
         normalized_z = fnz / length if length > 0.0001 else 0
         shade = max(0, min(255, int(255 * max(0.2, -normalized_z))))
         r = int(color[0] * (shade / 255))
         g = int(color[1] * (shade / 255))
         b = int(color[2] * (shade / 255))
-        
+
         self._layers[layer].append((
             avg_z, 'poly', pts, (r, g, b)
         ))
-        
+
     def submit_sprite(self, x, y, z, color, size, is_glow=False, layer='alpha', cam_pos=None):
         """Submit a 2D circle sprite."""
         if cam_pos:
             cx, cy, cz = cam_pos
         else:
             cx, cy, cz = self.camera.world_to_camera(x, y, z)
-            
+
         proj = self.camera.project(cx, cy, cz)
         if proj:
             sx, sy, scale = proj
@@ -253,7 +274,7 @@ class RenderPipeline:
         c2x, c2y, c2z = self.camera.world_to_camera(p2[0], p2[1], p2[2])
         proj1 = self.camera.project(c1x, c1y, c1z)
         proj2 = self.camera.project(c2x, c2y, c2z)
-        
+
         if proj1 and proj2:
             s1x, s1y, _ = proj1
             s2x, s2y, _ = proj2
@@ -263,22 +284,21 @@ class RenderPipeline:
 
     def render(self, surface):
         """Sort and render all submitted primitives by layer."""
-        # Process all mesh submissions in a single batched numba call before drawing
         self._flush_mesh_submissions()
         draw_poly = pygame.draw.polygon
         draw_circle = pygame.draw.circle
         draw_line = pygame.draw.line
-        
+
         # 1. Background
         self._layers['background'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['background']:
             draw_circle(surface, p[4], p[2], p[3])
-            
+
         # 2. Opaque
         self._layers['opaque'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['opaque']:
             draw_poly(surface, p[3], p[2])
-            
+
         # 3. Alpha
         self._layers['alpha'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['alpha']:
@@ -296,15 +316,16 @@ class RenderPipeline:
                     tint_surf.fill(cache_key)
                     tinted.blit(tint_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
                     self._tinted_puffs[cache_key] = tinted
-                
+
                 scaled_key = (cache_key, s)
                 if scaled_key not in self._scaled_nebulae:
                     try:
                         self._scaled_nebulae[scaled_key] = pygame.transform.scale(self._tinted_puffs[cache_key], (s, s))
-                    except pygame.error: continue
-                
+                    except pygame.error:
+                        continue
+
                 puff = self._scaled_nebulae[scaled_key]
-                surface.blit(puff, (p[2][0] - s//2, p[2][1] - s//2))
+                surface.blit(puff, (p[2][0] - s // 2, p[2][1] - s // 2))
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
 
@@ -345,8 +366,8 @@ class RenderPipeline:
             big_face_idx = np.vstack(face_idx_list).astype(np.int32)
             big_face_col = np.vstack(face_col_list).astype(np.int32)
         else:
-            big_face_idx = np.zeros((0,3), dtype=np.int32)
-            big_face_col = np.zeros((0,3), dtype=np.int32)
+            big_face_idx = np.zeros((0, 3), dtype=np.int32)
+            big_face_col = np.zeros((0, 3), dtype=np.int32)
 
         # Call numba once for all faces
         valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(big_cam, big_proj, big_face_idx, big_face_col)
@@ -370,4 +391,3 @@ class RenderPipeline:
 
         # Clear submissions
         self._mesh_submissions.clear()
-
