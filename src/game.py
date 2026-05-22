@@ -17,11 +17,8 @@ from src.constants import (
     ENEMY_CULL_DISTANCE, PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
-    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE,
-    AIM_MODE_THRESHOLD, AIM_MAGNIFICATION, AIM_MAGNIFICATION_MIN, AIM_MAGNIFICATION_MAX,
-    AIM_WINDOW_SIZE, AIM_WINDOW_POS,
-    AIM_WINDOW_BORDER_COLOR, AIM_WINDOW_CROSSHAIR_COLOR, PLAYER_LASER_SPEED,
-    FULLSCREEN, SCREEN_WIDTH, SCREEN_HEIGHT
+    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE, FULLSCREEN, 
+    SCREEN_WIDTH, SCREEN_HEIGHT
 )
 from src.utils import draw_damage_overlay
 from src.director import WaveDirector
@@ -33,6 +30,7 @@ from src.title_screen import TitleCinematic
 from src.hud_data import HUDData
 
 from src.state import State, StateManager
+from src.aim_scope import AimScope
 
 # ──────────────────────────────────────────────
 # State Classes
@@ -85,7 +83,7 @@ class GameplayState(State):
         # Initialize object pools
         self.particle_pool = ParticlePool(initial_size=500, max_size=2000)
         self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
-        
+
         # Spatial system
         self.spatial = SpatialPartition(cell_size=1000.0)
 
@@ -93,6 +91,9 @@ class GameplayState(State):
         self.camera = Camera(self.W, self.H)
         self.renderer = RenderPipeline(self.camera)
 
+        # Initialize aim scope
+        self.aim_scope = AimScope(self.camera, self.laser_pool, self.particle_pool)
+        
         # Environment & Entities
         self.stars = [Star(self.player.pos) for _ in range(250)]
         self.nebulae = NebulaSystem(count=12, area_radius=30000)
@@ -107,12 +108,6 @@ class GameplayState(State):
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
-
-        # Magnification Setup
-        self.magnify_surf = pygame.Surface((AIM_WINDOW_SIZE, AIM_WINDOW_SIZE), pygame.SRCALPHA)
-        self.magnify_camera = Camera(AIM_WINDOW_SIZE, AIM_WINDOW_SIZE)
-        self.magnify_renderer = RenderPipeline(self.magnify_camera)
-        self.current_magnification = 1.0
 
         # Waypoint & HUD toggles
         self.show_waypoints = True
@@ -163,6 +158,12 @@ class GameplayState(State):
             self.player.target_closest(self.enemies)
         elif self.player._key_cycle_target:
             self.player.cycle_targets(self.enemies)
+
+        # Update aim scope
+        self.aim_scope.update(
+            self.context.handler.trigger_left(),
+            keys,
+            )
 
         # Handle Camera Shake
         if self.player.shake_queued > 0:
@@ -255,23 +256,8 @@ class GameplayState(State):
         )
         draw_cockpit_hud(screen, hud)
 
-        # Zoom Handling
-        l2_val = self.context.handler.trigger_left()
-        keys = pygame.key.get_pressed()
+        self.aim_scope.draw(screen, self.player, visible_entities, self.stars)
         
-        if l2_val > AIM_MODE_THRESHOLD:
-            t = (l2_val - AIM_MODE_THRESHOLD) / (1.0 - AIM_MODE_THRESHOLD)
-            target_mag = AIM_MAGNIFICATION_MIN + t * (AIM_MAGNIFICATION_MAX - AIM_MAGNIFICATION_MIN)
-        elif keys[pygame.K_LSHIFT]:
-            target_mag = AIM_MAGNIFICATION
-        else:
-            target_mag = 1.0
-            
-        self.current_magnification += (target_mag - self.current_magnification) * 0.15
-        
-        if self.current_magnification > 1.05:
-            self._render_magnified_window(screen, self.player, visible_entities, self.stars, dt, self.current_magnification)
-
         draw_damage_overlay(screen, self.W, self.H, self.player.hit_flash / HIT_FLASH_DURATION)
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
@@ -387,98 +373,6 @@ class GameplayState(State):
             if bolt.life <= 0:
                 if bolt in enemy_projectiles:
                     enemy_projectiles.remove(bolt)
-
-    def _render_magnified_window(self, screen, player, visible_entities, stars, dt, magnification):
-        self.magnify_surf.fill((5, 5, 25, 200))
-        self.magnify_camera.fov = self.camera.fov * magnification
-        self.magnify_camera.update(player.pos, player.orientation)
-        self.magnify_renderer.clear()
-
-        for star in stars:
-            star.submit_to_renderer(self.magnify_renderer, player.pos)
-        
-        for obj in visible_entities:
-            if self.magnify_camera.sphere_in_frustum(obj.x, obj.y, obj.z, getattr(obj, 'hit_radius', 500)):
-                obj.submit_to_renderer(self.magnify_renderer)
-
-        for l in self.laser_pool.get_active():
-            if self.magnify_camera.sphere_in_frustum(l.x, l.y, l.z, 200):
-                l.submit_to_renderer(self.magnify_renderer)
-
-        self.particle_pool.submit_to_renderer(self.magnify_renderer, self.magnify_camera)
-        self.magnify_renderer.render(self.magnify_surf)
-
-        # Target Prediction Indicator
-        if player.active_target:
-            target = player.active_target
-            rx = target.x - player.pos[0]
-            ry = target.y - player.pos[1]
-            rz = target.z - player.pos[2]
-            
-            p_vx, p_vy, p_vz = player.vel
-            vx = target.vx - p_vx
-            vy = target.vy - p_vy
-            vz = target.vz - p_vz
-            
-            s = PLAYER_LASER_SPEED
-            a = (vx*vx + vy*vy + vz*vz) - s*s
-            b = 2 * (rx*vx + ry*vy + rz*vz)
-            c = rx*rx + ry*ry + rz*rz
-            
-            det = b*b - 4*a*c
-            if det >= 0:
-                sqrt_det = math.sqrt(det)
-                t1 = (-b - sqrt_det) / (2*a)
-                t2 = (-b + sqrt_det) / (2*a)
-                
-                t = -1
-                if t1 > 0 and t2 > 0: t = min(t1, t2)
-                elif t1 > 0: t = t1
-                elif t2 > 0: t = t2
-                
-                if t > 0:
-                    lx = target.x + target.vx * t
-                    ly = target.y + target.vy * t
-                    lz = target.z + target.vz * t
-                    
-                    cx, cy, cz = self.magnify_camera.world_to_camera(lx, ly, lz)
-                    proj = self.magnify_camera.project(cx, cy, cz)
-                    if proj:
-                        psx, psy, _ = proj
-                        pts = [
-                            (psx, psy - 8), (psx + 8, psy),
-                            (psx, psy + 8), (psx - 8, psy)
-                        ]
-                        pygame.draw.polygon(self.magnify_surf, (255, 255, 0), pts, 1)
-                        pygame.draw.circle(self.magnify_surf, (255, 255, 0), (psx, psy), 2)
-
-        # Draw Crosshair
-        mid = AIM_WINDOW_SIZE // 2
-        pygame.draw.line(self.magnify_surf, AIM_WINDOW_CROSSHAIR_COLOR, (mid - 20, mid), (mid + 20, mid), 1)
-        pygame.draw.line(self.magnify_surf, AIM_WINDOW_CROSSHAIR_COLOR, (mid, mid - 20), (mid, mid + 20), 1)
-        pygame.draw.circle(self.magnify_surf, AIM_WINDOW_CROSSHAIR_COLOR, (mid, mid), 4, 1)
-
-        if not hasattr(self, '_aim_font'):
-            self._aim_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 14)
-        lbl = self._aim_font.render("MAGNIFIED AIM", True, (0, 200, 255))
-        self.magnify_surf.blit(lbl, (10, 10))
-
-        screen.blit(self.magnify_surf, AIM_WINDOW_POS)
-        
-        rect = (AIM_WINDOW_POS[0], AIM_WINDOW_POS[1], AIM_WINDOW_SIZE, AIM_WINDOW_SIZE)
-        pygame.draw.rect(screen, AIM_WINDOW_BORDER_COLOR, rect, 2)
-        
-        c_len = 30
-        x, y, w, h = rect
-        pygame.draw.line(screen, (255, 255, 255), (x-2, y-2), (x+c_len, y-2), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x-2, y-2), (x-2, y+c_len), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x+w-c_len, y-2), (x+w+2, y-2), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x+w+2, y-2), (x+w+2, y+c_len), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x-2, y+h-c_len), (x-2, y+h+2), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x-2, y+h+2), (x+c_len, y+h+2), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x+w-c_len, y+h+2), (x+w+2, y+h+2), 2)
-        pygame.draw.line(screen, (255, 255, 255), (x+w+2, y+h-c_len), (x+w+2, y+h+2), 2)
-
 
 class PauseState(State):
     def __init__(self, context):
