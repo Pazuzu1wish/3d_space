@@ -4,7 +4,7 @@ import random
 from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
 from src.constants import (
     PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
-    HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
+    HIT_FLASH_DURATION, PLAYER_MISSILE_MAX_AMMO,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
     TARGETING_FOV, PLAYER_LASER_SPEED,
     PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE,
@@ -46,7 +46,6 @@ class Player:
         self.overheated = False
 
         # Missile System
-        from src.constants import PLAYER_MISSILE_MAX_AMMO
         self.missile_ammo = PLAYER_MISSILE_MAX_AMMO
         self.missile_lock_timer = 0.0
         self.missile_locked = False
@@ -69,7 +68,6 @@ class Player:
         # ── INPUT ─────────────────────────────────
         lx, ly = handler.stick_left()
         rx, _  = handler.stick_right()
-        #fire_l = handler.trigger_left()  > 0.5
         fire_r = handler.trigger_right() > 0.5
         fire_pressed = fire_r
 
@@ -99,8 +97,8 @@ class Player:
         if keys[pygame.K_UP] or keys[pygame.K_DOWN] or handler.held('R1') or handler.held('L1'):
             self.drift_mode = False
 
-        if handler.held('R1'): self.throttle = min(1.0, self.throttle + dt * 2.8)
-        if handler.held('L1'): self.throttle = max(-1.0, self.throttle - dt * 2.8)
+        if handler.held('R1'): self.throttle = min(1.0, self.throttle + dt * 3.8)
+        if handler.held('L1'): self.throttle = max(-1.0, self.throttle - dt * 3.8)
 
         if handler.just_pressed('R3') or keys[pygame.K_f]:
             self.drift_mode = not self.drift_mode
@@ -254,7 +252,7 @@ class Player:
             rfx, rfy, rfz = forward
             rrx, rry, rrz = right
             LASER_SPEED = PLAYER_LASER_SPEED
-            offset = 40
+            offset = 200
             
             # Calculate current spread and color based on heat
             current_spread = PLAYER_LASER_BASE_SPREAD + (self.laser_heat * PLAYER_LASER_MAX_SPREAD)
