@@ -1,3 +1,5 @@
+# TODO: move physics and projectiles out of player.py 
+
 import pygame
 import math
 import random

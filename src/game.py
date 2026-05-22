@@ -208,23 +208,8 @@ class GameplayState(State):
         self.renderer.render(screen)
 
         # Draw sniper beams on screen
-        for e in sniper_beams_to_draw:
-            cx, cy, cz = self.camera.world_to_camera(e.x, e.y, e.z)
-            if cz > CAMERA_CLIP_NEAR:
-                proj = self.camera.project(cx, cy, cz)
-                if proj:
-                    sx, sy, scale = proj
-                    intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', SNIPER_CHARGE_TIME) / SNIPER_CHARGE_TIME))
-                    jitter = math.sin(pygame.time.get_ticks() * 0.05) * (SNIPER_CHARGE_JITTER * intensity)
-                    jx, jy = sx + jitter, sy - jitter
-                    thickness = max(1, int(2 * intensity))
-                    pygame.draw.line(screen, (255, 0, 0), (jx, jy), (self.W // 2, self.H // 2), thickness)
-                    if intensity > SNIPER_CHARGE_CORE_THRESHOLD:
-                        pygame.draw.line(screen, (255, 255, 255), (jx, jy), (self.W // 2, self.H // 2), max(1, thickness - 3))
-                    glare = int(SNIPER_GLARE_MULTIPLIER * intensity * scale)
-                    if glare > 0:
-                        pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
-
+        self.draw_sniper_beams(screen, sniper_beams_to_draw)
+        
         hud = HUDData(
             W=self.W,
             H=self.H,
@@ -259,6 +244,26 @@ class GameplayState(State):
         self.aim_scope.draw(screen, self.player, visible_entities, self.stars)
         
         draw_damage_overlay(screen, self.W, self.H, self.player.hit_flash / HIT_FLASH_DURATION)
+
+    def draw_sniper_beams(self, screen, sniper_beams_to_draw):
+        for e in sniper_beams_to_draw:
+            cx, cy, cz = self.camera.world_to_camera(e.x, e.y, e.z)
+            if cz > CAMERA_CLIP_NEAR:
+                proj = self.camera.project(cx, cy, cz)
+                if proj:
+                    sx, sy, scale = proj
+                    intensity = 1.0 - max(0.0, min(1.0, getattr(e, 'timer', SNIPER_CHARGE_TIME) / SNIPER_CHARGE_TIME))
+                    jitter = math.sin(pygame.time.get_ticks() * 0.05) * (SNIPER_CHARGE_JITTER * intensity)
+                    jx, jy = sx + jitter, sy - jitter
+                    thickness = max(1, int(2 * intensity))
+                    pygame.draw.line(screen, (255, 0, 0), (jx, jy), (self.W // 2, self.H // 2), thickness)
+                    if intensity > SNIPER_CHARGE_CORE_THRESHOLD:
+                        pygame.draw.line(screen, (255, 255, 255), (jx, jy), (self.W // 2, self.H // 2), max(1, thickness - 3))
+                    glare = int(SNIPER_GLARE_MULTIPLIER * intensity * scale)
+                    if glare > 0:
+                        pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
+
+        
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
         # Update Lasers and Particles
@@ -468,8 +473,6 @@ class Game:
                 if self.state_manager.current:
                     self.state_manager.current.handle_event(event)
 
-            # Handle input
-            #self.handler.process_event(event)
 
             # State update
             if self.state_manager.current:
