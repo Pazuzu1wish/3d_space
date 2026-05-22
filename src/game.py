@@ -46,13 +46,21 @@ class TitleState(State):
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and self.title_cinematic.cinematic_done:
             self.start_game()
+        self.context.handler.process_event(event)
 
     def update(self, dt, manager):
-        self.title_cinematic.update(dt)
+        self.title_cinematic.update(dt, self.context.handler)
+
+        # Handle menu navigation
+        selected = self.title_cinematic.update_menu_navigation(self.context.handler)
+        if selected:
+            self.start_game()
+            
         # Allow starting the game via controller input too
         if self.title_cinematic.cinematic_done:
-            if self.context.handler.just_pressed('Cross') or self.context.handler.just_pressed('Options'):
+            if self.context.handler.just_pressed('X') or self.context.handler.just_pressed('Options'):
                 self.start_game()
+            
 
     def start_game(self):
         self.context.sound.play_music(self.context.music_file, loops=-1, volume=0.55)
@@ -232,7 +240,6 @@ class GameplayState(State):
             dodge_charge=self.player.dodge_charge,
             dodge_ready=self.player.dodge_ready,
             dodge_flash=self.player.dodge_flash,
-            text_fade=0.0,  # Required by some HUD configurations
             shield_charge=self.player.shield_charge,
             shield_recharging=self.player.shield_recharging,
             laser_heat=self.player.laser_heat,
@@ -481,6 +488,7 @@ class PauseState(State):
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
             self.context.state_manager.pop()
+        self.context.handler.process_event(event)
 
     def update(self, dt, manager):
         if self.context.handler.just_pressed('Options'):
@@ -565,6 +573,9 @@ class Game:
                 
                 if self.state_manager.current:
                     self.state_manager.current.handle_event(event)
+
+            # Handle input
+            #self.handler.process_event(event)
 
             # State update
             if self.state_manager.current:

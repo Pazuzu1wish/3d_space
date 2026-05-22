@@ -58,10 +58,6 @@ CINEMATIC_ASTEROIDS = [
         # (x,      y,     z,      scale)
         ( 3700,  -3000,  5000,   400),
         (-2900,   600,  3000,   280),
-        # ( -120,  1400,  9000,   520),
-        # (-3800,  100,  6500,   350),
-        # (  800,  -1600, 8000,   180),
-        # ( -250,  -150,  4500,   600),
         ( 4200,   500,  4500,   220)
     ]
 
@@ -168,7 +164,7 @@ class TitleCinematic:
     # ─────────────────────────────────────────────────────────────
     # UPDATE
     # ─────────────────────────────────────────────────────────────
-    def update(self, dt):
+    def update(self, dt, handler):
         self.elapsed_time += dt
         t = self.elapsed_time
 
@@ -291,13 +287,20 @@ class TitleCinematic:
         # ── PARTICLES ─────────────────────────────────────────
         self.particle_pool.update(dt)
 
+        # ── MENU NAVIGATION ───────────────────────────────────
+        if handler and self.cinematic_done:
+            selected = self.update_menu_navigation(handler)
+            if selected:
+                return selected  # Return the selected menu item
+        
+        return None
+
     # ─────────────────────────────────────────────────────────────
     # INTERNAL: TRIGGER EXPLOSION
     # ─────────────────────────────────────────────────────────────
     def _trigger_explosion(self):
         self.explosion_triggered = True
         self.sound.play_sfx("explosion")
-        #self.sound.play_music("assets/sounds/bgm_drone3.wav", loops=-1, volume=0.7)
 
         # Big particle burst at dogfighter position
         for _ in range(250):
@@ -323,22 +326,40 @@ class TitleCinematic:
     # ─────────────────────────────────────────────────────────────
     # HANDLE INPUT (call from game loop event handler)
     # ─────────────────────────────────────────────────────────────
-    def handle_event(self, event):
+    
+    def update_menu_navigation(self, handler):
+        """Handle menu navigation with controller input"""
         if not self.cinematic_done:
-            # Any key/button skips to end
-            if event.type in (pygame.KEYDOWN, pygame.JOYBUTTONDOWN):
-                self.elapsed_time = T_DONE + 0.1
-            return None   # no selection yet
+            return
+            
+        # D-pad up/down for menu navigation
+        if handler.just_pressed('DPad Up'):
+            self.menu_selected = (self.menu_selected - 1) % len(self.menu_items)
+        elif handler.just_pressed('DPad Down'):
+            self.menu_selected = (self.menu_selected + 1) % len(self.menu_items)
+        
+        # Also handle controller face buttons for selection
+        if handler.just_pressed('X'):  # 'X' button to select
+            return self.menu_items[self.menu_selected]
+        
+        return None  # No selection made yet
+    
+    # def handle_event(self, event):
+    #     if not self.cinematic_done:
+    #         # Any key/button skips to end
+    #         if event.type in (pygame.KEYDOWN, pygame.JOYBUTTONDOWN):
+    #             self.elapsed_time = T_DONE + 0.1
+    #         return None   # no selection yet
 
-        if event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_UP, pygame.K_w):
-                self.menu_selected = (self.menu_selected - 1) % len(self.menu_items)
-            elif event.key in (pygame.K_DOWN, pygame.K_s):
-                self.menu_selected = (self.menu_selected + 1) % len(self.menu_items)
-            elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
-                return self.menu_items[self.menu_selected]
+    #     if event.type == pygame.KEYDOWN:
+    #         if event.key in (pygame.K_UP, pygame.K_w):
+    #             self.menu_selected = (self.menu_selected - 1) % len(self.menu_items)
+    #         elif event.key in (pygame.K_DOWN, pygame.K_s):
+    #             self.menu_selected = (self.menu_selected + 1) % len(self.menu_items)
+    #         elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+    #             return self.menu_items[self.menu_selected]
 
-        return None   # no selection yet
+    #     return None   # no selection yet
 
     # ─────────────────────────────────────────────────────────────
     # DRAW
@@ -402,7 +423,7 @@ class TitleCinematic:
             self._draw_menu(screen)
 
         # PRESS ANY KEY prompt
-        if self.cinematic_done and self.menu_alpha < 10:
+        if self.cinematic_done: #and self.menu_alpha < 10:
             self._draw_prompt(screen)
 
         # DEBUG PROJECTION READOUT
