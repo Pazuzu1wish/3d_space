@@ -56,7 +56,8 @@ def fire_lasers(player, fire_pressed, handler, laser_pool, sound):
     forward, right, up = get_basis_from_quat(player.orientation)
     rfx, rfy, rfz = forward
     rrx, rry, rrz = right
-    offset = 200
+    horizontal_offset = 200
+    vertical_offset = 100
 
     current_spread = PLAYER_LASER_BASE_SPREAD + (player.laser_heat * PLAYER_LASER_MAX_SPREAD)
     laser_color = (255, 50, 50) if player.laser_heat > 0.75 else None
@@ -73,9 +74,9 @@ def fire_lasers(player, fire_pressed, handler, laser_pool, sound):
         mag = math.sqrt(pfx*pfx + pfy*pfy + pfz*pfz)
         pfx, pfy, pfz = pfx/mag, pfy/mag, pfz/mag
 
-        wx = player.pos[0] + rrx * offset * side + rfx * 70
-        wy = player.pos[1] + rry * offset * side + rfy * 70
-        wz = player.pos[2] + rrz * offset * side + rfz * 70
+        wx = player.pos[0] + rrx * horizontal_offset * side + rfx * 70 + up[0] * vertical_offset
+        wy = player.pos[1] + rry * horizontal_offset * side + rfy * 70 + up[1] * vertical_offset
+        wz = player.pos[2] + rrz * horizontal_offset * side + rfz * 70 + up[2] * vertical_offset
 
         laser_pool.fire(
             wx, wy, wz,
