@@ -3,6 +3,7 @@
 import pygame
 import math
 import random
+from src.weapon_system import fire_lasers, fire_missile
 from src.physics import player_integrate
 from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
 from src.constants import (
@@ -10,7 +11,8 @@ from src.constants import (
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
     TARGETING_FOV, PLAYER_LASER_SPEED,
     PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE,
-    PLAYER_LASER_BASE_SPREAD, PLAYER_LASER_MAX_SPREAD
+    PLAYER_LASER_BASE_SPREAD, PLAYER_LASER_MAX_SPREAD, PLAYER_MISSILE_LOCK_TIME, 
+    PLAYER_MISSILE_LOCK_FOV
 )
 
 SHIELD_MAX       = 100
@@ -148,7 +150,6 @@ class Player:
         self._target_key_cd   = max(0.0, self._target_key_cd  - dt)
 
         # ── MISSILE LOCK-ON LOGIC ──────────────────
-        from src.constants import PLAYER_MISSILE_LOCK_TIME, PLAYER_MISSILE_LOCK_FOV
         if self.active_target and getattr(self.active_target, 'hp', 0) > 0 and not getattr(self.active_target, 'stealthed', False):
             fx, fy, fz = get_forward_from_quat(self.orientation)
             dx = self.active_target.x - self.pos[0]
@@ -178,81 +179,10 @@ class Player:
         player_integrate(self, dt)
         
         # ── WEAPONS ───────────────────────────────
-        if missile_fire_pressed and self.missile_ammo > 0:
-            if sound:
-                sound.play_sfx("missile")
-            from src.constants import PLAYER_MISSILE_SPEED, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE
-            self.missile_ammo -= 1
-            forward, right, _ = get_basis_from_quat(self.orientation)
-            rfx, rfy, rfz = forward
-            wx = self.pos[0] + rfx * 50
-            wy = self.pos[1] + rfy * 50
-            wz = self.pos[2] + rfz * 50
-            vx, vy, vz = rfx * PLAYER_MISSILE_SPEED, rfy * PLAYER_MISSILE_SPEED, rfz * PLAYER_MISSILE_SPEED
-            
-            if self.missile_locked and self.active_target:
-                from src.missile import HomingMissile
-                m = HomingMissile(wx, wy, wz, vx, vy, vz, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE, self.active_target)
-                player_missiles.append(m)
-            else:
-                from src.missile import PlayerMissile
-                m = PlayerMissile(wx, wy, wz, vx, vy, vz, PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE, homing=False)
-                player_missiles.append(m)
-            
-            self.missile_lock_timer = 0.0
-            self.missile_locked = False
-            handler.rumble(0.2, 0.2, 100)
+        fire_lasers(self, fire_pressed, handler, lasers, sound)
+        
+        fire_missile(self, missile_fire_pressed, handler, player_missiles, sound)
 
-        if fire_pressed and self.weapons_cooldown <= 0 and not self.overheated:
-            if sound:
-                if self.laser_heat > .75:
-                    sound.play_sfx("laser_strained")
-                else:
-                    sound.play_sfx("laser")
-            forward, right, _ = get_basis_from_quat(self.orientation)
-            rfx, rfy, rfz = forward
-            rrx, rry, rrz = right
-            LASER_SPEED = PLAYER_LASER_SPEED
-            offset = 200
-            
-            # Calculate current spread and color based on heat
-            current_spread = PLAYER_LASER_BASE_SPREAD + (self.laser_heat * PLAYER_LASER_MAX_SPREAD)
-            laser_color = (255, 50, 50) if self.laser_heat > 0.75 else None
-            
-            for side in (-1, 1):
-                # Apply random jitter to the forward vector
-                jx = (random.random() * 2 - 1) * current_spread
-                jy = (random.random() * 2 - 1) * current_spread
-                
-                # Perturb the forward vector
-                _, _, up = get_basis_from_quat(self.orientation)
-                pfx = rfx + rrx * jx + up[0] * jy
-                pfy = rfy + rry * jx + up[1] * jy
-                pfz = rfz + rrz * jx + up[2] * jy
-                
-                # Re-normalize direction
-                mag = math.sqrt(pfx*pfx + pfy*pfy + pfz*pfz)
-                pfx, pfy, pfz = pfx/mag, pfy/mag, pfz/mag
-                
-                wx = self.pos[0] + rrx * offset * side + rfx * 70
-                wy = self.pos[1] + rry * offset * side + rfy * 70
-                wz = self.pos[2] + rrz * offset * side + rfz * 70
-                
-                lasers.fire(
-                    wx, wy, wz,
-                    pfx * LASER_SPEED, pfy * LASER_SPEED, pfz * LASER_SPEED,
-                    color=laser_color
-                )
-            
-            # Update cooldown, heat and shake
-            self.weapons_cooldown = 0.15
-            self.laser_heat = min(1.0, self.laser_heat + PLAYER_LASER_HEAT_PER_SHOT)
-            if self.laser_heat >= 1.0:
-                self.overheated = True
-            
-            self.shake_queued += PLAYER_LASER_FIRE_SHAKE
-            handler.rumble(0.0, 0.12, 50)
-            
         # ── RUMBLE FEEDBACK ───────────────────────────
         if self.rumble_queued > 0:
             intensity = min(1.0, self.rumble_queued / 30.0)
