@@ -1,3 +1,6 @@
+# TODO: move physics out of enemy.py 
+# TODO: rename to ship so these could have alignments (friendly, neutral, hostile)
+
 import math
 import random
 import pygame
@@ -5,9 +8,7 @@ import pygame
 from src.math_engine import (
     ray_sphere_intersection,
     world_to_camera,
-    project_to_screen,
-    basis_from_forward,
-    get_forward_from_quat,
+    get_forward_from_quat
 )
 from src.constants import (
     MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR,
@@ -18,6 +19,8 @@ from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
     CorvetteTurret, Mine, StealthShotgun
 )
+from src.physics import (newtonian_integrate, approaching_too_fast, 
+update_orientation_from_velocity)
 
 
 # ──────────────────────────────────────────────
@@ -171,83 +174,13 @@ class Enemy:
     # ── NEWTONIAN PHYSICS ──────────────────────────────────────────
 
     def _apply_newtonian(self, desired_heading, dt, lateral_force=None):
-        """Rotate nose toward desired_heading at turn_rate, fire main thrust,
-        apply optional world-space lateral_force, drag, speed cap, integrate."""
-        hx, hy, hz = desired_heading
-        fx, fy, fz = self.forward
-
-        # 1. Rotate forward toward desired heading (limited by turn_rate)
-        dot = max(-1.0, min(1.0, hx*fx + hy*fy + hz*fz))
-        angle = math.acos(dot)
-        max_turn = self.turn_rate * dt
-        if angle > 1e-4:
-            t = min(1.0, max_turn / angle)
-            nx = fx + (hx - fx) * t
-            ny = fy + (hy - fy) * t
-            nz = fz + (hz - fz) * t
-            n = math.sqrt(nx*nx + ny*ny + nz*nz) or 1.0
-            fx, fy, fz = nx/n, ny/n, nz/n
-        self.forward = (fx, fy, fz)
-
-        # 2. Rebuild right / up from new forward
-        temp_up = (0, 1, 0) if abs(fy) < 0.99 else (1, 0, 0)
-        rx = fy * temp_up[2] - fz * temp_up[1]
-        ry = fz * temp_up[0] - fx * temp_up[2]
-        rz = fx * temp_up[1] - fy * temp_up[0]
-        rlen = math.sqrt(rx*rx + ry*ry + rz*rz) or 1.0
-        self.right = (rx/rlen, ry/rlen, rz/rlen)
-        self.up = (
-            self.right[1]*fz - self.right[2]*fy,
-            self.right[2]*fx - self.right[0]*fz,
-            self.right[0]*fy - self.right[1]*fx,
-        )
-
-        # 3. Main thrust along current (rotated) forward
-        accel = self.thrust * dt
-        self.vx += fx * accel
-        self.vy += fy * accel
-        self.vz += fz * accel
-
-        # 4. Optional world-space lateral force (e.g. pattern impulses, circling)
-        if lateral_force is not None:
-            self.vx += lateral_force[0] * dt
-            self.vy += lateral_force[1] * dt
-            self.vz += lateral_force[2] * dt
-
-        # 5. Drag
-        d = max(0.0, 1.0 - self.drag * dt)
-        self.vx *= d
-        self.vy *= d
-        self.vz *= d
-
-        # 6. Speed cap
-        spd_sq = self.vx**2 + self.vy**2 + self.vz**2
-        if spd_sq > self.max_speed**2:
-            s = self.max_speed / math.sqrt(spd_sq)
-            self.vx *= s
-            self.vy *= s
-            self.vz *= s
-
-        # 7. Integrate position
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
+        newtonian_integrate(self, desired_heading, dt, lateral_force)
 
     def _approaching_too_fast(self, target_pos, brake_threshold=600.0):
-        """True when close to target and still closing fast — signal to flip and brake."""
-        dx = target_pos[0] - self.x
-        dy = target_pos[1] - self.y
-        dz = target_pos[2] - self.z
-        dist = math.sqrt(dx*dx + dy*dy + dz*dz) or 1.0
-        approach_rate = (self.vx*dx + self.vy*dy + self.vz*dz) / dist
-        return dist < brake_threshold and approach_rate > 60.0
+        return approaching_too_fast(self, target_pos, brake_threshold)
 
     def _update_orientation(self):
-        spd = math.sqrt(self.vx ** 2 + self.vy ** 2 + self.vz ** 2)
-        if spd > 1e-3:
-            self.forward, self.right, self.up = basis_from_forward(
-                (self.vx, self.vy, self.vz)
-            )
+        update_orientation_from_velocity(self)
 
     # Max trail particles per engine hardpoint
     _TRAIL_CAP_PER_ENGINE = 20

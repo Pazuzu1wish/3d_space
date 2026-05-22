@@ -3,10 +3,10 @@
 import pygame
 import math
 import random
+from src.physics import player_integrate
 from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
 from src.constants import (
-    PLAYER_MAX_HP, MAX_THRUST, MAX_RETRO_THRUST, DRAG, MAX_SPEED,
-    HIT_FLASH_DURATION, PLAYER_MISSILE_MAX_AMMO,
+    PLAYER_MAX_HP, HIT_FLASH_DURATION, PLAYER_MISSILE_MAX_AMMO,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
     TARGETING_FOV, PLAYER_LASER_SPEED,
     PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE,
@@ -175,48 +175,7 @@ class Player:
             self.overheated = False
 
         # ── MOVEMENT ──────────────────────────────
-        fx, fy, fz = get_forward_from_quat(self.orientation)
-        
-        if self.drift_mode:
-            accel = 0.0
-        else:
-            # Target speed along the ship's forward axis
-            target_fwd_speed = self.throttle * MAX_SPEED
-            
-            # Current velocity projected onto the forward vector
-            current_fwd_speed = self.vel[0] * fx + self.vel[1] * fy + self.vel[2] * fz
-            
-            # Proportional controller to match target speed
-            time_constant = 0.25  # 250ms response time
-            
-            # Include drag compensation to ensure we hit the target speed precisely
-            required_accel = (target_fwd_speed - current_fwd_speed) / time_constant + current_fwd_speed * DRAG
-            
-            # Clamp acceleration by engine thrust capabilities
-            if required_accel >= 0:
-                accel = min(required_accel, MAX_THRUST)
-            else:
-                accel = max(required_accel, -MAX_RETRO_THRUST)
-            
-        self.vel[0] += fx * accel * dt
-        self.vel[1] += fy * accel * dt
-        self.vel[2] += fz * accel * dt
-        
-        self.vel[0] -= self.vel[0] * DRAG * dt
-        self.vel[1] -= self.vel[1] * DRAG * dt
-        self.vel[2] -= self.vel[2] * DRAG * dt
-        
-        # Cap max speed
-        speed_sq = self.vel[0]**2 + self.vel[1]**2 + self.vel[2]**2
-        if speed_sq > MAX_SPEED**2:
-            speed = math.sqrt(speed_sq)
-            self.vel[0] = (self.vel[0] / speed) * MAX_SPEED
-            self.vel[1] = (self.vel[1] / speed) * MAX_SPEED
-            self.vel[2] = (self.vel[2] / speed) * MAX_SPEED
-        
-        self.pos[0] += self.vel[0] * dt
-        self.pos[1] += self.vel[1] * dt
-        self.pos[2] += self.vel[2] * dt
+        player_integrate(self, dt)
         
         # ── WEAPONS ───────────────────────────────
         if missile_fire_pressed and self.missile_ammo > 0:
