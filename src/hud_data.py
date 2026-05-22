@@ -18,6 +18,7 @@ class HUDData:
     dodge_charge: float = 1.0
     dodge_ready: bool = True
     dodge_flash: float = 0.0
+    text_fade: float = 1.0
     shield_charge: float = 1.0
     shield_recharging: bool = False
     laser_heat: float = 0.0
