@@ -85,6 +85,7 @@ def fire_lasers(player, fire_pressed, handler, laser_pool, sound):
             pfz * PLAYER_LASER_SPEED,
             color=laser_color,
         )
+        player.shots_fired += 1
 
     player.weapons_cooldown = 0.15
     player.laser_heat = min(1.0, player.laser_heat + PLAYER_LASER_HEAT_PER_SHOT)

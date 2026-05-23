@@ -55,6 +55,13 @@ class Player:
         self.missile_locked = False
         self.drift_mode = False
 
+        # Stats for scoring
+        self.shots_fired = 0
+        self.shots_hit = 0
+        self.damage_taken = 0
+        self.max_hp = self.hp
+        
+
     @property
     def shield_charge(self):
         """0.0 = depleted, 1.0 = full."""
@@ -194,6 +201,7 @@ class Player:
             sound.update_engine_hum(self.throttle, rx, lx, ly)
 
     def take_damage(self, amount):
+        self.damage_taken += amount
         self.shield_regen_timer = SHIELD_DELAY
         self.hit_flash = HIT_FLASH_DURATION
         self.shake_queued += amount

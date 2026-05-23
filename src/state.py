@@ -56,3 +56,5 @@ class StateManager:
         """Replaces the top state of the stack with a new state."""
         self.pop()
         self.push(state)
+
+    

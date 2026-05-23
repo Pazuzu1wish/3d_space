@@ -2,6 +2,7 @@
 from random import choice
 import pygame
 import math
+from src.save_data import RunResult, SaveData
 from src.camera import Camera
 from src.renderer import RenderPipeline
 from src.cockpit import draw_cockpit_hud
@@ -165,6 +166,19 @@ class GameplayState(State):
             keys,
             )
 
+        # Handle Death
+        if self.player.hp <= 0:
+            result = RunResult(
+                kills         = self.director.kills,
+                survival_time = self.director.elapsed,
+                shots_fired   = self.player.shots_fired,
+                shots_hit     = self.player.shots_hit,
+                damage_taken  = self.player.damage_taken,
+                max_hp        = self.player.max_hp
+                )
+            manager.change(GameOverState(self.context, result))
+            return
+            
         # Handle Camera Shake
         if self.player.shake_queued > 0:
             self.camera.trigger_shake(self.player.shake_queued)
@@ -287,6 +301,7 @@ class GameplayState(State):
 
             if e.hp <= 0:
                 self.context.sound.play_sfx("explosion")
+                self.director.kills.append(type(e).__name__)
                 p_count = 100 if getattr(e, 'did_detonate', False) else PARTICLES_ON_DESTROY
                 for _ in range(p_count):
                     self.particle_pool.spawn(e.x, e.y, e.z)
@@ -344,6 +359,7 @@ class GameplayState(State):
                 if hasattr(obj, 'is_hit') and obj.is_hit(l.x, l.y, l.z):
                     if hasattr(obj, 'on_hit'):
                         obj.on_hit(1)
+                        self.player.shots_hit += 1
                     l.life = 0
                     for _ in range(PARTICLES_ON_HIT):
                         self.particle_pool.spawn(l.x, l.y, l.z)
@@ -379,6 +395,223 @@ class GameplayState(State):
                 if bolt in enemy_projectiles:
                     enemy_projectiles.remove(bolt)
 
+class GameOverState(State):
+    """
+    Displays score breakdown for the completed run and top scores.
+    No gameplay systems — purely presentation.
+ 
+    Usage (from GameplayState.update):
+        result = RunResult(
+            kills         = self.director.kills,
+            survival_time = self.director.elapsed,
+            shots_fired   = self.player.shots_fired,
+            shots_hit     = self.player.shots_hit,
+            damage_taken  = self.player.damage_taken,
+            max_hp        = self.player.max_hp,
+        )
+        manager.change(GameOverState(self.context, result))
+    """
+ 
+    def __init__(self, context, result: RunResult):
+        super().__init__(context)
+        self.result  = result
+ 
+        # Persist immediately on construction
+        self.context.save_data.record_run(result)
+        self.context.save_data.save()
+ 
+        self._build_fonts()
+        self._anim_timer  = 0.0     # drives line-by-line reveal
+        self._lines_shown = 0
+        self._done        = False   # all lines revealed
+ 
+    # ── State interface ───────────────────────────────────────────────────────
+ 
+    def handle_event(self, event):
+        if event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
+                self._handle_confirm()
+        self.context.handler.process_event(event)
+ 
+    def update(self, dt, manager):
+        # Skip to fully revealed on any button
+        if self.context.handler.just_pressed('X') or self.context.handler.just_pressed('Cross'):
+            if not self._done:
+                self._lines_shown = 999
+                self._done = True
+            else:
+                self._go_to_title(manager)
+            return
+ 
+        if self.context.handler.just_pressed('Circle'):
+            self._go_to_retry(manager)
+            return
+ 
+        # Timed line reveal
+        self._anim_timer += dt
+        target = int(self._anim_timer / 0.18)
+        if target > self._lines_shown:
+            self._lines_shown = target
+        if self._lines_shown >= self._total_lines():
+            self._done = True
+ 
+    def draw(self, screen):
+        screen.fill((5, 5, 15))
+        self._draw_scanlines(screen)
+ 
+        W, H = self.context.W, self.context.H
+        cx = W // 2
+        r = self.result
+ 
+        lines_drawn = 0
+ 
+        def draw_line(text, font, color, y, alpha=255):
+            nonlocal lines_drawn
+            lines_drawn += 1
+            if lines_drawn > self._lines_shown:
+                return
+            surf = font.render(text, True, color)
+            surf.set_alpha(alpha)
+            screen.blit(surf, (cx - surf.get_width() // 2, y))
+ 
+        def draw_line_lr(left, right, font, color_l, color_r, y):
+            nonlocal lines_drawn
+            lines_drawn += 1
+            if lines_drawn > self._lines_shown:
+                return
+            ls = font.render(left,  True, color_l)
+            rs = font.render(right, True, color_r)
+            screen.blit(ls, (cx - 260, y))
+            screen.blit(rs, (cx + 260 - rs.get_width(), y))
+ 
+        # ── header ────────────────────────────────────────────────────────
+        draw_line("MISSION COMPLETE" if r.kill_count() > 0 else "PILOT DOWN",
+                  self._font_large,
+                  (255, 50, 50) if r.kill_count() == 0 else (0, 220, 255),
+                  H * 0.08)
+ 
+        draw_line("─" * 48, self._font_small, (40, 80, 100), H * 0.16)
+ 
+        # ── kill breakdown ────────────────────────────────────────────────
+        draw_line("KILLS", self._font_med, (180, 180, 180), H * 0.21)
+ 
+        from collections import Counter
+        counts = Counter(r.kills)
+        kill_y = H * 0.27
+        for etype, count in sorted(counts.items(), key=lambda x: -x[1]):
+            pts = RunResult.KILL_POINTS.get(etype, 100)
+            draw_line_lr(
+                f"  {etype}  ×{count}",
+                f"{pts * count:,}",
+                self._font_small,
+                (200, 200, 200),
+                (255, 220, 80),
+                kill_y,
+            )
+            kill_y += 28
+ 
+        if not r.kills:
+            draw_line("  no kills", self._font_small, (100, 100, 100), kill_y)
+            kill_y += 28
+ 
+        # ── modifiers ────────────────────────────────────────────────────
+        mod_y = kill_y + 16
+        draw_line("─" * 48, self._font_small, (40, 80, 100), mod_y)
+        mod_y += 20
+ 
+        draw_line("MODIFIERS", self._font_med, (180, 180, 180), mod_y)
+        mod_y += 32
+ 
+        mins = int(r.survival_time // 60)
+        secs = int(r.survival_time % 60)
+        draw_line_lr(
+            f"  Survival  {mins}m {secs:02d}s",
+            f"×{r.time_modifier():.2f}",
+            self._font_small, (200, 200, 200), (100, 220, 255), mod_y,
+        )
+        mod_y += 28
+ 
+        draw_line_lr(
+            f"  Accuracy  {r.accuracy() * 100:.1f}%  ({r.shots_hit}/{r.shots_fired})",
+            f"×{r.accuracy_modifier():.2f}",
+            self._font_small, (200, 200, 200), (100, 220, 255), mod_y,
+        )
+        mod_y += 28
+ 
+        dmg_pct = min(100, int(r.damage_taken / max(1, r.max_hp) * 100))
+        draw_line_lr(
+            f"  Damage taken  {dmg_pct}%",
+            f"×{r.damage_modifier():.2f}",
+            self._font_small, (200, 200, 200), (100, 220, 255), mod_y,
+        )
+        mod_y += 28
+ 
+        # ── final score ───────────────────────────────────────────────────
+        draw_line("─" * 48, self._font_small, (40, 80, 100), mod_y + 8)
+ 
+        draw_line_lr(
+            "  FINAL SCORE",
+            f"{r.final_score():,}",
+            self._font_med,
+            (220, 220, 220),
+            (255, 220, 0),
+            mod_y + 36,
+        )
+ 
+        # ── top scores sidebar ────────────────────────────────────────────
+        scores = self.context.save_data.high_scores
+        if scores and self._done:
+            self._draw_high_scores(screen, scores)
+ 
+        # ── prompt ────────────────────────────────────────────────────────
+        if self._done:
+            prompt = "[ X ] Continue    [ O ] Retry"
+            ps = self._font_small.render(prompt, True, (120, 120, 120))
+            screen.blit(ps, (cx - ps.get_width() // 2, H * 0.92))
+ 
+    # ── private ───────────────────────────────────────────────────────────────
+ 
+    def _build_fonts(self):
+        path = "assets/fonts/interdictionexpand.ttf"
+        self._font_large = pygame.font.Font(path, 64)
+        self._font_med   = pygame.font.Font(path, 28)
+        self._font_small = pygame.font.Font(path, 18)
+ 
+    def _total_lines(self):
+        """Approximate total drawable lines — controls when _done fires."""
+        return 6 + len(self.result.kills) + 8
+ 
+    def _draw_scanlines(self, screen):
+        W, H = self.context.W, self.context.H
+        overlay = pygame.Surface((W, H), pygame.SRCALPHA)
+        for y in range(0, H, 4):
+            pygame.draw.line(overlay, (0, 0, 0, 40), (0, y), (W, y))
+        screen.blit(overlay, (0, 0))
+ 
+    def _draw_high_scores(self, screen, scores):
+        W, H = self.context.W, self.context.H
+        x = W * 0.78
+        y = H * 0.22
+        title = self._font_med.render("TOP SCORES", True, (80, 80, 120))
+        screen.blit(title, (x, y))
+        y += 36
+        for i, s in enumerate(scores[:SaveData.MAX_SCORES]):
+            color = (255, 220, 0) if s['final_score'] == self.result.final_score() else (120, 120, 140)
+            line = self._font_small.render(
+                f"{i+1}.  {s['final_score']:>10,}   {len(s['kills'])}k", True, color
+            )
+            screen.blit(line, (x, y))
+            y += 24
+ 
+    def _handle_confirm(self):
+        pass  # handled in update via just_pressed
+ 
+    def _go_to_title(self, manager):
+        manager.change(TitleState(self.context))
+
+    def _go_to_retry(self, manager):
+        manager.change(GameplayState(self.context))
+ 
 class PauseState(State):
     def __init__(self, context):
         super().__init__(context)
@@ -456,6 +689,7 @@ class Game:
 
         # State Handling setup
         self.state_manager = StateManager(self)
+        self.save_data = SaveData.load()   # load persistent state
         self.state_manager.push(TitleState(self))
         self.running = True
 

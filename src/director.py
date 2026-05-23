@@ -72,6 +72,7 @@ class WaveDirector:
 
         self.spawn_timer = 0.0
         self.elapsed     = 0.0
+        self.kills       = []   # list of type name strings, appended in game.py
 
     # ──────────────────────────────────────────────────────────────
     # PUBLIC
