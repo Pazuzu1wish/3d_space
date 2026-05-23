@@ -29,13 +29,17 @@ from src.sound_handler import SoundHandler
 from src.ship_ai import ShipAI
 from src.title_screen import TitleCinematic
 from src.hud_data import HUDData
-
 from src.state import State, StateManager
 from src.aim_scope import AimScope
 
 # ──────────────────────────────────────────────
 # State Classes
 # ──────────────────────────────────────────────
+
+# ──────────────────────────────────────────────
+# Title State
+# ──────────────────────────────────────────────
+
 
 class TitleState(State):
     def __init__(self, context):
@@ -68,6 +72,9 @@ class TitleState(State):
     def draw(self, screen):
         self.title_cinematic.draw(screen)
 
+# ──────────────────────────────────────────────
+# Gameplay Class
+# ──────────────────────────────────────────────
 
 class GameplayState(State):
     def __init__(self, context):
@@ -395,6 +402,10 @@ class GameplayState(State):
                 if bolt in enemy_projectiles:
                     enemy_projectiles.remove(bolt)
 
+# ──────────────────────────────────────────────
+# Game Over Class
+# ──────────────────────────────────────────────
+
 class GameOverState(State):
     """
     Displays score breakdown for the completed run and top scores.
@@ -611,6 +622,10 @@ class GameOverState(State):
 
     def _go_to_retry(self, manager):
         manager.change(GameplayState(self.context))
+
+# ──────────────────────────────────────────────
+# Pause Class
+# ──────────────────────────────────────────────        
  
 class PauseState(State):
     def __init__(self, context):
@@ -693,6 +708,11 @@ class Game:
         self.state_manager.push(TitleState(self))
         self.running = True
 
+
+# ──────────────────────────────────────────────
+# Main Loop
+# ──────────────────────────────────────────────
+
     def main(self):
         while self.running:
             dt = self.clock.tick(60) / 1000.0
@@ -722,8 +742,3 @@ class Game:
 
         self.sound.stop_music()
         pygame.quit()
-
-
-if __name__ == "__main__":
-    game = Game()
-    game.main()
