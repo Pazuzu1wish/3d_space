@@ -218,6 +218,118 @@ class _FallbackShip:
         pass
 
 
+class PlayerMeshWrapper:
+    def __init__(self):
+        from src.player import Player
+        self.player = Player()
+        self.verts = self.player.verts
+
+        accent_color = (0, 255, 200)   # default cyan accent
+        C_BODY = (200, 200, 210)
+        C_DARK = (45, 45, 50)
+
+        self.faces = [
+            # ── NOSE CONE ─────────────────────────────────────────────────────
+            {'v': ['needle', 'fwd_top', 'fwd_l'],       'color': C_BODY},
+            {'v': ['needle', 'fwd_r',   'fwd_top'],      'color': C_BODY},
+            {'v': ['needle', 'fwd_bot', 'fwd_r'],        'color': C_DARK},
+            {'v': ['needle', 'fwd_l',   'fwd_bot'],      'color': C_DARK},
+
+            # ── DORSAL SPINE (accent surface) ────────────────────────────────
+            {'v': ['fwd_top', 'spine_mid', 'spine_fwd'], 'color': accent_color},
+            {'v': ['spine_fwd', 'spine_mid', 'mid_top'], 'color': accent_color},
+            {'v': ['spine_mid', 'spine_aft', 'mid_top'], 'color': accent_color},
+            {'v': ['spine_aft', 'aft_top',   'mid_top'], 'color': accent_color},
+
+            # ── FWD FUSELAGE SIDES ────────────────────────────────────────────
+            {'v': ['fwd_top', 'spine_fwd', 'fwd_l'],     'color': C_BODY},
+            {'v': ['fwd_top', 'fwd_r',     'spine_fwd'], 'color': C_BODY},
+            {'v': ['fwd_l',   'mid_l',     'fwd_bot'],   'color': C_DARK},
+            {'v': ['fwd_r',   'fwd_bot',   'mid_r'],     'color': C_DARK},
+            {'v': ['fwd_bot', 'mid_bot',   'mid_r'],     'color': C_DARK},
+            {'v': ['fwd_bot', 'mid_l',     'mid_bot'],   'color': C_DARK},
+
+            # ── MID-AFT FUSELAGE ─────────────────────────────────────────────
+            {'v': ['mid_top', 'mid_l',  'aft_top'],      'color': C_BODY},
+            {'v': ['aft_top', 'mid_l',  'aft_l'],        'color': C_BODY},
+            {'v': ['mid_top', 'aft_top','mid_r'],        'color': C_BODY},
+            {'v': ['aft_top', 'aft_r',  'mid_r'],        'color': C_BODY},
+            {'v': ['mid_l',   'mid_bot','aft_l'],        'color': C_DARK},
+            {'v': ['aft_l',   'mid_bot','aft_bot'],      'color': C_DARK},
+            {'v': ['mid_r',   'aft_r',  'mid_bot'],      'color': C_DARK},
+            {'v': ['aft_r',   'aft_bot','mid_bot'],      'color': C_DARK},
+
+            # ── CANARDS ───────────────────────────────────────────────────────
+            {'v': ['cl_base_f', 'cl_tip',    'cl_base_r'], 'color': accent_color},
+            {'v': ['cl_base_r', 'cl_tip',    'cl_base_f'], 'color': accent_color},
+            {'v': ['cr_base_f', 'cr_base_r', 'cr_tip'],    'color': accent_color},
+            {'v': ['cr_base_r', 'cr_base_f', 'cr_tip'],    'color': accent_color},
+
+            # ── INNER WING PANELS ────────────────────────────────────────────
+            {'v': ['wrl_fwd', 'wml_le',  'wml_tip'],     'color': C_BODY},
+            {'v': ['wrl_fwd', 'mid_l',   'wml_le'],      'color': C_BODY},
+            {'v': ['wrl_fwd', 'wml_tip', 'wrl_aft'],     'color': C_DARK},
+            {'v': ['wrl_aft', 'wml_tip', 'wml_te'],      'color': C_DARK},
+            {'v': ['wrr_fwd', 'wmr_tip', 'wmr_le'],      'color': C_BODY},
+            {'v': ['wrr_fwd', 'wmr_le',  'mid_r'],       'color': C_BODY},
+            {'v': ['wrr_fwd', 'wrr_aft', 'wmr_tip'],     'color': C_DARK},
+            {'v': ['wrr_aft', 'wmr_te',  'wmr_tip'],     'color': C_DARK},
+
+            # ── OUTER WING SWEPT TIPS (accent) ───────────────────────────────
+            {'v': ['wml_le',  'wtl',    'wml_tip'],      'color': accent_color},
+            {'v': ['wml_tip', 'wtl',    'wtl_te'],       'color': accent_color},
+            {'v': ['wml_tip', 'wtl_te', 'wml_te'],       'color': C_BODY},
+            {'v': ['wmr_le',  'wmr_tip','wtr'],          'color': accent_color},
+            {'v': ['wmr_tip', 'wtr_te', 'wtr'],          'color': accent_color},
+            {'v': ['wmr_tip', 'wmr_te', 'wtr_te'],       'color': C_BODY},
+
+            # ── ENGINE NACELLES — LEFT ────────────────────────────────────────
+            {'v': ['enl_top_f','enl_in_f', 'enl_top_r'], 'color': C_BODY},
+            {'v': ['enl_top_r','enl_in_f', 'enl_in_r'],  'color': C_BODY},
+            {'v': ['enl_out_f','enl_top_f','enl_out_r'],  'color': C_BODY},
+            {'v': ['enl_out_r','enl_top_f','enl_top_r'],  'color': C_BODY},
+            {'v': ['enl_bot_f','enl_out_f','enl_bot_r'],  'color': C_DARK},
+            {'v': ['enl_bot_r','enl_out_f','enl_out_r'],  'color': C_DARK},
+            {'v': ['enl_in_f', 'enl_bot_f','enl_in_r'],   'color': C_DARK},
+            {'v': ['enl_in_r', 'enl_bot_f','enl_bot_r'],  'color': C_DARK},
+            {'v': ['enl_top_f','enl_bot_f','enl_in_f'],   'color': accent_color},
+            {'v': ['enl_top_f','enl_out_f','enl_bot_f'],  'color': accent_color},
+
+            # ── ENGINE NACELLES — RIGHT ───────────────────────────────────────
+            {'v': ['enr_top_f','enr_top_r','enr_in_f'],   'color': C_BODY},
+            {'v': ['enr_top_r','enr_in_r', 'enr_in_f'],   'color': C_BODY},
+            {'v': ['enr_out_f','enr_out_r','enr_top_f'],   'color': C_BODY},
+            {'v': ['enr_out_r','enr_top_r','enr_top_f'],   'color': C_BODY},
+            {'v': ['enr_bot_f','enr_bot_r','enr_out_f'],   'color': C_DARK},
+            {'v': ['enr_bot_r','enr_out_r','enr_out_f'],   'color': C_DARK},
+            {'v': ['enr_in_f', 'enr_in_r', 'enr_bot_f'],  'color': C_DARK},
+            {'v': ['enr_in_r', 'enr_bot_r','enr_bot_f'],   'color': C_DARK},
+            {'v': ['enr_top_f','enr_in_f', 'enr_bot_f'],   'color': accent_color},
+            {'v': ['enr_top_f','enr_bot_f','enr_out_f'],   'color': accent_color},
+
+            # ── V-TAIL ────────────────────────────────────────────────────────
+            {'v': ['vtl_base','vtl_tip','vtl_aft'],        'color': accent_color},
+            {'v': ['vtl_aft', 'vtl_tip','vtl_base'],       'color': C_BODY},
+            {'v': ['vtr_base','vtr_aft','vtr_tip'],        'color': accent_color},
+            {'v': ['vtr_aft', 'vtr_base','vtr_tip'],       'color': C_BODY},
+        ]
+        self.base_color = C_BODY
+
+    def get_mesh(self):
+        return self.verts, self.faces
+
+class MissileMeshWrapper:
+    def __init__(self):
+        from src.missile import PlayerMissile
+        self.missile = PlayerMissile(0, 0, 0, 0, 0, 0, 1.0, 10.0)
+        self.verts = self.missile.verts
+        self.faces = self.missile.faces
+        self.base_color = (170, 170, 180)
+        
+    def get_mesh(self):
+        return self.verts, self.faces
+
+
 # ── viewer ────────────────────────────────────────────────────────────────────
 
 class DebugViewer:
@@ -237,19 +349,23 @@ class DebugViewer:
         self.font_md  = custom_font(14)
         self.font_lg  = custom_font(16)
 
-        # ship
-        if ship_factory is not None:
-            self.ship = ship_factory()
-        elif _HAS_PROJECT:
-            self.ship = enemy.Corvette(0, 0, 0)
-        else:
-            self.ship = _FallbackShip()
-
-        self.verts, self.faces = self.ship.get_mesh()
-        self.centroid = mesh_centroid(self.verts)
-
-        # precompute per-face normals and winding colours (local space)
-        self._precompute_face_data()
+        # Available models registry
+        import src.enemy as enemy
+        self.models = [
+            ("Corvette", lambda: enemy.Corvette(0, 0, 0)),
+            ("StealthInterceptor", lambda: enemy.StealthInterceptor(0, 0, 0)),
+            ("SuicideDrone", lambda: enemy.SuicideDrone(0, 0, 0)),
+            ("Dogfighter", lambda: enemy.Dogfighter(0, 0, 0)),
+            ("Sniper", lambda: enemy.Sniper(0, 0, 0)),
+            ("Minelayer", lambda: enemy.Minelayer(0, 0, 0)),
+            ("Carrier", lambda: enemy.Carrier(0, 0, 0)),
+            ("Player", lambda: PlayerMeshWrapper()),
+            ("PlayerMissile", lambda: MissileMeshWrapper()),
+        ]
+        self.current_model_idx = 0
+        
+        # Load first model
+        self.load_model(0)
 
         # camera / transform
         self.obj_quat  = _quat_identity()
@@ -306,6 +422,22 @@ class DebugViewer:
             self._face_normals.append(n)
             self._face_centers.append(c)
             self._face_wind_col.append(col)
+
+    def load_model(self, idx):
+        self.current_model_idx = idx
+        name, factory = self.models[idx]
+        print(f"[mesh loader] Loading model: {name}")
+        try:
+            self.ship = factory()
+            self.verts, self.faces = self.ship.get_mesh()
+            self.centroid = mesh_centroid(self.verts)
+            self._precompute_face_data()
+            self.selected_face = 0
+            print(f"[mesh loader] Loaded {name} successfully: {len(self.verts)} verts, {len(self.faces)} faces")
+        except Exception as e:
+            print(f"[mesh loader] Error loading {name}: {e}")
+            import traceback
+            traceback.print_exc()
 
     # ── rotation helpers using the local quat ─────────────────────────────────
 
@@ -560,12 +692,13 @@ class DebugViewer:
         mode_name = self.DEBUG_MODES[self.debug_mode_idx].upper()
 
         lines = [
-            ("MODEL",    type(self.ship).__name__),
+            ("MODEL",    self.models[self.current_model_idx][0]),
             ("VERTS",    str(len(self.verts))),
             ("FACES",    str(len(self.faces))),
             ("",         ""),
             ("DEBUG",    mode_name),
             ("",         ""),
+            ("[PgUp/Dn]", "Cycle active mesh"),
             ("[C]",      f"Culling {'ON' if self.culling else 'OFF'}"),
             ("[W]",      f"Wireframe {'ON' if self.show_wireframe else 'OFF'}"),
             ("[N]",      f"Normals {'ON' if self.show_normals else 'OFF'}"),
@@ -621,6 +754,29 @@ class DebugViewer:
                 vcol = col if label == "winding" else HUD_COL
                 self.screen.blit(self.font_sm.render(value, True, vcol), (px + 70, py))
             py += 18
+
+        # ── available meshes selector panel (right side) ─────────────────
+        py_m = 160
+        surf_hdr = self.font_md.render("AVAILABLE MESHES", True, ACCENT)
+        self.screen.blit(surf_hdr, (px, py_m))
+        py_m += 24
+        
+        for idx, (name, _) in enumerate(self.models):
+            is_curr = (self.current_model_idx == idx)
+            y_item = py_m + idx * 26
+            
+            if is_curr:
+                # Translucent hover highlight
+                box_surf = pygame.Surface((260, 22), pygame.SRCALPHA)
+                box_surf.fill((80, 160, 255, 35))
+                self.screen.blit(box_surf, (px - 10, y_item - 3))
+                pygame.draw.rect(self.screen, (80, 160, 255, 180), (px - 10, y_item - 3, 260, 22), 1, border_radius=3)
+                
+                lbl = self.font_md.render(f"> {name}", True, (255, 255, 255))
+            else:
+                lbl = self.font_sm.render(f"  {name}", True, (130, 130, 140))
+                
+            self.screen.blit(lbl, (px, y_item))
 
         # ── winding legend (bottom-left) ──────────────────────────────────
         lx, ly = 18, self.H - 72
@@ -736,11 +892,27 @@ class DebugViewer:
                         self.input_mode = 'add_face'
                         self.input_string = ""
                         self.input_prompt = "Add face: i,j,k"
+                    elif k == pygame.K_PAGEUP:
+                        self.load_model((self.current_model_idx - 1) % len(self.models))
+                    elif k == pygame.K_PAGEDOWN:
+                        self.load_model((self.current_model_idx + 1) % len(self.models))
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    self.is_dragging    = True
-                    self.last_mouse_pos = event.pos
+                    # Check if clicked inside the mesh selector panel
+                    m_x, m_y = event.pos
+                    px = self.W - 280
+                    clicked_list = False
+                    if px - 10 <= m_x <= px + 250:
+                        for idx in range(len(self.models)):
+                            y_item = 160 + 24 + idx * 26
+                            if y_item - 3 <= m_y <= y_item + 19:
+                                self.load_model(idx)
+                                clicked_list = True
+                                break
+                    if not clicked_list:
+                        self.is_dragging    = True
+                        self.last_mouse_pos = event.pos
                 elif event.button == 4:
                     self.camera_z = max(50, self.camera_z - 20)
                 elif event.button == 5:

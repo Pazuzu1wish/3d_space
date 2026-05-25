@@ -62,7 +62,10 @@ class Player:
         self.max_hp = self.hp
 
         # Trail & Visual Customization
-        self.engine_offsets = [(-18.0, -4.0, -50.0), (18.0, -4.0, -50.0)]
+        self.engine_offsets = [
+            (-19.0, -4.0, -62.0),   # left nacelle exhaust
+            (19.0,  -4.0, -62.0),   # right nacelle exhaust
+        ]
         self.engine_trail = []
         self.trail_life = 1.0       # trail lasts 1 second
         self.trail_drift = 25.0
@@ -81,19 +84,98 @@ class Player:
         ]
         self.trail_color_index = 0
 
-        # Player ship 3D geometry
+        # ── PREMIUM SHIP GEOMETRY ─────────────────────────────────────────────────
+        # +Z forward, +Y up, +X right.  All faces convex outward.
         self.verts = {
-            'nose': (0.0, 0.0, 75.0),
-            'cockpit': (0.0, 14.0, 20.0),
-            'fuse_l': (-15.0, -4.0, 10.0),
-            'fuse_r': (15.0, -4.0, 10.0),
-            'fuse_b': (0.0, -12.0, 10.0),
-            'wing_l': (-90.0, -8.0, -20.0),
-            'wing_r': (90.0, -8.0, -20.0),
-            'eng_l': (-18.0, -4.0, -45.0),
-            'eng_r': (18.0, -4.0, -45.0),
-            'tail_top': (0.0, 28.0, -45.0),
-            'tail_base': (0.0, 4.0, -40.0),
+            # Needle nose
+            'needle':       (0.0,   0.0,   90.0),
+
+            # Forward fuselage ring
+            'fwd_top':      (0.0,   9.0,   55.0),
+            'fwd_l':        (-11.0, 2.0,   55.0),
+            'fwd_r':        (11.0,  2.0,   55.0),
+            'fwd_bot':      (0.0,  -7.0,   55.0),
+
+            # Dorsal spine ridge (accent stripe surface)
+            'spine_fwd':    (0.0,  18.0,   35.0),
+            'spine_mid':    (0.0,  20.0,    0.0),
+            'spine_aft':    (0.0,  16.0,  -28.0),
+
+            # Mid fuselage ring
+            'mid_top':      (0.0,  14.0,   15.0),
+            'mid_l':        (-16.0, -1.0,  15.0),
+            'mid_r':        (16.0,  -1.0,  15.0),
+            'mid_bot':      (0.0,  -13.0,  15.0),
+
+            # Aft fuselage ring
+            'aft_top':      (0.0,  10.0,  -38.0),
+            'aft_l':        (-14.0, -2.0, -38.0),
+            'aft_r':        (14.0,  -2.0, -38.0),
+            'aft_bot':      (0.0,  -10.0, -38.0),
+
+            # Canards
+            'cl_base_f':    (-13.0,  3.0,  48.0),
+            'cl_base_r':    (-13.0, -1.0,  36.0),
+            'cl_tip':       (-28.0, -2.0,  42.0),
+            'cr_base_f':    (13.0,   3.0,  48.0),
+            'cr_base_r':    (13.0,  -1.0,  36.0),
+            'cr_tip':       (28.0,  -2.0,  42.0),
+
+            # Wing roots
+            'wrl_fwd':      (-16.0,  0.0,  10.0),
+            'wrr_fwd':      (16.0,   0.0,  10.0),
+            'wrl_aft':      (-14.0, -3.0, -30.0),
+            'wrr_aft':      (14.0,  -3.0, -30.0),
+
+            # Wing mid panels (dihedral break, swept)
+            'wml_le':       (-42.0,  1.0,  20.0),
+            'wmr_le':       (42.0,   1.0,  20.0),
+            'wml_tip':      (-58.0, -5.0,  -8.0),
+            'wmr_tip':      (58.0,  -5.0,  -8.0),
+            'wml_te':       (-48.0, -6.0, -28.0),
+            'wmr_te':       (48.0,  -6.0, -28.0),
+
+            # Wing outer swept tips
+            'wtl':          (-82.0, -10.0, -15.0),
+            'wtr':          (82.0,  -10.0, -15.0),
+            'wtl_te':       (-68.0, -12.0, -40.0),
+            'wtr_te':       (68.0,  -12.0, -40.0),
+
+            # Engine nacelles — left pair
+            'enl_top_f':    (-19.0,  1.0,  -30.0),
+            'enl_bot_f':    (-19.0, -9.0,  -30.0),
+            'enl_out_f':    (-26.0, -4.0,  -30.0),
+            'enl_in_f':     (-12.0, -4.0,  -30.0),
+            'enl_top_r':    (-19.0,  1.0,  -58.0),
+            'enl_bot_r':    (-19.0, -9.0,  -58.0),
+            'enl_out_r':    (-26.0, -4.0,  -58.0),
+            'enl_in_r':     (-12.0, -4.0,  -58.0),
+
+            # Engine nacelles — right pair
+            'enr_top_f':    (19.0,   1.0,  -30.0),
+            'enr_bot_f':    (19.0,  -9.0,  -30.0),
+            'enr_out_f':    (26.0,  -4.0,  -30.0),
+            'enr_in_f':     (12.0,  -4.0,  -30.0),
+            'enr_top_r':    (19.0,   1.0,  -58.0),
+            'enr_bot_r':    (19.0,  -9.0,  -58.0),
+            'enr_out_r':    (26.0,  -4.0,  -58.0),
+            'enr_in_r':     (12.0,  -4.0,  -58.0),
+
+            # V-tail (split, canted outward +X)
+            'vtl_base':     (-8.0,  10.0, -38.0),
+            'vtr_base':     (8.0,   10.0, -38.0),
+            'vtl_tip':      (-30.0, 32.0, -60.0),
+            'vtr_tip':      (30.0,  32.0, -60.0),
+            'vtl_aft':      (-12.0,  8.0, -60.0),
+            'vtr_aft':      (12.0,   8.0, -60.0),
+
+            # Legacy aliases — engine_offsets and any code referencing old keys still work
+            'eng_l':        (-19.0, -4.0, -58.0),
+            'eng_r':        (19.0,  -4.0, -58.0),
+            'nose':         (0.0,   0.0,   90.0),   # = needle
+            'cockpit':      (0.0,   14.0,  20.0),   # ≈ spine_fwd
+            'tail_top':     (0.0,   32.0, -60.0),   # ≈ vtl_tip midpoint
+            'tail_base':    (0.0,   10.0, -38.0),
         }
 
     @property
@@ -144,34 +226,89 @@ class Player:
         C_DARK = (45, 45, 50)
         
         faces = [
-            # Nose cone
-            {'v': ['nose', 'cockpit', 'fuse_l'], 'color': C_BODY},
-            {'v': ['nose', 'fuse_r', 'cockpit'], 'color': C_BODY},
-            {'v': ['nose', 'fuse_l', 'fuse_b'], 'color': C_DARK},
-            {'v': ['nose', 'fuse_b', 'fuse_r'], 'color': C_DARK},
-            
-            # Left wing
-            {'v': ['cockpit', 'wing_l', 'fuse_l'], 'color': accent_color},
-            {'v': ['fuse_l', 'wing_l', 'eng_l'], 'color': C_BODY},
-            {'v': ['fuse_b', 'eng_l', 'wing_l'], 'color': C_DARK},
-            {'v': ['fuse_l', 'wing_l', 'fuse_b'], 'color': C_DARK},
-            
-            # Right wing
-            {'v': ['cockpit', 'fuse_r', 'wing_r'], 'color': accent_color},
-            {'v': ['fuse_r', 'eng_r', 'wing_r'], 'color': C_BODY},
-            {'v': ['fuse_b', 'wing_r', 'eng_r'], 'color': C_DARK},
-            {'v': ['fuse_r', 'fuse_b', 'wing_r'], 'color': C_DARK},
-            
-            # Fuselage back / Engines
-            {'v': ['cockpit', 'eng_l', 'tail_base'], 'color': C_BODY},
-            {'v': ['cockpit', 'tail_base', 'eng_r'], 'color': C_BODY},
-            {'v': ['fuse_l', 'fuse_b', 'eng_l'], 'color': C_DARK},
-            {'v': ['fuse_r', 'eng_r', 'fuse_b'], 'color': C_DARK},
-            {'v': ['eng_l', 'eng_r', 'tail_base'], 'color': C_DARK},
-            
-            # Tail fin
-            {'v': ['tail_base', 'tail_top', 'eng_l'], 'color': accent_color},
-            {'v': ['tail_base', 'eng_r', 'tail_top'], 'color': accent_color},
+            # ── NOSE CONE ─────────────────────────────────────────────────────
+            {'v': ['needle', 'fwd_top', 'fwd_l'],       'color': C_BODY},
+            {'v': ['needle', 'fwd_r',   'fwd_top'],      'color': C_BODY},
+            {'v': ['needle', 'fwd_bot', 'fwd_r'],        'color': C_DARK},
+            {'v': ['needle', 'fwd_l',   'fwd_bot'],      'color': C_DARK},
+
+            # ── DORSAL SPINE (accent surface) ────────────────────────────────
+            {'v': ['fwd_top', 'spine_mid', 'spine_fwd'], 'color': accent_color},
+            {'v': ['spine_fwd', 'spine_mid', 'mid_top'], 'color': accent_color},
+            {'v': ['spine_mid', 'spine_aft', 'mid_top'], 'color': accent_color},
+            {'v': ['spine_aft', 'aft_top',   'mid_top'], 'color': accent_color},
+
+            # ── FWD FUSELAGE SIDES ────────────────────────────────────────────
+            {'v': ['fwd_top', 'spine_fwd', 'fwd_l'],     'color': C_BODY},
+            {'v': ['fwd_top', 'fwd_r',     'spine_fwd'], 'color': C_BODY},
+            {'v': ['fwd_l',   'mid_l',     'fwd_bot'],   'color': C_DARK},
+            {'v': ['fwd_r',   'fwd_bot',   'mid_r'],     'color': C_DARK},
+            {'v': ['fwd_bot', 'mid_bot',   'mid_r'],     'color': C_DARK},
+            {'v': ['fwd_bot', 'mid_l',     'mid_bot'],   'color': C_DARK},
+
+            # ── MID-AFT FUSELAGE ─────────────────────────────────────────────
+            {'v': ['mid_top', 'mid_l',  'aft_top'],      'color': C_BODY},
+            {'v': ['aft_top', 'mid_l',  'aft_l'],        'color': C_BODY},
+            {'v': ['mid_top', 'aft_top','mid_r'],        'color': C_BODY},
+            {'v': ['aft_top', 'aft_r',  'mid_r'],        'color': C_BODY},
+            {'v': ['mid_l',   'mid_bot','aft_l'],        'color': C_DARK},
+            {'v': ['aft_l',   'mid_bot','aft_bot'],      'color': C_DARK},
+            {'v': ['mid_r',   'aft_r',  'mid_bot'],      'color': C_DARK},
+            {'v': ['aft_r',   'aft_bot','mid_bot'],      'color': C_DARK},
+
+            # ── CANARDS ───────────────────────────────────────────────────────
+            {'v': ['cl_base_f', 'cl_tip',    'cl_base_r'], 'color': accent_color},
+            {'v': ['cl_base_r', 'cl_tip',    'cl_base_f'], 'color': accent_color},
+            {'v': ['cr_base_f', 'cr_base_r', 'cr_tip'],    'color': accent_color},
+            {'v': ['cr_base_r', 'cr_base_f', 'cr_tip'],    'color': accent_color},
+
+            # ── INNER WING PANELS ────────────────────────────────────────────
+            {'v': ['wrl_fwd', 'wml_le',  'wml_tip'],     'color': C_BODY},
+            {'v': ['wrl_fwd', 'mid_l',   'wml_le'],      'color': C_BODY},
+            {'v': ['wrl_fwd', 'wml_tip', 'wrl_aft'],     'color': C_DARK},
+            {'v': ['wrl_aft', 'wml_tip', 'wml_te'],      'color': C_DARK},
+            {'v': ['wrr_fwd', 'wmr_tip', 'wmr_le'],      'color': C_BODY},
+            {'v': ['wrr_fwd', 'wmr_le',  'mid_r'],       'color': C_BODY},
+            {'v': ['wrr_fwd', 'wrr_aft', 'wmr_tip'],     'color': C_DARK},
+            {'v': ['wrr_aft', 'wmr_te',  'wmr_tip'],     'color': C_DARK},
+
+            # ── OUTER WING SWEPT TIPS (accent) ───────────────────────────────
+            {'v': ['wml_le',  'wtl',    'wml_tip'],      'color': accent_color},
+            {'v': ['wml_tip', 'wtl',    'wtl_te'],       'color': accent_color},
+            {'v': ['wml_tip', 'wtl_te', 'wml_te'],       'color': C_BODY},
+            {'v': ['wmr_le',  'wmr_tip','wtr'],          'color': accent_color},
+            {'v': ['wmr_tip', 'wtr_te', 'wtr'],          'color': accent_color},
+            {'v': ['wmr_tip', 'wmr_te', 'wtr_te'],       'color': C_BODY},
+
+            # ── ENGINE NACELLES — LEFT ────────────────────────────────────────
+            {'v': ['enl_top_f','enl_in_f', 'enl_top_r'], 'color': C_BODY},
+            {'v': ['enl_top_r','enl_in_f', 'enl_in_r'],  'color': C_BODY},
+            {'v': ['enl_out_f','enl_top_f','enl_out_r'],  'color': C_BODY},
+            {'v': ['enl_out_r','enl_top_f','enl_top_r'],  'color': C_BODY},
+            {'v': ['enl_bot_f','enl_out_f','enl_bot_r'],  'color': C_DARK},
+            {'v': ['enl_bot_r','enl_out_f','enl_out_r'],  'color': C_DARK},
+            {'v': ['enl_in_f', 'enl_bot_f','enl_in_r'],   'color': C_DARK},
+            {'v': ['enl_in_r', 'enl_bot_f','enl_bot_r'],  'color': C_DARK},
+            {'v': ['enl_top_f','enl_bot_f','enl_in_f'],   'color': accent_color},
+            {'v': ['enl_top_f','enl_out_f','enl_bot_f'],  'color': accent_color},
+
+            # ── ENGINE NACELLES — RIGHT ───────────────────────────────────────
+            {'v': ['enr_top_f','enr_top_r','enr_in_f'],   'color': C_BODY},
+            {'v': ['enr_top_r','enr_in_r', 'enr_in_f'],   'color': C_BODY},
+            {'v': ['enr_out_f','enr_out_r','enr_top_f'],   'color': C_BODY},
+            {'v': ['enr_out_r','enr_top_r','enr_top_f'],   'color': C_BODY},
+            {'v': ['enr_bot_f','enr_bot_r','enr_out_f'],   'color': C_DARK},
+            {'v': ['enr_bot_r','enr_out_r','enr_out_f'],   'color': C_DARK},
+            {'v': ['enr_in_f', 'enr_in_r', 'enr_bot_f'],  'color': C_DARK},
+            {'v': ['enr_in_r', 'enr_bot_r','enr_bot_f'],   'color': C_DARK},
+            {'v': ['enr_top_f','enr_in_f', 'enr_bot_f'],   'color': accent_color},
+            {'v': ['enr_top_f','enr_bot_f','enr_out_f'],   'color': accent_color},
+
+            # ── V-TAIL ────────────────────────────────────────────────────────
+            {'v': ['vtl_base','vtl_tip','vtl_aft'],        'color': accent_color},
+            {'v': ['vtl_aft', 'vtl_tip','vtl_base'],       'color': C_BODY},
+            {'v': ['vtr_base','vtr_aft','vtr_tip'],        'color': accent_color},
+            {'v': ['vtr_aft', 'vtr_base','vtr_tip'],       'color': C_BODY},
         ]
         
         # Get player basis vectors
