@@ -60,7 +60,135 @@ class Player:
         self.shots_hit = 0
         self.damage_taken = 0
         self.max_hp = self.hp
+
+        # Trail & Visual Customization
+        self.engine_offsets = [(-18.0, -4.0, -50.0), (18.0, -4.0, -50.0)]
+        self.engine_trail = []
+        self.trail_life = 1.0       # trail lasts 1 second
+        self.trail_drift = 25.0
+        self.engine_size = 2.5
         
+        # 8 Premium neon colors
+        self.trail_colors = [
+            ("HYPER CYAN", (0, 255, 200)),
+            ("SOLAR ORANGE", (255, 100, 0)),
+            ("VOID PURPLE", (170, 0, 255)),
+            ("PLAGUE GREEN", (50, 255, 50)),
+            ("LASER RED", (255, 0, 50)),
+            ("SUPERNOVA YELLOW", (255, 220, 0)),
+            ("PRISM PINK", (255, 50, 180)),
+            ("GLACIER WHITE", (220, 240, 255)),
+        ]
+        self.trail_color_index = 0
+
+        # Player ship 3D geometry
+        self.verts = {
+            'nose': (0.0, 0.0, 75.0),
+            'cockpit': (0.0, 14.0, 20.0),
+            'fuse_l': (-15.0, -4.0, 10.0),
+            'fuse_r': (15.0, -4.0, 10.0),
+            'fuse_b': (0.0, -12.0, 10.0),
+            'wing_l': (-90.0, -8.0, -20.0),
+            'wing_r': (90.0, -8.0, -20.0),
+            'eng_l': (-18.0, -4.0, -45.0),
+            'eng_r': (18.0, -4.0, -45.0),
+            'tail_top': (0.0, 28.0, -45.0),
+            'tail_base': (0.0, 4.0, -40.0),
+        }
+
+    @property
+    def trail_color_name(self):
+        return self.trail_colors[self.trail_color_index][0]
+
+    @property
+    def trail_color(self):
+        return self.trail_colors[self.trail_color_index][1]
+
+    def change_trail_color(self, direction):
+        self.trail_color_index = (self.trail_color_index + direction) % len(self.trail_colors)
+        # Instantly update all frozen trail colors
+        new_color = self.trail_color
+        for p in self.engine_trail:
+            p[7] = new_color
+
+    def _submit_engine_trail(self, renderer):
+        for x, y, z, vx, vy, vz, life, color, base_size in self.engine_trail:
+            ratio = max(0.0, life / self.trail_life)
+            
+            # "Sparkling points" effect: 15% chance to flicker to a dim state
+            flicker = 1.0 if random.random() > 0.15 else 0.4
+            
+            # Fade out color as it dies
+            r = min(255, max(0, int(color[0] * ratio * flicker)))
+            g = min(255, max(0, int(color[1] * ratio * flicker)))
+            b = min(255, max(0, int(color[2] * ratio * flicker)))
+            
+            # Bright white core for sparkling point
+            core_color = (
+                min(255, r + int((255 - r) * 0.5)),
+                min(255, g + int((255 - g) * 0.5)),
+                min(255, b + int((255 - b) * 0.5))
+            )
+            
+            renderer.submit_sprite(x, y, z, (r, g, b), base_size * 5 * ratio, layer='alpha')
+            renderer.submit_sprite(x, y, z, core_color, base_size * 2 * ratio, layer='alpha')
+
+    def submit_to_renderer(self, renderer):
+        # 1. Submit engine trail
+        self._submit_engine_trail(renderer)
+        
+        # 2. Submit ship wireframe mesh
+        accent_color = self.trail_color
+        
+        C_BODY = (200, 200, 210)
+        C_DARK = (45, 45, 50)
+        
+        faces = [
+            # Nose cone
+            {'v': ['nose', 'cockpit', 'fuse_l'], 'color': C_BODY},
+            {'v': ['nose', 'fuse_r', 'cockpit'], 'color': C_BODY},
+            {'v': ['nose', 'fuse_l', 'fuse_b'], 'color': C_DARK},
+            {'v': ['nose', 'fuse_b', 'fuse_r'], 'color': C_DARK},
+            
+            # Left wing
+            {'v': ['cockpit', 'wing_l', 'fuse_l'], 'color': accent_color},
+            {'v': ['fuse_l', 'wing_l', 'eng_l'], 'color': C_BODY},
+            {'v': ['fuse_b', 'eng_l', 'wing_l'], 'color': C_DARK},
+            {'v': ['fuse_l', 'wing_l', 'fuse_b'], 'color': C_DARK},
+            
+            # Right wing
+            {'v': ['cockpit', 'fuse_r', 'wing_r'], 'color': accent_color},
+            {'v': ['fuse_r', 'eng_r', 'wing_r'], 'color': C_BODY},
+            {'v': ['fuse_b', 'wing_r', 'eng_r'], 'color': C_DARK},
+            {'v': ['fuse_r', 'fuse_b', 'wing_r'], 'color': C_DARK},
+            
+            # Fuselage back / Engines
+            {'v': ['cockpit', 'eng_l', 'tail_base'], 'color': C_BODY},
+            {'v': ['cockpit', 'tail_base', 'eng_r'], 'color': C_BODY},
+            {'v': ['fuse_l', 'fuse_b', 'eng_l'], 'color': C_DARK},
+            {'v': ['fuse_r', 'eng_r', 'fuse_b'], 'color': C_DARK},
+            {'v': ['eng_l', 'eng_r', 'tail_base'], 'color': C_DARK},
+            
+            # Tail fin
+            {'v': ['tail_base', 'tail_top', 'eng_l'], 'color': accent_color},
+            {'v': ['tail_base', 'eng_r', 'tail_top'], 'color': accent_color},
+        ]
+        
+        # Get player basis vectors
+        _, right, up = get_basis_from_quat(self.orientation)
+        fx, fy, fz = get_forward_from_quat(self.orientation)
+        
+        # Submit player ship mesh to the renderer!
+        renderer.submit_mesh(
+            self.pos,
+            right,
+            up,
+            (fx, fy, fz),
+            self.verts,
+            faces,
+            radius=150.0
+        )
+
 
     @property
     def shield_charge(self):
@@ -188,7 +316,38 @@ class Player:
         # ── WEAPONS ───────────────────────────────
         fire_lasers(self, fire_pressed, handler, lasers, sound)
         
-        fire_missile(self, missile_fire_pressed, handler, player_missiles, sound)
+        # ── ENGINE TRAIL SPAWNING & UPDATING ──────────
+        fx, fy, fz = get_forward_from_quat(self.orientation)
+        _, right, up = get_basis_from_quat(self.orientation)
+        speed = self.current_speed
+        
+        for ox, oy, oz in self.engine_offsets:
+            ex = self.pos[0] + right[0] * ox + up[0] * oy + fx * oz
+            ey = self.pos[1] + right[1] * ox + up[1] * oy + fy * oz
+            ez = self.pos[2] + right[2] * ox + up[2] * oy + fz * oz
+            
+            # Drift velocity: backward exhaust force + minor random diffusion
+            dvx = -fx * speed * 0.2 + (random.random() - 0.5) * self.trail_drift
+            dvy = -fy * speed * 0.2 + (random.random() - 0.5) * self.trail_drift
+            dvz = -fz * speed * 0.2 + (random.random() - 0.5) * self.trail_drift
+            
+            self.engine_trail.append([
+                ex, ey, ez, 
+                dvx, dvy, dvz, 
+                self.trail_life * random.uniform(0.8, 1.2), 
+                self.trail_color, 
+                self.engine_size
+            ])
+            
+        # Update existing trail points
+        for p in self.engine_trail:
+            p[0] += p[3] * dt
+            p[1] += p[4] * dt
+            p[2] += p[5] * dt
+            p[6] -= dt
+            
+        # Recycle dead ones
+        self.engine_trail = [p for p in self.engine_trail if p[6] > 0]
 
         # ── RUMBLE FEEDBACK ───────────────────────────
         if self.rumble_queued > 0:

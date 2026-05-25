@@ -285,6 +285,54 @@ class GameplayState(State):
                         pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
 
         
+    def draw_photo_mode(self, screen, cam_pos, q_cam):
+        screen.fill((5, 5, 15))
+        
+        # Temp save original camera position & orientation
+        orig_pos = self.camera.pos
+        orig_orient = self.camera.orientation
+        
+        # Set camera to the orbit camera
+        self.camera.update(cam_pos, q_cam)
+        self.renderer.clear()
+        
+        # Submit elements to renderer
+        Star.submit_batch_to_renderer(self.stars, self.renderer, self.player.pos)
+        self.nebulae.submit_to_renderer(self.renderer)
+        
+        # Query nearby entities to render in Photo Mode
+        visible_entities = self.spatial.query_nearby(self.player.pos, 15000.0)
+        sniper_beams_to_draw = []
+        for obj in visible_entities:
+            obj.submit_to_renderer(self.renderer)
+            if getattr(obj, 'state', '') == 'charging':
+                sniper_beams_to_draw.append(obj)
+                
+        for bolt in self.enemy_projectiles:
+            if self.camera.sphere_in_frustum(bolt.x, bolt.y, bolt.z, 100):
+                bolt.submit_to_renderer(self.renderer)
+        
+        for l in self.laser_pool.get_active():
+            if self.camera.sphere_in_frustum(l.x, l.y, l.z, 200):
+                l.submit_to_renderer(self.renderer)
+                
+        for m in self.player_missiles:
+            if self.camera.sphere_in_frustum(m.x, m.y, m.z, 200):
+                m.submit_to_renderer(self.renderer)
+                
+        self.particle_pool.submit_to_renderer(self.renderer, self.camera)
+        
+        # Submit the Player Ship in 3D!
+        self.player.submit_to_renderer(self.renderer)
+        
+        # Render the 3D scene!
+        self.renderer.render(screen)
+        
+        # Draw sniper beams if charging
+        self.draw_sniper_beams(screen, sniper_beams_to_draw)
+        
+        # Restore camera
+        self.camera.update(orig_pos, orig_orient)
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
         # Update Lasers and Particles
@@ -630,34 +678,317 @@ class GameOverState(State):
 class PauseState(State):
     def __init__(self, context):
         super().__init__(context)
-        self.pause_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 72)
+        self.title_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 34)
+        self.menu_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 18)
+        self.hint_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 11)
+        
+        # 3D Orbit Camera state
+        self.orbit_yaw = 0.0
+        self.orbit_pitch = 0.2
+        self.orbit_distance = 250.0
+        
+        # Timing / Auto-Orbit
+        self.idle_timer = 0.0
+        self.user_rotated = False
+        
+        # Menu state
+        self.menu_items = ["RESUME", "TRAIL COLOR", "RESTART", "TITLE", "EXIT"]
+        self.selected_item = 0
+
+    @property
+    def gameplay_state(self):
+        if len(self.context.state_manager.stack) > 1:
+            state = self.context.state_manager.stack[-2]
+            if hasattr(state, 'player'):
+                return state
+        return None
 
     def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
-            self.context.state_manager.pop()
+        gp = self.gameplay_state
+        if not gp:
+            return
+            
+        manager = self.context.state_manager
+        
+        # Mouse interactions
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1: # Left-click
+                m_x, m_y = event.pos
+                if m_x < 380: # clicked inside the sidebar!
+                    for i, item in enumerate(self.menu_items):
+                        y_item = 140 + i * 80
+                        if 20 <= m_x <= 355 and y_item - 6 <= m_y <= y_item + 36:
+                            if self.selected_item == i:
+                                self.trigger_action(item, manager)
+                            else:
+                                self.selected_item = i
+                                self.context.sound.play_sfx("laser")
+                            break
+                        if item == "TRAIL COLOR":
+                            y_dots = y_item + 46
+                            for dot_idx in range(8):
+                                cx = 50 + dot_idx * 38
+                                if (m_x - cx)**2 + (m_y - y_dots)**2 <= 144: # inside 12px radius
+                                    gp.player.trail_color_index = dot_idx
+                                    gp.player.change_trail_color(0)
+                                    self.selected_item = i
+                                    self.context.sound.play_sfx("laser")
+                                    break
+            elif event.button == 4: # Scroll Up (Zoom In)
+                self.orbit_distance = max(100.0, self.orbit_distance - 20.0)
+                self.user_rotated = True
+                self.idle_timer = 0.0
+            elif event.button == 5: # Scroll Down (Zoom Out)
+                self.orbit_distance = min(700.0, self.orbit_distance + 20.0)
+                self.user_rotated = True
+                self.idle_timer = 0.0
+                
+        # Keyboard interactions
+        elif event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_p, pygame.K_ESCAPE):
+                manager.pop()
+            elif event.key in (pygame.K_UP, pygame.K_w):
+                self.selected_item = (self.selected_item - 1) % len(self.menu_items)
+                self.context.sound.play_sfx("laser")
+            elif event.key in (pygame.K_DOWN, pygame.K_s):
+                self.selected_item = (self.selected_item + 1) % len(self.menu_items)
+                self.context.sound.play_sfx("laser")
+            elif event.key in (pygame.K_LEFT, pygame.K_a):
+                if self.menu_items[self.selected_item] == "TRAIL COLOR":
+                    gp.player.change_trail_color(-1)
+                    self.context.sound.play_sfx("laser")
+            elif event.key in (pygame.K_RIGHT, pygame.K_d):
+                if self.menu_items[self.selected_item] == "TRAIL COLOR":
+                    gp.player.change_trail_color(1)
+                    self.context.sound.play_sfx("laser")
+            elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self.trigger_action(self.menu_items[self.selected_item], manager)
+                
         self.context.handler.process_event(event)
 
     def update(self, dt, manager):
+        gp = self.gameplay_state
+        if not gp:
+            return
+            
+        # Option / Pause button on controller resumes game
         if self.context.handler.just_pressed('Options'):
             manager.pop()
+            return
+            
+        # D-pad controls for controller menu navigation
+        if self.context.handler.just_pressed('DPad Up'):
+            self.selected_item = (self.selected_item - 1) % len(self.menu_items)
+            self.context.sound.play_sfx("laser")
+        elif self.context.handler.just_pressed('DPad Down'):
+            self.selected_item = (self.selected_item + 1) % len(self.menu_items)
+            self.context.sound.play_sfx("laser")
+            
+        if self.menu_items[self.selected_item] == "TRAIL COLOR":
+            if self.context.handler.just_pressed('DPad Left'):
+                gp.player.change_trail_color(-1)
+                self.context.sound.play_sfx("laser")
+            elif self.context.handler.just_pressed('DPad Right'):
+                gp.player.change_trail_color(1)
+                self.context.sound.play_sfx("laser")
+                
+        if self.context.handler.just_pressed('X'):
+            self.trigger_action(self.menu_items[self.selected_item], manager)
+            
+        # Manual Orbit Camera input checks
+        lx, ly = self.context.handler.stick_left()
+        rx, ry = self.context.handler.stick_right()
+        cx = rx if abs(rx) > abs(lx) else lx
+        cy = ry if abs(ry) > abs(ly) else ly
+        
+        # Keyboard key holdings for manual orbit
+        keys = pygame.key.get_pressed()
+        kb_yaw = 0.0
+        kb_pitch = 0.0
+        speed_mult = 1.8
+        
+        if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+            kb_yaw -= dt * speed_mult
+        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+            kb_yaw += dt * speed_mult
+        if keys[pygame.K_UP] or keys[pygame.K_w]:
+            kb_pitch -= dt * speed_mult
+        if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+            kb_pitch += dt * speed_mult
+            
+        if keys[pygame.K_q]:
+            self.orbit_distance = max(100.0, self.orbit_distance - dt * 300.0)
+            self.user_rotated = True
+            self.idle_timer = 0.0
+        if keys[pygame.K_e]:
+            self.orbit_distance = min(700.0, self.orbit_distance + dt * 300.0)
+            self.user_rotated = True
+            self.idle_timer = 0.0
+            
+        # Mouse drag calculations
+        m_pressed = pygame.mouse.get_pressed()
+        m_rel = pygame.mouse.get_rel()
+        m_pos = pygame.mouse.get_pos()
+        mouse_active = False
+        if m_pressed[0] and m_pos[0] > 380:
+            self.orbit_yaw += m_rel[0] * 0.007
+            self.orbit_pitch = max(-1.4, min(1.4, self.orbit_pitch + m_rel[1] * 0.007))
+            mouse_active = True
+            
+        if abs(cx) > 0.05 or abs(cy) > 0.05 or abs(kb_yaw) > 0 or abs(kb_pitch) > 0 or mouse_active:
+            self.orbit_yaw += cx * dt * 2.5 + kb_yaw
+            self.orbit_pitch = max(-1.4, min(1.4, self.orbit_pitch + cy * dt * 2.5 + kb_pitch))
+            self.user_rotated = True
+            self.idle_timer = 0.0
+        else:
+            self.idle_timer += dt
+            if self.idle_timer > 3.0:
+                self.user_rotated = False
+                
+        # Controller bumper/trigger zooms
+        if self.context.handler.held('R1') or self.context.handler.trigger_right() > 0.1:
+            self.orbit_distance = max(100.0, self.orbit_distance - dt * 400.0)
+            self.user_rotated = True
+            self.idle_timer = 0.0
+        if self.context.handler.held('L1') or self.context.handler.trigger_left() > 0.1:
+            self.orbit_distance = min(700.0, self.orbit_distance + dt * 400.0)
+            self.user_rotated = True
+            self.idle_timer = 0.0
+            
+        # Auto orbit rotation
+        if not self.user_rotated:
+            self.orbit_yaw += dt * 0.15
+            
+        # Damped engine hum sound during pause
+        if self.context.sound:
+            self.context.sound.update_engine_hum(0.0, 0.0, 0.0, 0.0)
 
     def draw(self, screen):
-        # Draw the gameplay frame beneath the pause overlay
-        if len(self.context.state_manager.stack) > 1:
-            self.context.state_manager.stack[-2].draw(screen)
-
-        # Translucent dark mask
-        overlay = pygame.Surface((self.context.W, self.context.H), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 150))
-        screen.blit(overlay, (0, 0))
-
-        # Pause Title
-        pause_text = self.pause_font.render("PAUSED", True, (255, 0, 0))
-        screen.blit(
-            pause_text, 
-            (self.context.W // 2 - pause_text.get_width() // 2, 
-             self.context.H // 2 - pause_text.get_height() // 2)
+        gp = self.gameplay_state
+        if not gp:
+            screen.fill((10, 10, 20))
+            return
+            
+        # 1. Calculate Orbit Camera coordinates
+        from src.math_engine import get_forward_from_quat, quat_from_axis_angle, quat_mul
+        
+        q_yaw = quat_from_axis_angle(0.0, 1.0, 0.0, self.orbit_yaw)
+        q_pitch = quat_from_axis_angle(1.0, 0.0, 0.0, self.orbit_pitch)
+        q_orbit = quat_mul(q_yaw, q_pitch)
+        
+        q_cam = quat_mul(gp.player.orientation, q_orbit)
+        cam_fwd = get_forward_from_quat(q_cam)
+        cam_pos = (
+            gp.player.pos[0] - cam_fwd[0] * self.orbit_distance,
+            gp.player.pos[1] - cam_fwd[1] * self.orbit_distance,
+            gp.player.pos[2] - cam_fwd[2] * self.orbit_distance
         )
+        
+        # 2. Draw the 3D scene from the orbital camera view!
+        gp.draw_photo_mode(screen, cam_pos, q_cam)
+        
+        # 3. Draw premium translucent sidebar glassmorphic overlay
+        sidebar = pygame.Surface((380, self.context.H), pygame.SRCALPHA)
+        # Deep dark cybernetic glass
+        sidebar.fill((10, 10, 18, 215))
+        # Sleek neon border on the right
+        pygame.draw.line(sidebar, (45, 45, 65), (378, 0), (378, self.context.H), 1)
+        pygame.draw.line(sidebar, (0, 180, 255), (379, 0), (379, self.context.H), 1)
+        
+        # Title text: SYSTEM PAUSED
+        title_text = self.title_font.render("SYSTEM PAUSED", True, (255, 255, 255))
+        # Draw a little neon highlight glow behind title
+        pygame.draw.line(sidebar, (0, 180, 255), (25, 80), (355, 80), 2)
+        sidebar.blit(title_text, (25, 30))
+        
+        # Draw interactive menu items
+        for i, item in enumerate(self.menu_items):
+            y_item = 140 + i * 80
+            is_sel = (self.selected_item == i)
+            
+            if is_sel:
+                # Glowing selection box
+                pygame.draw.rect(sidebar, (0, 180, 255, 35), (20, y_item - 6, 335, 42), border_radius=4)
+                pygame.draw.rect(sidebar, (0, 180, 255, 180), (20, y_item - 6, 335, 42), 1, border_radius=4)
+                
+                text_col = (255, 255, 255)
+                # Caret indicators
+                caret_l = self.menu_font.render("> ", True, (0, 180, 255))
+                sidebar.blit(caret_l, (30, y_item))
+            else:
+                text_col = (130, 130, 140)
+                
+            # Render menu item text
+            if item == "TRAIL COLOR":
+                val_text = self.menu_font.render(f"TRAIL: {gp.player.trail_color_name}", True, gp.player.trail_color if is_sel else text_col)
+                sidebar.blit(val_text, (50 if is_sel else 40, y_item))
+                
+                # Draw neon cycling arrow guides if selected
+                if is_sel:
+                    arrow_l = self.menu_font.render("<", True, (0, 180, 255))
+                    arrow_r = self.menu_font.render(">", True, (0, 180, 255))
+                    sidebar.blit(arrow_l, (270, y_item))
+                    sidebar.blit(arrow_r, (330, y_item))
+                    
+                # Draw the glowing color beads selector below the item!
+                y_dots = y_item + 46
+                for dot_idx, (name, col) in enumerate(gp.player.trail_colors):
+                    cx = 50 + dot_idx * 38
+                    pygame.draw.circle(sidebar, col, (cx, y_dots), 10)
+                    if dot_idx == gp.player.trail_color_index:
+                        pygame.draw.circle(sidebar, (255, 255, 255), (cx, y_dots), 13, 2)
+            else:
+                lbl = self.menu_font.render(item, True, text_col)
+                sidebar.blit(lbl, (50 if is_sel else 40, y_item))
+                
+        # 4. Render Mission/Tactical statistics panel at the bottom of the sidebar
+        y_stats = self.context.H - 220
+        pygame.draw.line(sidebar, (35, 35, 45), (25, y_stats), (355, y_stats), 1)
+        
+        stats_hdr = self.hint_font.render("TACTICAL DATA INTEGRITY", True, (0, 180, 255))
+        sidebar.blit(stats_hdr, (25, y_stats + 12))
+        
+        acc_pct = (gp.player.shots_hit / max(1, gp.player.shots_fired)) * 100
+        stats_list = [
+            ("HULL STRENGTH", f"{int(gp.player.hp)} / {int(gp.player.max_hp)}", (255, 50, 50) if gp.player.hp < 30 else (220, 220, 220)),
+            ("SHIELD POWER", f"{int(gp.player.shield)} / 100", (0, 180, 255) if gp.player.shield > 0 else (100, 100, 110)),
+            ("MISSILES LOADED", f"{gp.player.missile_ammo} / 6", (255, 210, 60)),
+            ("WEAPON ACCURACY", f"{acc_pct:.1f}%", (60, 220, 120)),
+        ]
+        
+        for k, (label, val, val_col) in enumerate(stats_list):
+            lbl_surf = self.hint_font.render(label, True, (130, 130, 140))
+            val_surf = self.hint_font.render(val, True, val_col)
+            sidebar.blit(lbl_surf, (25, y_stats + 42 + k * 28))
+            sidebar.blit(val_surf, (355 - val_surf.get_width(), y_stats + 42 + k * 28))
+            
+        screen.blit(sidebar, (0, 0))
+        
+        # 5. Draw Orbit instructions HUD on the bottom-right side of screen!
+        helper_bg = pygame.Surface((600, 40), pygame.SRCALPHA)
+        helper_bg.fill((5, 5, 10, 160))
+        pygame.draw.rect(helper_bg, (45, 45, 55), (0, 0, 600, 40), 1, border_radius=6)
+        
+        instructions = "[W/S/A/D or Mouse Drag] Orbit Camera  •  [Q/E or Scroll] Zoom  •  [UP/DOWN] Menu"
+        instr_surf = self.hint_font.render(instructions, True, (200, 220, 255))
+        helper_bg.blit(instr_surf, (300 - instr_surf.get_width()//2, 20 - instr_surf.get_height()//2))
+        
+        screen.blit(helper_bg, (self.context.W - 630, self.context.H - 60))
+
+    def trigger_action(self, action, manager):
+        self.context.sound.play_sfx("laser")
+        if action == "RESUME":
+            manager.pop()
+        elif action == "TRAIL COLOR":
+            self.gameplay_state.player.change_trail_color(1)
+        elif action == "RESTART":
+            manager.pop()
+            manager.change(GameplayState(self.context))
+        elif action == "TITLE":
+            manager.pop()
+            manager.change(TitleState(self.context))
+        elif action == "EXIT":
+            self.context.running = False
 
 
 # ──────────────────────────────────────────────
