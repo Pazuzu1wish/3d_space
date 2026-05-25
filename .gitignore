@@ -36,3 +36,6 @@ htmlcov/
 .pytest_cache/
 .mypy_cache/
 ```
+# Save data
+run_data.json
+save_data.json
