@@ -454,6 +454,7 @@ class Player:
         fire_lasers(self, fire_pressed, handler, lasers, sound)
         fire_missile(self, missile_fire_pressed, handler, player_missiles, sound)
         
+        
         # ── ENGINE TRAIL SPAWNING & UPDATING ──────────
         fx, fy, fz = get_forward_from_quat(self.orientation)
         _, right, up = get_basis_from_quat(self.orientation)
