@@ -38,4 +38,4 @@ htmlcov/
 ```
 # Save data
 run_data.json
-save_data.json
+save.json
