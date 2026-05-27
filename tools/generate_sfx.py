@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import wave
-import pyttsx3
 import numpy as np
 
 
