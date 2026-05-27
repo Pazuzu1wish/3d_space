@@ -1,4 +1,3 @@
-# TODO: move physics and projectiles out of player.py 
 
 import pygame
 import math
@@ -178,6 +177,81 @@ class Player:
             'tail_base':    (0.0,   10.0, -38.0),
         }
 
+        C_BODY = (200, 200, 210)
+        C_DARK = (45, 45, 50)
+
+        accent_color = self.trail_color
+
+        
+
+        self.faces = [
+            {'v': ['needle', 'fwd_top', 'fwd_l'], 'color': (200, 200, 210)},  # 0 OK
+            {'v': ['needle', 'fwd_r', 'fwd_top'], 'color': (200, 200, 210)},  # 1 OK
+            {'v': ['needle', 'fwd_bot', 'fwd_r'], 'color': (45, 45, 50)},  # 2 OK
+            {'v': ['needle', 'fwd_l', 'fwd_bot'], 'color': (45, 45, 50)},  # 3 OK
+            {'v': ['fwd_top', 'spine_mid', 'spine_fwd'], 'color': (0, 255, 200)},  # 4 EDGE
+            {'v': ['spine_fwd', 'spine_mid', 'mid_top'], 'color': (0, 255, 200)},  # 5 EDGE
+            {'v': ['spine_mid', 'spine_aft', 'mid_top'], 'color': (0, 255, 200)},  # 6 EDGE
+            {'v': ['spine_aft', 'aft_top', 'mid_top'], 'color': (0, 255, 200)},  # 7 EDGE
+            {'v': ['fwd_top', 'spine_fwd', 'fwd_l'], 'color': (200, 200, 210)},  # 8 OK
+            {'v': ['fwd_top', 'fwd_r', 'spine_fwd'], 'color': (200, 200, 210)},  # 9 OK
+            {'v': ['fwd_l', 'mid_l', 'fwd_bot'], 'color': (45, 45, 50)},  # 10 OK
+            {'v': ['fwd_r', 'fwd_bot', 'mid_r'], 'color': (45, 45, 50)},  # 11 OK
+            {'v': ['fwd_bot', 'mid_bot', 'mid_r'], 'color': (45, 45, 50)},  # 12 OK
+            {'v': ['fwd_bot', 'mid_l', 'mid_bot'], 'color': (45, 45, 50)},  # 13 OK
+            {'v': ['mid_top', 'aft_top', 'mid_l'], 'color': (200, 200, 210)},  # 14 OK
+            {'v': ['aft_top', 'aft_l', 'mid_l'], 'color': (200, 200, 210)},  # 15 OK
+            {'v': ['mid_top', 'mid_r', 'aft_top'], 'color': (200, 200, 210)},  # 16 OK
+            {'v': ['aft_top', 'mid_r', 'aft_r'], 'color': (200, 200, 210)},  # 17 OK
+            {'v': ['mid_l', 'aft_l', 'mid_bot'], 'color': (45, 45, 50)},  # 18 OK
+            {'v': ['aft_l', 'aft_bot', 'mid_bot'], 'color': (45, 45, 50)},  # 19 OK
+            {'v': ['mid_r', 'mid_bot', 'aft_r'], 'color': (45, 45, 50)},  # 20 OK
+            {'v': ['aft_r', 'mid_bot', 'aft_bot'], 'color': (45, 45, 50)},  # 21 OK
+            {'v': ['cl_base_f', 'cl_tip', 'cl_base_r'], 'color': (0, 255, 200)},  # 22 OK
+            {'v': ['cl_base_r', 'cl_base_f', 'cl_tip'], 'color': (0, 255, 200)},  # 23 OK
+            {'v': ['cr_base_f', 'cr_base_r', 'cr_tip'], 'color': (0, 255, 200)},  # 24 OK
+            {'v': ['cr_base_r', 'cr_tip', 'cr_base_f'], 'color': (0, 255, 200)},  # 25 OK
+            {'v': ['wrl_fwd', 'wml_le', 'wml_tip'], 'color': (200, 200, 210)},  # 26 OK
+            {'v': ['wrl_fwd', 'wml_le', 'mid_l'], 'color': (200, 200, 210)},  # 27 OK
+            {'v': ['wrl_fwd', 'wml_tip', 'wrl_aft'], 'color': (45, 45, 50)},  # 28 OK
+            {'v': ['wrl_aft', 'wml_tip', 'wml_te'], 'color': (45, 45, 50)},  # 29 OK
+            {'v': ['wrr_fwd', 'wmr_tip', 'wmr_le'], 'color': (200, 200, 210)},  # 30 OK
+            {'v': ['wrr_fwd', 'mid_r', 'wmr_le'], 'color': (200, 200, 210)},  # 31 OK
+            {'v': ['wrr_fwd', 'wrr_aft', 'wmr_tip'], 'color': (45, 45, 50)},  # 32 OK
+            {'v': ['wrr_aft', 'wmr_te', 'wmr_tip'], 'color': (45, 45, 50)},  # 33 OK
+            {'v': ['wml_le', 'wml_tip', 'wtl'], 'color': (0, 255, 200)},  # 34 OK
+            {'v': ['wml_tip', 'wtl_te', 'wtl'], 'color': (0, 255, 200)},  # 35 OK
+            {'v': ['wml_tip', 'wml_te', 'wtl_te'], 'color': (200, 200, 210)},  # 36 OK
+            {'v': ['wmr_le', 'wtr', 'wmr_tip'], 'color': (0, 255, 200)},  # 37 OK
+            {'v': ['wmr_tip', 'wtr', 'wtr_te'], 'color': (0, 255, 200)},  # 38 OK
+            {'v': ['wmr_tip', 'wtr_te', 'wmr_te'], 'color': (200, 200, 210)},  # 39 OK
+            {'v': ['enl_top_f', 'enl_top_r', 'enl_in_f'], 'color': (200, 200, 210)},  # 40 OK
+            {'v': ['enl_top_r', 'enl_in_r', 'enl_in_f'], 'color': (200, 200, 210)},  # 41 OK
+            {'v': ['enl_out_f', 'enl_top_f', 'enl_out_r'], 'color': (200, 200, 210)},  # 42 OK
+            {'v': ['enl_out_r', 'enl_top_f', 'enl_top_r'], 'color': (200, 200, 210)},  # 43 OK
+            {'v': ['enl_bot_f', 'enl_out_f', 'enl_bot_r'], 'color': (45, 45, 50)},  # 44 OK
+            {'v': ['enl_bot_r', 'enl_out_f', 'enl_out_r'], 'color': (45, 45, 50)},  # 45 OK
+            {'v': ['enl_in_f', 'enl_in_r', 'enl_bot_f'], 'color': (45, 45, 50)},  # 46 OK
+            {'v': ['enl_in_r', 'enl_bot_r', 'enl_bot_f'], 'color': (45, 45, 50)},  # 47 OK
+            {'v': ['enl_top_f', 'enl_in_f', 'enl_bot_f'], 'color': (0, 255, 200)},  # 48 OK
+            {'v': ['enl_top_f', 'enl_bot_f', 'enl_out_f'], 'color': (0, 255, 200)},  # 49 OK
+            {'v': ['enr_top_f', 'enr_in_f', 'enr_top_r'], 'color': (200, 200, 210)},  # 50 OK
+            {'v': ['enr_top_r', 'enr_in_f', 'enr_in_r'], 'color': (200, 200, 210)},  # 51 OK
+            {'v': ['enr_out_f', 'enr_out_r', 'enr_top_f'], 'color': (200, 200, 210)},  # 52 OK
+            {'v': ['enr_out_r', 'enr_top_r', 'enr_top_f'], 'color': (200, 200, 210)},  # 53 OK
+            {'v': ['enr_bot_f', 'enr_bot_r', 'enr_out_f'], 'color': (45, 45, 50)},  # 54 OK
+            {'v': ['enr_bot_r', 'enr_out_r', 'enr_out_f'], 'color': (45, 45, 50)},  # 55 OK
+            {'v': ['enr_in_f', 'enr_bot_f', 'enr_in_r'], 'color': (45, 45, 50)},  # 56 OK
+            {'v': ['enr_in_r', 'enr_bot_f', 'enr_bot_r'], 'color': (45, 45, 50)},  # 57 OK
+            {'v': ['enr_top_f', 'enr_bot_f', 'enr_in_f'], 'color': (0, 255, 200)},  # 58 OK
+            {'v': ['enr_top_f', 'enr_out_f', 'enr_bot_f'], 'color': (0, 255, 200)},  # 59 OK
+            {'v': ['vtl_base', 'vtl_aft', 'vtl_tip'], 'color': (0, 255, 200)},  # 60 OK
+            {'v': ['vtl_aft', 'vtl_tip', 'vtl_base'], 'color': (200, 200, 210)},  # 61 OK
+            {'v': ['vtr_base', 'vtr_tip', 'vtr_aft'], 'color': (0, 255, 200)},  # 62 OK
+            {'v': ['vtr_aft', 'vtr_base', 'vtr_tip'], 'color': (200, 200, 210)},  # 63 OK
+        ]
+        
+
     @property
     def trail_color_name(self):
         return self.trail_colors[self.trail_color_index][0]
@@ -220,97 +294,8 @@ class Player:
         self._submit_engine_trail(renderer)
         
         # 2. Submit ship wireframe mesh
-        accent_color = self.trail_color
-        
-        C_BODY = (200, 200, 210)
-        C_DARK = (45, 45, 50)
-        
-        faces = [
-            # ── NOSE CONE ─────────────────────────────────────────────────────
-            {'v': ['needle', 'fwd_top', 'fwd_l'],       'color': C_BODY},
-            {'v': ['needle', 'fwd_r',   'fwd_top'],      'color': C_BODY},
-            {'v': ['needle', 'fwd_bot', 'fwd_r'],        'color': C_DARK},
-            {'v': ['needle', 'fwd_l',   'fwd_bot'],      'color': C_DARK},
+        faces = self.faces  
 
-            # ── DORSAL SPINE (accent surface) ────────────────────────────────
-            {'v': ['fwd_top', 'spine_mid', 'spine_fwd'], 'color': accent_color},
-            {'v': ['spine_fwd', 'spine_mid', 'mid_top'], 'color': accent_color},
-            {'v': ['spine_mid', 'spine_aft', 'mid_top'], 'color': accent_color},
-            {'v': ['spine_aft', 'aft_top',   'mid_top'], 'color': accent_color},
-
-            # ── FWD FUSELAGE SIDES ────────────────────────────────────────────
-            {'v': ['fwd_top', 'spine_fwd', 'fwd_l'],     'color': C_BODY},
-            {'v': ['fwd_top', 'fwd_r',     'spine_fwd'], 'color': C_BODY},
-            {'v': ['fwd_l',   'mid_l',     'fwd_bot'],   'color': C_DARK},
-            {'v': ['fwd_r',   'fwd_bot',   'mid_r'],     'color': C_DARK},
-            {'v': ['fwd_bot', 'mid_bot',   'mid_r'],     'color': C_DARK},
-            {'v': ['fwd_bot', 'mid_l',     'mid_bot'],   'color': C_DARK},
-
-            # ── MID-AFT FUSELAGE ─────────────────────────────────────────────
-            {'v': ['mid_top', 'mid_l',  'aft_top'],      'color': C_BODY},
-            {'v': ['aft_top', 'mid_l',  'aft_l'],        'color': C_BODY},
-            {'v': ['mid_top', 'aft_top','mid_r'],        'color': C_BODY},
-            {'v': ['aft_top', 'aft_r',  'mid_r'],        'color': C_BODY},
-            {'v': ['mid_l',   'mid_bot','aft_l'],        'color': C_DARK},
-            {'v': ['aft_l',   'mid_bot','aft_bot'],      'color': C_DARK},
-            {'v': ['mid_r',   'aft_r',  'mid_bot'],      'color': C_DARK},
-            {'v': ['aft_r',   'aft_bot','mid_bot'],      'color': C_DARK},
-
-            # ── CANARDS ───────────────────────────────────────────────────────
-            {'v': ['cl_base_f', 'cl_tip',    'cl_base_r'], 'color': accent_color},
-            {'v': ['cl_base_r', 'cl_tip',    'cl_base_f'], 'color': accent_color},
-            {'v': ['cr_base_f', 'cr_base_r', 'cr_tip'],    'color': accent_color},
-            {'v': ['cr_base_r', 'cr_base_f', 'cr_tip'],    'color': accent_color},
-
-            # ── INNER WING PANELS ────────────────────────────────────────────
-            {'v': ['wrl_fwd', 'wml_le',  'wml_tip'],     'color': C_BODY},
-            {'v': ['wrl_fwd', 'mid_l',   'wml_le'],      'color': C_BODY},
-            {'v': ['wrl_fwd', 'wml_tip', 'wrl_aft'],     'color': C_DARK},
-            {'v': ['wrl_aft', 'wml_tip', 'wml_te'],      'color': C_DARK},
-            {'v': ['wrr_fwd', 'wmr_tip', 'wmr_le'],      'color': C_BODY},
-            {'v': ['wrr_fwd', 'wmr_le',  'mid_r'],       'color': C_BODY},
-            {'v': ['wrr_fwd', 'wrr_aft', 'wmr_tip'],     'color': C_DARK},
-            {'v': ['wrr_aft', 'wmr_te',  'wmr_tip'],     'color': C_DARK},
-
-            # ── OUTER WING SWEPT TIPS (accent) ───────────────────────────────
-            {'v': ['wml_le',  'wtl',    'wml_tip'],      'color': accent_color},
-            {'v': ['wml_tip', 'wtl',    'wtl_te'],       'color': accent_color},
-            {'v': ['wml_tip', 'wtl_te', 'wml_te'],       'color': C_BODY},
-            {'v': ['wmr_le',  'wmr_tip','wtr'],          'color': accent_color},
-            {'v': ['wmr_tip', 'wtr_te', 'wtr'],          'color': accent_color},
-            {'v': ['wmr_tip', 'wmr_te', 'wtr_te'],       'color': C_BODY},
-
-            # ── ENGINE NACELLES — LEFT ────────────────────────────────────────
-            {'v': ['enl_top_f','enl_in_f', 'enl_top_r'], 'color': C_BODY},
-            {'v': ['enl_top_r','enl_in_f', 'enl_in_r'],  'color': C_BODY},
-            {'v': ['enl_out_f','enl_top_f','enl_out_r'],  'color': C_BODY},
-            {'v': ['enl_out_r','enl_top_f','enl_top_r'],  'color': C_BODY},
-            {'v': ['enl_bot_f','enl_out_f','enl_bot_r'],  'color': C_DARK},
-            {'v': ['enl_bot_r','enl_out_f','enl_out_r'],  'color': C_DARK},
-            {'v': ['enl_in_f', 'enl_bot_f','enl_in_r'],   'color': C_DARK},
-            {'v': ['enl_in_r', 'enl_bot_f','enl_bot_r'],  'color': C_DARK},
-            {'v': ['enl_top_f','enl_bot_f','enl_in_f'],   'color': accent_color},
-            {'v': ['enl_top_f','enl_out_f','enl_bot_f'],  'color': accent_color},
-
-            # ── ENGINE NACELLES — RIGHT ───────────────────────────────────────
-            {'v': ['enr_top_f','enr_top_r','enr_in_f'],   'color': C_BODY},
-            {'v': ['enr_top_r','enr_in_r', 'enr_in_f'],   'color': C_BODY},
-            {'v': ['enr_out_f','enr_out_r','enr_top_f'],   'color': C_BODY},
-            {'v': ['enr_out_r','enr_top_r','enr_top_f'],   'color': C_BODY},
-            {'v': ['enr_bot_f','enr_bot_r','enr_out_f'],   'color': C_DARK},
-            {'v': ['enr_bot_r','enr_out_r','enr_out_f'],   'color': C_DARK},
-            {'v': ['enr_in_f', 'enr_in_r', 'enr_bot_f'],  'color': C_DARK},
-            {'v': ['enr_in_r', 'enr_bot_r','enr_bot_f'],   'color': C_DARK},
-            {'v': ['enr_top_f','enr_in_f', 'enr_bot_f'],   'color': accent_color},
-            {'v': ['enr_top_f','enr_bot_f','enr_out_f'],   'color': accent_color},
-
-            # ── V-TAIL ────────────────────────────────────────────────────────
-            {'v': ['vtl_base','vtl_tip','vtl_aft'],        'color': accent_color},
-            {'v': ['vtl_aft', 'vtl_tip','vtl_base'],       'color': C_BODY},
-            {'v': ['vtr_base','vtr_aft','vtr_tip'],        'color': accent_color},
-            {'v': ['vtr_aft', 'vtr_base','vtr_tip'],       'color': C_BODY},
-        ]
-        
         # Get player basis vectors
         _, right, up = get_basis_from_quat(self.orientation)
         fx, fy, fz = get_forward_from_quat(self.orientation)
