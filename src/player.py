@@ -245,9 +245,179 @@ class Player:
 
         accent_color = self.trail_color
 
-        
+        C_ACCENT = accent_color # Or accent_color
 
         self.faces = [
+            # ==========================================
+            # FUSELAGE (Unchanged, already solid)
+            # ==========================================
+            {'v': ['needle', 'fwd_top', 'fwd_l'], 'color': C_BODY},
+            {'v': ['needle', 'fwd_r', 'fwd_top'], 'color': C_BODY},
+            {'v': ['needle', 'fwd_bot', 'fwd_r'], 'color': C_DARK},
+            {'v': ['needle', 'fwd_l', 'fwd_bot'], 'color': C_DARK},
+            {'v': ['fwd_top', 'spine_mid', 'spine_fwd'], 'color': C_ACCENT},
+            {'v': ['spine_fwd', 'spine_mid', 'mid_top'], 'color': C_ACCENT},
+            {'v': ['spine_mid', 'spine_aft', 'mid_top'], 'color': C_ACCENT},
+            {'v': ['spine_aft', 'aft_top', 'mid_top'], 'color': C_ACCENT},
+            {'v': ['fwd_top', 'spine_fwd', 'fwd_l'], 'color': C_BODY},
+            {'v': ['fwd_top', 'fwd_r', 'spine_fwd'], 'color': C_BODY},
+            {'v': ['fwd_l', 'mid_l', 'fwd_bot'], 'color': C_DARK},
+            {'v': ['fwd_r', 'fwd_bot', 'mid_r'], 'color': C_DARK},
+            {'v': ['fwd_bot', 'mid_bot', 'mid_r'], 'color': C_DARK},
+            {'v': ['fwd_bot', 'mid_l', 'mid_bot'], 'color': C_DARK},
+            {'v': ['mid_top', 'aft_top', 'mid_l'], 'color': C_BODY},
+            {'v': ['aft_top', 'aft_l', 'mid_l'], 'color': C_BODY},
+            {'v': ['mid_top', 'mid_r', 'aft_top'], 'color': C_BODY},
+            {'v': ['aft_top', 'mid_r', 'aft_r'], 'color': C_BODY},
+            {'v': ['mid_l', 'aft_l', 'mid_bot'], 'color': C_DARK},
+            {'v': ['aft_l', 'aft_bot', 'mid_bot'], 'color': C_DARK},
+            {'v': ['mid_r', 'mid_bot', 'aft_r'], 'color': C_DARK},
+            {'v': ['aft_r', 'mid_bot', 'aft_bot'], 'color': C_DARK},
+
+            # ==========================================
+            # THICK CANARDS
+            # ==========================================
+            # Left Canard Top & Bottom
+            {'v': ['cl_base_f', 'cl_tip', 'cl_base_r'], 'color': C_ACCENT},
+            {'v': ['cl_base_f_d', 'cl_base_r_d', 'cl_tip_d'], 'color': C_DARK},
+            # Left Canard Edges
+            {'v': ['cl_base_f', 'cl_base_f_d', 'cl_tip_d'], 'color': C_ACCENT},
+            {'v': ['cl_base_f', 'cl_tip_d', 'cl_tip'], 'color': C_ACCENT},
+            {'v': ['cl_tip', 'cl_tip_d', 'cl_base_r_d'], 'color': C_DARK},
+            {'v': ['cl_tip', 'cl_base_r_d', 'cl_base_r'], 'color': C_DARK},
+
+            # Right Canard Top & Bottom
+            {'v': ['cr_base_f', 'cr_base_r', 'cr_tip'], 'color': C_ACCENT},
+            {'v': ['cr_base_f_d', 'cr_tip_d', 'cr_base_r_d'], 'color': C_DARK},
+            # Right Canard Edges
+            {'v': ['cr_base_f', 'cr_tip_d', 'cr_base_f_d'], 'color': C_ACCENT},
+            {'v': ['cr_base_f', 'cr_tip', 'cr_tip_d'], 'color': C_ACCENT},
+            {'v': ['cr_tip', 'cr_base_r_d', 'cr_tip_d'], 'color': C_DARK},
+            {'v': ['cr_tip', 'cr_base_r', 'cr_base_r_d'], 'color': C_DARK},
+
+            # ==========================================
+            # THICK MID WINGS
+            # ==========================================
+            # Left Mid Wing Top
+            {'v': ['wrl_fwd', 'wml_le_u', 'wml_tip_u'], 'color': C_BODY},
+            {'v': ['wrl_fwd', 'wml_tip_u', 'wrl_aft'], 'color': C_BODY},
+            {'v': ['wrl_aft', 'wml_tip_u', 'wml_te_u'], 'color': C_BODY},
+            # Left Mid Wing Bottom
+            {'v': ['wrl_fwd', 'wml_tip_d', 'wml_le_d'], 'color': C_DARK},
+            {'v': ['wrl_fwd', 'wrl_aft', 'wml_tip_d'], 'color': C_DARK},
+            {'v': ['wrl_aft', 'wml_te_d', 'wml_tip_d'], 'color': C_DARK},
+            # Left Mid Wing Edges (Leading & Trailing)
+            {'v': ['wrl_fwd', 'wml_le_d', 'wml_le_u'], 'color': C_BODY},
+            {'v': ['wml_le_u', 'wml_le_d', 'wml_tip_d'], 'color': C_BODY},
+            {'v': ['wml_le_u', 'wml_tip_d', 'wml_tip_u'], 'color': C_BODY},
+            {'v': ['wml_te_u', 'wml_tip_u', 'wml_tip_d'], 'color': C_DARK},
+            {'v': ['wml_te_u', 'wml_tip_d', 'wml_te_d'], 'color': C_DARK},
+            {'v': ['wml_te_u', 'wml_te_d', 'wrl_aft'], 'color': C_DARK},
+
+            # Right Mid Wing Top
+            {'v': ['wrr_fwd', 'wmr_tip_u', 'wmr_le_u'], 'color': C_BODY},
+            {'v': ['wrr_fwd', 'wrr_aft', 'wmr_tip_u'], 'color': C_BODY},
+            {'v': ['wrr_aft', 'wmr_te_u', 'wmr_tip_u'], 'color': C_BODY},
+            # Right Mid Wing Bottom
+            {'v': ['wrr_fwd', 'wmr_le_d', 'wmr_tip_d'], 'color': C_DARK},
+            {'v': ['wrr_fwd', 'wmr_tip_d', 'wrr_aft'], 'color': C_DARK},
+            {'v': ['wrr_aft', 'wmr_tip_d', 'wmr_te_d'], 'color': C_DARK},
+            # Right Mid Wing Edges
+            {'v': ['wrr_fwd', 'wmr_le_u', 'wmr_le_d'], 'color': C_BODY},
+            {'v': ['wmr_le_u', 'wmr_tip_d', 'wmr_le_d'], 'color': C_BODY},
+            {'v': ['wmr_le_u', 'wmr_tip_u', 'wmr_tip_d'], 'color': C_BODY},
+            {'v': ['wmr_te_u', 'wmr_tip_d', 'wmr_tip_u'], 'color': C_DARK},
+            {'v': ['wmr_te_u', 'wmr_te_d', 'wmr_tip_d'], 'color': C_DARK},
+            {'v': ['wmr_te_u', 'wrr_aft', 'wmr_te_d'], 'color': C_DARK},
+
+            # ==========================================
+            # THICK OUTER WINGS
+            # ==========================================
+            # Left Outer Top
+            {'v': ['wml_tip_u', 'wtl_u', 'wtl_te_u'], 'color': C_ACCENT},
+            {'v': ['wml_tip_u', 'wtl_te_u', 'wml_te_u'], 'color': C_BODY},
+            # Left Outer Bottom
+            {'v': ['wml_tip_d', 'wtl_te_d', 'wtl_d'], 'color': C_ACCENT},
+            {'v': ['wml_tip_d', 'wml_te_d', 'wtl_te_d'], 'color': C_DARK},
+            # Left Outer Edges
+            {'v': ['wml_tip_u', 'wml_tip_d', 'wtl_d'], 'color': C_ACCENT},
+            {'v': ['wml_tip_u', 'wtl_d', 'wtl_u'], 'color': C_ACCENT},
+            {'v': ['wml_te_u', 'wtl_te_u', 'wtl_te_d'], 'color': C_DARK},
+            {'v': ['wml_te_u', 'wtl_te_d', 'wml_te_d'], 'color': C_DARK},
+            {'v': ['wtl_u', 'wtl_d', 'wtl_te_d'], 'color': C_ACCENT},
+            {'v': ['wtl_u', 'wtl_te_d', 'wtl_te_u'], 'color': C_ACCENT},
+
+            # Right Outer Top
+            {'v': ['wmr_tip_u', 'wtr_te_u', 'wtr_u'], 'color': C_ACCENT},
+            {'v': ['wmr_tip_u', 'wmr_te_u', 'wtr_te_u'], 'color': C_BODY},
+            # Right Outer Bottom
+            {'v': ['wmr_tip_d', 'wtr_d', 'wtr_te_d'], 'color': C_ACCENT},
+            {'v': ['wmr_tip_d', 'wtr_te_d', 'wmr_te_d'], 'color': C_DARK},
+            # Right Outer Edges
+            {'v': ['wmr_tip_u', 'wtr_d', 'wmr_tip_d'], 'color': C_ACCENT},
+            {'v': ['wmr_tip_u', 'wtr_u', 'wtr_d'], 'color': C_ACCENT},
+            {'v': ['wmr_te_u', 'wtr_te_d', 'wtr_te_u'], 'color': C_DARK},
+            {'v': ['wmr_te_u', 'wmr_te_d', 'wtr_te_d'], 'color': C_DARK},
+            {'v': ['wtr_u', 'wtr_te_d', 'wtr_d'], 'color': C_ACCENT},
+            {'v': ['wtr_u', 'wtr_te_u', 'wtr_te_d'], 'color': C_ACCENT},
+
+            # ==========================================
+            # ENGINE NACELLES (Maintained original walls)
+            # ==========================================
+            # Left
+            {'v': ['enl_top_f', 'enl_top_r', 'enl_in_f'], 'color': C_BODY},
+            {'v': ['enl_top_r', 'enl_in_r', 'enl_in_f'], 'color': C_BODY},
+            {'v': ['enl_out_f', 'enl_top_f', 'enl_out_r'], 'color': C_BODY},
+            {'v': ['enl_out_r', 'enl_top_f', 'enl_top_r'], 'color': C_BODY},
+            {'v': ['enl_bot_f', 'enl_out_f', 'enl_bot_r'], 'color': C_DARK},
+            {'v': ['enl_bot_r', 'enl_out_f', 'enl_out_r'], 'color': C_DARK},
+            {'v': ['enl_in_f', 'enl_in_r', 'enl_bot_f'], 'color': C_DARK},
+            {'v': ['enl_in_r', 'enl_bot_r', 'enl_bot_f'], 'color': C_DARK},
+            {'v': ['enl_top_f', 'enl_in_f', 'enl_bot_f'], 'color': C_ACCENT},
+            {'v': ['enl_top_f', 'enl_bot_f', 'enl_out_f'], 'color': C_ACCENT},
+            # Right
+            {'v': ['enr_top_f', 'enr_in_f', 'enr_top_r'], 'color': C_BODY},
+            {'v': ['enr_top_r', 'enr_in_f', 'enr_in_r'], 'color': C_BODY},
+            {'v': ['enr_out_f', 'enr_out_r', 'enr_top_f'], 'color': C_BODY},
+            {'v': ['enr_out_r', 'enr_top_r', 'enr_top_f'], 'color': C_BODY},
+            {'v': ['enr_bot_f', 'enr_bot_r', 'enr_out_f'], 'color': C_DARK},
+            {'v': ['enr_bot_r', 'enr_out_r', 'enr_out_f'], 'color': C_DARK},
+            {'v': ['enr_in_f', 'enr_bot_f', 'enr_in_r'], 'color': C_DARK},
+            {'v': ['enr_in_r', 'enr_bot_f', 'enr_bot_r'], 'color': C_DARK},
+            {'v': ['enr_top_f', 'enr_bot_f', 'enr_in_f'], 'color': C_ACCENT},
+            {'v': ['enr_top_f', 'enr_out_f', 'enr_bot_f'], 'color': C_ACCENT},
+
+            # ==========================================
+            # ENGINE EXHAUST CONES (Closes the back of engines)
+            # ==========================================
+            # Left Exhaust (Pointed backward)
+            {'v': ['enl_top_r', 'enl_out_r', 'enl_exhaust'], 'color': C_ACCENT},
+            {'v': ['enl_out_r', 'enl_bot_r', 'enl_exhaust'], 'color': C_ACCENT},
+            {'v': ['enl_bot_r', 'enl_in_r', 'enl_exhaust'], 'color': C_ACCENT},
+            {'v': ['enl_in_r', 'enl_top_r', 'enl_exhaust'], 'color': C_ACCENT},
+            # Right Exhaust
+            {'v': ['enr_top_r', 'enr_exhaust', 'enr_out_r'], 'color': C_ACCENT},
+            {'v': ['enr_out_r', 'enr_exhaust', 'enr_bot_r'], 'color': C_ACCENT},
+            {'v': ['enr_bot_r', 'enr_exhaust', 'enr_in_r'], 'color': C_ACCENT},
+            {'v': ['enr_in_r', 'enr_exhaust', 'enr_top_r'], 'color': C_ACCENT},
+
+            # ==========================================
+            # V-TAILS (Double sided for flat geometry)
+            # ==========================================
+            {'v': ['vtl_base', 'vtl_aft', 'vtl_tip'], 'color': C_ACCENT},
+            {'v': ['vtl_aft', 'vtl_tip', 'vtl_base'], 'color': C_BODY},
+            {'v': ['vtr_base', 'vtr_tip', 'vtr_aft'], 'color': C_ACCENT},
+            {'v': ['vtr_aft', 'vtr_base', 'vtr_tip'], 'color': C_BODY},
+
+            # ==========================================
+            # VENTRAL KEEL
+            # ==========================================
+            # Double-sided connection from fuselage bottom to keel tip
+            {'v': ['mid_bot', 'keel_aft', 'keel_mid'], 'color': C_DARK},
+            {'v': ['mid_bot', 'aft_bot', 'keel_aft'], 'color': C_DARK},
+            {'v': ['mid_bot', 'keel_mid', 'keel_aft'], 'color': C_DARK},
+            {'v': ['mid_bot', 'keel_aft', 'aft_bot'], 'color': C_DARK},
+        
             {'v': ['needle', 'fwd_top', 'fwd_l'], 'color': (200, 200, 210)},  # 0 OK
             {'v': ['needle', 'fwd_r', 'fwd_top'], 'color': (200, 200, 210)},  # 1 OK
             {'v': ['needle', 'fwd_bot', 'fwd_r'], 'color': (45, 45, 50)},  # 2 OK

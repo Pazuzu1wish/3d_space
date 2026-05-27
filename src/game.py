@@ -952,7 +952,7 @@ class PauseState(State):
         stats_list = [
             ("HULL STRENGTH", f"{int(gp.player.hp)} / {int(gp.player.max_hp)}", (255, 50, 50) if gp.player.hp < 30 else (220, 220, 220)),
             ("SHIELD POWER", f"{int(gp.player.shield)} / 100", (0, 180, 255) if gp.player.shield > 0 else (100, 100, 110)),
-            ("MISSILES LOADED", f"{gp.player.missile_ammo} / 6", (255, 210, 60)),
+            ("MISSILES LOADED", f"{gp.player.missile_ammo} / 10", (255, 210, 60)),
             ("WEAPON ACCURACY", f"{acc_pct:.1f}%", (60, 220, 120)),
         ]
         
