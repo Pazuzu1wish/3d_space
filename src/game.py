@@ -2,6 +2,7 @@
 from random import choice
 import pygame
 import math
+import numpy as np
 from src.save_data import RunResult, SaveData
 from src.camera import Camera
 from src.renderer import RenderPipeline
@@ -126,6 +127,36 @@ class GameplayState(State):
         ]
         self.show_prograde = True
         self.show_coords = False
+
+        # Force all Numba JIT compilations to happen now (during load),
+        # not on the first gameplay frame.
+        self._warmup_numba()
+
+    def _warmup_numba(self):
+        """Pre-compile every @njit function used in the hot render path.
+
+        Each call uses tiny dummy arrays so the compile finishes in ~1-2 s
+        during the title / loading phase rather than causing a stutter on
+        the very first gameplay frame.
+        """
+        from src.renderer import process_faces_batch_numba
+        from src.math_engine import world_to_camera_batch, project_to_screen_batch
+
+        # Minimal dummy data — 1 vert, 1 face
+        dummy_verts = np.zeros((3, 3), dtype=np.float64)
+        dummy_cam   = np.zeros((3, 3), dtype=np.float64)
+        dummy_cam[:, 2] = 1.0   # Z > near-clip so projection doesn’t sentinel
+        dummy_proj  = np.zeros((3, 3), dtype=np.float64)
+        dummy_fidx  = np.array([[0, 1, 2]], dtype=np.int32)
+        dummy_fcol  = np.array([[200, 200, 200]], dtype=np.int32)
+        dummy_rcoef = np.eye(3, dtype=np.float64).ravel()  # identity rotation
+
+        # world_to_camera_batch
+        world_to_camera_batch(dummy_verts, 0.0, 0.0, 0.0, dummy_rcoef)
+        # project_to_screen_batch
+        project_to_screen_batch(dummy_cam, 400.0, 640.0, 360.0, 0.0, 0.0, 0.1)
+        # process_faces_batch_numba (main face shading + depth sort)
+        process_faces_batch_numba(dummy_cam, dummy_proj, dummy_fidx, dummy_fcol)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:

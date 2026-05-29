@@ -82,6 +82,10 @@ def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
 
 
 class RenderPipeline:
+    # Initial capacity for per-frame staging arrays (in vertices).
+    # Doubled automatically when a frame needs more space.
+    _STAGING_INITIAL = 8000
+
     def __init__(self, camera):
         self.camera = camera
 
@@ -101,11 +105,25 @@ class RenderPipeline:
 
         # Scale cache for nebulae to avoid expensive transform.scale every frame
         self._scaled_nebulae = {}  # (cache_key, size) -> surface
-        self._mesh_cache = {}
+
+        # Mesh cache: mesh_id -> (v_data_np, face_indices_np, face_colors_np)
+        # v_data_np is the pre-converted vertex array so submit_mesh never
+        # rebuilds it from a Python dict on cache-hit frames.
+        self._mesh_cache = {}       # {mesh_id: (v_data, f_idx, f_col)}
+        self._mesh_lru   = {}       # {mesh_id: frame_counter} for LRU eviction
+        self._mesh_frame = 0        # incremented each clear()
+
         # Per-frame mesh submissions to be processed in a single batched numba call
         self._mesh_submissions = []  # list of (face_indices, face_colors, cam_verts, projected, layer)
-        # Cache for static mesh camera-space results: (mesh_id, pos, right, up, forward) -> (cam_verts, projected)
-        self._static_mesh_cache = {}
+
+        # Pre-allocated staging arrays for _flush_mesh_submissions.
+        # Grown lazily (amortised O(1)) — no allocation on normal frames.
+        cap = self._STAGING_INITIAL
+        self._stg_cam  = np.empty((cap, 3), dtype=np.float64)
+        self._stg_proj = np.empty((cap, 3), dtype=np.float64)
+        self._stg_fidx = np.empty((cap, 3), dtype=np.int32)
+        self._stg_fcol = np.empty((cap, 3), dtype=np.int32)
+        self._stg_cap  = cap
 
     def _create_puff_texture(self, size):
         """Create a soft, radial gradient puff texture for nebulae."""
@@ -119,84 +137,87 @@ class RenderPipeline:
     def clear(self):
         for layer in self._layers.values():
             layer.clear()
-        # Periodically clear caches if they grow too large
+        self._mesh_frame += 1
+        # Periodically clear sprite/nebula caches
         if len(self._tinted_puffs) > 100:
             self._tinted_puffs.clear()
         if len(self._scaled_nebulae) > 200:
             self._scaled_nebulae.clear()
-        if len(self._mesh_cache) > 2000:
-            self._mesh_cache.clear()
-        if len(self._static_mesh_cache) > 1000:
-            self._static_mesh_cache.clear()
+        # LRU eviction for mesh cache: keep 5000 entries max.
+        # Evict the half that were used least recently.
+        if len(self._mesh_cache) > 5000:
+            sorted_ids = sorted(self._mesh_lru, key=self._mesh_lru.__getitem__)
+            for mid in sorted_ids[:len(sorted_ids) // 2]:
+                del self._mesh_cache[mid]
+                del self._mesh_lru[mid]
 
     def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None, static=False):
         """
         Submit a whole mesh for optimized rendering.
         Uses Numba-optimized batch transformations with pre-cached numpy data.
+        Vertex arrays are converted from Python dicts only on the first call
+        for each unique mesh (mesh_id cache-hit path allocates nothing).
         """
         # Fast frustum culling
         if radius is not None:
             if not self.camera.sphere_in_frustum(pos[0], pos[1], pos[2], radius):
                 return
 
-        # 1. Transform all vertices once using NumPy and Numba
-        if isinstance(verts, dict):
-            v_ids = list(verts.keys())
-            v_data = np.array([verts[vid] for vid in v_ids], dtype=np.float64)
-        else:
-            v_data = np.asanyarray(verts, dtype=np.float64)
-            v_ids = None  # Use indices directly
+        # Determine whether verts is a dict or already a numpy/list array
+        is_dict = isinstance(verts, dict)
 
-        n_verts = len(v_ids) if v_ids is not None else len(v_data)
-
-        # Unique identifier that remains safe from Python address recycling collisions
-        if len(faces) > 0:
+        # Build a stable mesh_id from the faces list identity + shape.
+        if faces:
             first_f = faces[0]
-            first_v = tuple(first_f.get('v', ()))
-            first_c = tuple(first_f.get('color', ()))
-            mesh_id = (id(faces), len(faces), n_verts, first_v, first_c)
+            first_v = tuple(first_f.get('v', ())) if isinstance(first_f, dict) else ()
+            first_c = tuple(first_f.get('color', ())) if isinstance(first_f, dict) else ()
+            mesh_id = (id(faces), len(faces), first_v, first_c)
         else:
-            mesh_id = (id(faces), 0, n_verts, (), ())
+            mesh_id = (id(faces), 0, (), ())
 
-        # Local to World (Vectorized)
-        basis = np.array([right, up, forward], dtype=np.float64)
-        if static:
-            # Cache world_verts for static meshes keyed by mesh_id and transform
-            transform_key = (mesh_id, tuple(map(float, pos)), tuple(map(float, right)), tuple(map(float, up)),
-                             tuple(map(float, forward)))
-            if transform_key in self._static_mesh_cache:
-                world_verts = self._static_mesh_cache[transform_key]
-            else:
-                world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
-                # store a copy to avoid accidental mutation
-                self._static_mesh_cache[transform_key] = world_verts.copy()
-        else:
-            world_verts = v_data @ basis + np.array(pos, dtype=np.float64)
-
-        # World to Camera (Batch Numba)
-        cam_verts = self.camera.world_to_camera_batch(world_verts)
-
-        # Project (Batch Numba)
-        projected = self.camera.project_batch(cam_verts)
-
+        # ── Cache-miss: build v_data + face arrays once, store everything ──
         if mesh_id not in self._mesh_cache:
-            if v_ids is not None:
+            if is_dict:
+                v_ids  = list(verts.keys())
+                v_data = np.array([verts[vid] for vid in v_ids], dtype=np.float64)
                 vid_map = {vid: i for i, vid in enumerate(v_ids)}
             else:
+                v_data  = np.asarray(verts, dtype=np.float64)
                 vid_map = None
+
             f_idx = []
             f_col = []
             for f in faces:
-                if len(f['v']) == 3:
-                    if vid_map:
-                        f_idx.append([vid_map[f['v'][0]], vid_map[f['v'][1]], vid_map[f['v'][2]]])
+                fv = f['v'] if isinstance(f, dict) else f
+                if len(fv) == 3:
+                    if vid_map is not None:
+                        f_idx.append([vid_map[fv[0]], vid_map[fv[1]], vid_map[fv[2]]])
                     else:
-                        f_idx.append([f['v'][0], f['v'][1], f['v'][2]])
-                    f_col.append(f['color'])
-            self._mesh_cache[mesh_id] = (np.array(f_idx, dtype=np.int32), np.array(f_col, dtype=np.int32))
+                        f_idx.append([fv[0], fv[1], fv[2]])
+                    f_col.append(f['color'] if isinstance(f, dict) else (200, 200, 200))
 
-        face_indices, face_colors = self._mesh_cache[mesh_id]
-        # Enqueue submission for batched processing later in render
+            self._mesh_cache[mesh_id] = (
+                v_data.copy(),
+                np.array(f_idx, dtype=np.int32),
+                np.array(f_col, dtype=np.int32),
+            )
+
+        # ── Cache-hit: zero allocation ──
+        self._mesh_lru[mesh_id] = self._mesh_frame
+        v_data, face_indices, face_colors = self._mesh_cache[mesh_id]
+
+        # Local → World (vectorised)
+        basis       = np.array([right, up, forward], dtype=np.float64)
+        pos_arr     = np.array(pos,                  dtype=np.float64)
+        world_verts = v_data @ basis + pos_arr
+
+        # World → Camera (Numba batch)
+        cam_verts = self.camera.world_to_camera_batch(world_verts)
+
+        # Project (Numba batch)
+        projected = self.camera.project_batch(cam_verts)
+
+        # Enqueue for batched numba processing later in render()
         self._mesh_submissions.append((face_indices, face_colors, cam_verts, projected, layer))
 
     def submit_polygon(self, world_verts, color, layer='opaque'):
@@ -329,52 +350,74 @@ class RenderPipeline:
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
 
+    def _ensure_staging(self, n_verts, n_faces):
+        """Grow pre-allocated staging buffers if the current frame needs more space.
+        Doubles capacity to amortise the cost (O(1) average)."""
+        if n_verts > self._stg_cap:
+            new_cap = max(n_verts, self._stg_cap * 2)
+            self._stg_cam  = np.empty((new_cap, 3), dtype=np.float64)
+            self._stg_proj = np.empty((new_cap, 3), dtype=np.float64)
+            self._stg_cap  = new_cap
+        if n_faces > self._stg_fidx.shape[0]:
+            new_cap = max(n_faces, self._stg_fidx.shape[0] * 2)
+            self._stg_fidx = np.empty((new_cap, 3), dtype=np.int32)
+            self._stg_fcol = np.empty((new_cap, 3), dtype=np.int32)
+
     def _flush_mesh_submissions(self):
-        """Batch all mesh submissions into a single numba call by concatenating
-        camera-space vertex arrays and projected arrays, offsetting indices.
-        This reduces numba call overhead and allows the shading to run once
-        for all faces.
+        """Batch all mesh submissions into a single numba call.
+        Uses pre-allocated staging arrays written with slice-assignment to avoid
+        np.vstack allocations on every frame.
         """
         if not self._mesh_submissions:
             return
 
-        # Concatenate cam_verts and projected arrays, track offsets
-        cam_list = []
-        proj_list = []
-        face_idx_list = []
-        face_col_list = []
-        layer_list = []
-        offsets = []
-
-        vert_offset = 0
+        # First pass: count total verts and faces
+        total_verts = 0
+        total_faces = 0
         for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
-            n_verts = cam_verts.shape[0]
-            cam_list.append(cam_verts)
-            proj_list.append(projected)
-            # offset indices
-            if f_idx.size > 0:
-                face_idx_list.append(f_idx + vert_offset)
-                face_col_list.append(f_col)
-                layer_list.extend([layer] * f_idx.shape[0])
-            offsets.append((vert_offset, n_verts))
-            vert_offset += n_verts
+            total_verts += cam_verts.shape[0]
+            total_faces += f_idx.shape[0]
 
-        # Build concatenated arrays
-        big_cam = np.vstack(cam_list)
-        big_proj = np.vstack(proj_list)
-        if face_idx_list:
-            big_face_idx = np.vstack(face_idx_list).astype(np.int32)
-            big_face_col = np.vstack(face_col_list).astype(np.int32)
-        else:
-            big_face_idx = np.zeros((0, 3), dtype=np.int32)
-            big_face_col = np.zeros((0, 3), dtype=np.int32)
+        if total_faces == 0:
+            self._mesh_submissions.clear()
+            return
 
-        # Call numba once for all faces
-        valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(big_cam, big_proj, big_face_idx, big_face_col)
+        # Grow staging buffers if needed (amortised, rarely triggers)
+        self._ensure_staging(total_verts, total_faces)
 
-        # Split results back per-face and append into layer buffers
+        # Second pass: fill staging arrays in-place (no allocation)
+        layer_list  = []
+        vert_offset = 0
+        face_offset = 0
+        for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
+            nv = cam_verts.shape[0]
+            nf = f_idx.shape[0]
+
+            self._stg_cam [vert_offset:vert_offset + nv] = cam_verts
+            self._stg_proj[vert_offset:vert_offset + nv] = projected
+
+            if nf > 0:
+                self._stg_fidx[face_offset:face_offset + nf] = f_idx + vert_offset
+                self._stg_fcol[face_offset:face_offset + nf] = f_col
+                layer_list.extend([layer] * nf)
+
+            vert_offset += nv
+            face_offset += nf
+
+        # Use views into the staging arrays — zero extra allocation
+        big_cam      = self._stg_cam [:total_verts]
+        big_proj     = self._stg_proj[:total_verts]
+        big_face_idx = self._stg_fidx[:total_faces]
+        big_face_col = self._stg_fcol[:total_faces]
+
+        # Single Numba call for all faces
+        valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(
+            big_cam, big_proj, big_face_idx, big_face_col
+        )
+
+        # Dispatch visible faces into layer buffers
         layer_lists = self._layers
-        for i in range(big_face_idx.shape[0]):
+        for i in range(total_faces):
             if not valid_mask[i]:
                 continue
             idx0 = big_face_idx[i, 0]
@@ -383,11 +426,8 @@ class RenderPipeline:
             pts = [
                 (big_proj[idx0, 0], big_proj[idx0, 1]),
                 (big_proj[idx1, 0], big_proj[idx1, 1]),
-                (big_proj[idx2, 0], big_proj[idx2, 1])
+                (big_proj[idx2, 0], big_proj[idx2, 1]),
             ]
-            color = tuple(shaded_colors[i])
-            layer = layer_list[i]
-            layer_lists[layer].append((avg_zs[i], 'poly', pts, color))
+            layer_lists[layer_list[i]].append((avg_zs[i], 'poly', pts, tuple(shaded_colors[i])))
 
-        # Clear submissions
         self._mesh_submissions.clear()

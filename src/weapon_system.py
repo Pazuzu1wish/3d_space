@@ -57,7 +57,7 @@ def fire_lasers(player, fire_pressed, handler, laser_pool, sound):
     rfx, rfy, rfz = forward
     rrx, rry, rrz = right
     horizontal_offset = 200
-    vertical_offset = 100
+    vertical_offset = -100
 
     current_spread = PLAYER_LASER_BASE_SPREAD + (player.laser_heat * PLAYER_LASER_MAX_SPREAD)
     laser_color = (255, 50, 50) if player.laser_heat > 0.75 else None

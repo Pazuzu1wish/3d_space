@@ -3,8 +3,9 @@ Object Pooling System
 Efficiently manages reusable game objects to avoid frequent allocation/deallocation.
 """
 
-from typing import List, Callable, Optional, TypeVar, Generic
+from typing import List, Callable, Optional, TypeVar, Generic, Set
 import random
+import numpy as np
 
 T = TypeVar('T')
 
@@ -33,7 +34,7 @@ class ObjectPool(Generic[T]):
         self._reset_func = reset_func or self._default_reset
         self._max_size = max_size
         self._available: List[T] = []
-        self._in_use: List[T] = []
+        self._in_use: Set[T] = set()  # set for O(1) release
         
         # Pre-allocate initial objects
         for _ in range(initial_size):
@@ -57,13 +58,13 @@ class ObjectPool(Generic[T]):
         else:
             return None
         
-        self._in_use.append(obj)
+        self._in_use.add(obj)
         return obj
     
     def release(self, obj: T) -> None:
-        """Return an object to the pool for reuse."""
+        """Return an object to the pool for reuse. O(1) with set membership."""
         if obj in self._in_use:
-            self._in_use.remove(obj)
+            self._in_use.discard(obj)
             self._reset_func(obj)
             
             if self._max_size is None or len(self._available) < self._max_size:
@@ -71,7 +72,7 @@ class ObjectPool(Generic[T]):
     
     def release_all(self) -> None:
         """Return all in-use objects to the pool."""
-        for obj in self._in_use[:]:
+        for obj in list(self._in_use):
             self.release(obj)
     
     def get_active_count(self) -> int:
@@ -92,7 +93,110 @@ class ObjectPool(Generic[T]):
             self._available.pop()
 
 
-import numpy as np
+# ──────────────────────────────────────────────────────────────────────────────
+# TrailPool — Fixed-capacity numpy ring buffer for engine particle trails.
+# Replaces the per-entity Python list that triggered a full list comprehension +
+# GC cycle every frame.  update() is three lines of vectorised numpy math.
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TrailPool:
+    """Fixed-capacity numpy ring buffer for engine exhaust trails.
+
+    All state is stored in pre-allocated float32 arrays.  Particle
+    births and deaths are O(1); the update step is fully vectorised.
+
+    Args:
+        capacity: Maximum simultaneous live particles.  When the buffer
+                  is full, new spawn() calls are silently dropped.
+    """
+
+    def __init__(self, capacity: int = 60):
+        self.cap     = capacity
+        # Positions (x, y, z)
+        self.pos     = np.zeros((capacity, 3), dtype=np.float32)
+        # Drift velocities (vx, vy, vz)
+        self.vel     = np.zeros((capacity, 3), dtype=np.float32)
+        # Remaining lifetime in seconds
+        self.life    = np.zeros(capacity,      dtype=np.float32)
+        # Lifetime at spawn (for ratio fade)
+        self.max_life = np.ones(capacity,      dtype=np.float32)
+        # Render size at full life
+        self.size    = np.zeros(capacity,      dtype=np.float32)
+        # Base RGB colour  (uint8 keeps memory tiny)
+        self.color   = np.zeros((capacity, 3), dtype=np.uint8)
+        # Boolean active mask
+        self.active  = np.zeros(capacity,      dtype=np.bool_)
+
+        # Free-slot stack for O(1) allocation
+        self._free   = list(range(capacity - 1, -1, -1))   # pop() = lowest index
+
+    # ── Public API ────────────────────────────────────────────────────────────
+
+    def spawn(
+        self,
+        x: float, y: float, z: float,
+        vx: float, vy: float, vz: float,
+        life: float,
+        color: tuple,
+        size: float,
+    ) -> None:
+        """Emit one trail particle.  No-op when the buffer is full."""
+        if not self._free:
+            return
+        idx = self._free.pop()
+        self.pos[idx, 0]  = x;  self.pos[idx, 1]  = y;  self.pos[idx, 2]  = z
+        self.vel[idx, 0]  = vx; self.vel[idx, 1]  = vy; self.vel[idx, 2]  = vz
+        self.life[idx]    = life
+        self.max_life[idx] = life
+        self.size[idx]    = size
+        self.color[idx, 0] = color[0]
+        self.color[idx, 1] = color[1]
+        self.color[idx, 2] = color[2]
+        self.active[idx]  = True
+
+    def update(self, dt: float) -> None:
+        """Advance all live particles by dt seconds.  Fully vectorised — zero Python loops."""
+        if not np.any(self.active):
+            return
+        # Integrate positions
+        self.pos[self.active]  += self.vel[self.active]  * dt
+        self.life[self.active] -= dt
+        # Recycle expired particles
+        died = (self.life <= 0) & self.active
+        if np.any(died):
+            indices = np.nonzero(died)[0]
+            self.active[indices] = False
+            self._free.extend(indices.tolist())
+
+    def submit_to_renderer(self, renderer, trail_life: float) -> None:
+        """Submit all live particles to the renderer as alpha sprites."""
+        if not np.any(self.active):
+            return
+        indices = np.nonzero(self.active)[0]
+        for idx in indices:
+            # Fade ratio
+            max_l = self.max_life[idx]
+            ratio = float(self.life[idx]) / float(max_l) if max_l > 0 else 0.0
+            ratio = max(0.0, ratio)
+            r = min(255, int(self.color[idx, 0] * ratio))
+            g = min(255, int(self.color[idx, 1] * ratio))
+            b = min(255, int(self.color[idx, 2] * ratio))
+            sz = float(self.size[idx]) * 4.0 * ratio
+            renderer.submit_sprite(
+                float(self.pos[idx, 0]),
+                float(self.pos[idx, 1]),
+                float(self.pos[idx, 2]),
+                (r, g, b), sz, layer='alpha'
+            )
+
+    def clear(self) -> None:
+        """Deactivate all particles and reset free-slot stack."""
+        self.active[:] = False
+        self._free = list(range(self.cap - 1, -1, -1))
+
+    def get_active_count(self) -> int:
+        return int(np.sum(self.active))
+
 
 class ParticlePool:
     """Specialized high-performance pool for particle effects using numpy vectorization."""

@@ -133,36 +133,51 @@ class Star:
         """
         Optimized batch submission of all stars.
         Wraps all positions at once using Numba, then submits individually.
-        This centralizes star rendering and allows for future GPU-based optimizations.
+        Uses a single world_to_camera_batch call for all 250 stars instead
+        of 250 individual Python calls.
         """
         spread = 3000
         N = len(stars)
-        
-        # Quick wrapping pass using Numba to update positions
+
+        # ── Build / reuse a positions array cached on the list object ──
+        # Avoids re-allocating (N, 3) every frame when star count is stable.
         positions = np.array([(s.x, s.y, s.z) for s in stars], dtype=np.float64)
         wrapped_pos = wrap_star_positions_batch(positions, player_pos, spread)
-        
-        # Update positions
+
+        # Write wrapped positions back and collect size/brightness/color info
+        sizes      = np.empty(N, dtype=np.float64)
+        brightness = np.empty(N, dtype=np.float64)
+        base_cols  = np.empty((N, 3), dtype=np.float64)
+        for i, s in enumerate(stars):
+            s.x = wrapped_pos[i, 0]
+            s.y = wrapped_pos[i, 1]
+            s.z = wrapped_pos[i, 2]
+            sizes[i]        = s.size
+            brightness[i]   = s.brightness
+            base_cols[i, 0] = s.base_color[0]
+            base_cols[i, 1] = s.base_color[1]
+            base_cols[i, 2] = s.base_color[2]
+
+        # Single batched world → camera transform (one Numba call for all stars)
+        cam_positions = renderer.camera.world_to_camera_batch(wrapped_pos)
+
+        # Batch-compute colours (existing Numba kernel)
+        colors, valid = compute_star_colors_batch(cam_positions, brightness, base_cols)
+
+        # Submit only visible stars to the renderer
         for i in range(N):
-            stars[i].x = wrapped_pos[i, 0]
-            stars[i].y = wrapped_pos[i, 1]
-            stars[i].z = wrapped_pos[i, 2]
-        
-        # Individual submission (already optimized)
-        for star in stars:
-            cx, cy, cz = renderer.camera.world_to_camera(star.x, star.y, star.z)
-            if cz > 0:
-                # Distance-based dimming
-                dist_factor = min(1.0, 500 / (cz or 1))
-                intensity = star.brightness * dist_factor
-                
-                r = min(255, int(star.base_color[0] * intensity))
-                g = min(255, int(star.base_color[1] * intensity))
-                b = min(255, int(star.base_color[2] * intensity))
-                
-                is_glow = star.size > 2.5
-                renderer.submit_sprite(star.x, star.y, star.z, (r, g, b), star.size, 
-                                     is_glow=is_glow, layer='background', cam_pos=(cx, cy, cz))
+            if not valid[i]:
+                continue
+            cz = cam_positions[i, 2]
+            is_glow = sizes[i] > 2.5
+            renderer.submit_sprite(
+                wrapped_pos[i, 0], wrapped_pos[i, 1], wrapped_pos[i, 2],
+                (int(colors[i, 0]), int(colors[i, 1]), int(colors[i, 2])),
+                sizes[i],
+                is_glow=is_glow,
+                layer='background',
+                cam_pos=(cam_positions[i, 0], cam_positions[i, 1], cz),
+            )
 
 
 

@@ -5,12 +5,13 @@ import random
 from src.weapon_system import fire_lasers, fire_missile
 from src.physics import player_integrate
 from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
+from src.object_pool import TrailPool
 from src.constants import (
     PLAYER_MAX_HP, HIT_FLASH_DURATION, PLAYER_MISSILE_MAX_AMMO,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
     TARGETING_FOV, PLAYER_LASER_SPEED,
     PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE,
-    PLAYER_LASER_BASE_SPREAD, PLAYER_LASER_MAX_SPREAD, PLAYER_MISSILE_LOCK_TIME, 
+    PLAYER_LASER_BASE_SPREAD, PLAYER_LASER_MAX_SPREAD, PLAYER_MISSILE_LOCK_TIME,
     PLAYER_MISSILE_LOCK_FOV
 )
 
@@ -65,7 +66,8 @@ class Player:
             (-19.0, -4.0, -62.0),   # left nacelle exhaust
             (19.0,  -4.0, -62.0),   # right nacelle exhaust
         ]
-        self.engine_trail = []
+        # TrailPool: 2 engines × 30 slots = 60 capacity
+        self._trail_pool = TrailPool(capacity=60)
         self.trail_life = 1.0       # trail lasts 1 second
         self.trail_drift = 25.0
         self.engine_size = 2.5
@@ -494,32 +496,12 @@ class Player:
 
     def change_trail_color(self, direction):
         self.trail_color_index = (self.trail_color_index + direction) % len(self.trail_colors)
-        # Instantly update all frozen trail colors
-        new_color = self.trail_color
-        for p in self.engine_trail:
-            p[7] = new_color
+        # New particles spawned after this call will use the new trail_color.
+        # In-flight TrailPool slots keep their current colour (barely noticeable
+        # given trail_life = 1 s).  No list iteration needed.
 
     def _submit_engine_trail(self, renderer):
-        for x, y, z, vx, vy, vz, life, color, base_size in self.engine_trail:
-            ratio = max(0.0, life / self.trail_life)
-            
-            # "Sparkling points" effect: 15% chance to flicker to a dim state
-            flicker = 1.0 if random.random() > 0.15 else 0.4
-            
-            # Fade out color as it dies
-            r = min(255, max(0, int(color[0] * ratio * flicker)))
-            g = min(255, max(0, int(color[1] * ratio * flicker)))
-            b = min(255, max(0, int(color[2] * ratio * flicker)))
-            
-            # Bright white core for sparkling point
-            core_color = (
-                min(255, r + int((255 - r) * 0.5)),
-                min(255, g + int((255 - g) * 0.5)),
-                min(255, b + int((255 - b) * 0.5))
-            )
-            
-            renderer.submit_sprite(x, y, z, (r, g, b), base_size * 5 * ratio, layer='alpha')
-            renderer.submit_sprite(x, y, z, core_color, base_size * 2 * ratio, layer='alpha')
+        self._trail_pool.submit_to_renderer(renderer, self.trail_life)
 
     def submit_to_renderer(self, renderer):
         # 1. Submit engine trail
@@ -676,34 +658,23 @@ class Player:
         fx, fy, fz = get_forward_from_quat(self.orientation)
         _, right, up = get_basis_from_quat(self.orientation)
         speed = self.current_speed
-        
+        trail_color = self.trail_color
+
         for ox, oy, oz in self.engine_offsets:
-            ex = self.pos[0] + right[0] * ox + up[0] * oy + fx * oz
-            ey = self.pos[1] + right[1] * ox + up[1] * oy + fy * oz
-            ez = self.pos[2] + right[2] * ox + up[2] * oy + fz * oz
-            
-            # Drift velocity: backward exhaust force + minor random diffusion
+            ex = self.pos[0] + right[0]*ox + up[0]*oy + fx*oz
+            ey = self.pos[1] + right[1]*ox + up[1]*oy + fy*oz
+            ez = self.pos[2] + right[2]*ox + up[2]*oy + fz*oz
+
+            # Drift velocity: backward exhaust + random diffusion
             dvx = -fx * speed * 0.2 + (random.random() - 0.5) * self.trail_drift
             dvy = -fy * speed * 0.2 + (random.random() - 0.5) * self.trail_drift
             dvz = -fz * speed * 0.2 + (random.random() - 0.5) * self.trail_drift
-            
-            self.engine_trail.append([
-                ex, ey, ez, 
-                dvx, dvy, dvz, 
-                self.trail_life * random.uniform(0.8, 1.2), 
-                self.trail_color, 
-                self.engine_size
-            ])
-            
-        # Update existing trail points
-        for p in self.engine_trail:
-            p[0] += p[3] * dt
-            p[1] += p[4] * dt
-            p[2] += p[5] * dt
-            p[6] -= dt
-            
-        # Recycle dead ones
-        self.engine_trail = [p for p in self.engine_trail if p[6] > 0]
+            life = self.trail_life * random.uniform(0.8, 1.2)
+
+            self._trail_pool.spawn(ex, ey, ez, dvx, dvy, dvz, life, trail_color, self.engine_size)
+
+        # Advance all trail particles (vectorised, zero allocation)
+        self._trail_pool.update(dt)
 
         # ── RUMBLE FEEDBACK ───────────────────────────
         if self.rumble_queued > 0:

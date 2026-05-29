@@ -19,8 +19,9 @@ from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
     CorvetteTurret, Mine, StealthShotgun
 )
-from src.physics import (newtonian_integrate, approaching_too_fast, 
+from src.physics import (newtonian_integrate, approaching_too_fast,
 update_orientation_from_velocity)
+from src.object_pool import TrailPool
 
 
 # ──────────────────────────────────────────────
@@ -43,7 +44,9 @@ class Enemy:
 
         # Enhanced visual properties
         self.base_color = (255, 255, 255)
-        self.engine_trail = []
+        # engine_trail kept as empty list for legacy compatibility;
+        # the live TrailPool is created after subclass sets engine_offsets
+        self.engine_trail = []  # legacy — do not use directly
 
         # Engine customization (override in subclasses)
         self.engine_offsets = [(0, 0, -35)]  # Local (x, y, z) offsets for thrusters
@@ -54,6 +57,10 @@ class Enemy:
         self.engine_time = random.uniform(0, 100)
         self._last_dist = 0.0
         self.trail_drift = 50.0
+
+        # TrailPool is initialised in _init_trail_pool(), called by subclasses
+        # after they have set engine_offsets / trail_life.
+        self._trail_pool: TrailPool | None = None
 
         # ── Newtonian physics (override per subclass) ──────────────
         self.max_speed      = 1500.0   # terminal velocity cap (u/s)
@@ -182,49 +189,48 @@ class Enemy:
     def _update_orientation(self):
         update_orientation_from_velocity(self)
 
-    # Max trail particles per engine hardpoint
+    # Max trail particles per engine hardpoint (kept for reference)
     _TRAIL_CAP_PER_ENGINE = 20
 
+    def _init_trail_pool(self):
+        """Create the TrailPool sized for this enemy's engine layout.
+        Must be called by subclasses after setting engine_offsets and trail_life.
+        """
+        cap = self._TRAIL_CAP_PER_ENGINE * max(1, len(self.engine_offsets))
+        self._trail_pool = TrailPool(capacity=cap)
+
     def _spawn_engine_trail(self):
+        """Emit one trail particle per engine hardpoint into the TrailPool."""
         # Cull particles if too far
         if self._last_dist > 15000:
             return
+        if self._trail_pool is None:
+            self._init_trail_pool()
 
-        # Cap trail length for headroom
-        max_trail = self._TRAIL_CAP_PER_ENGINE * len(self.engine_offsets)
-        if len(self.engine_trail) >= max_trail:
-            return
-
-        # Spawn a trail particle for every engine hardpoint
         for ox, oy, oz in self.engine_offsets:
-            ex = self.x + self.right[0] * ox + self.up[0] * oy + self.forward[0] * oz
-            ey = self.y + self.right[1] * ox + self.up[1] * oy + self.forward[1] * oz
-            ez = self.z + self.right[2] * ox + self.up[2] * oy + self.forward[2] * oz
-
-            # Add slight random drift velocity
+            ex = self.x + self.right[0]*ox + self.up[0]*oy + self.forward[0]*oz
+            ey = self.y + self.right[1]*ox + self.up[1]*oy + self.forward[1]*oz
+            ez = self.z + self.right[2]*ox + self.up[2]*oy + self.forward[2]*oz
             dvx = (random.random() - 0.5) * self.trail_drift
             dvy = (random.random() - 0.5) * self.trail_drift
             dvz = (random.random() - 0.5) * self.trail_drift
-
-            self.engine_trail.append([ex, ey, ez, dvx, dvy, dvz, self.trail_life, self.engine_color, self.engine_size])
+            self._trail_pool.spawn(
+                ex, ey, ez,
+                dvx, dvy, dvz,
+                self.trail_life,
+                self.engine_color,
+                self.engine_size,
+            )
 
     def _update_engine_trail(self, dt):
-        for p in self.engine_trail:
-            p[0] += p[3] * dt # drift x
-            p[1] += p[4] * dt # drift y
-            p[2] += p[5] * dt # drift z
-            p[6] -= dt        # life
-        self.engine_trail = [p for p in self.engine_trail if p[6] > 0]
+        """Advance the TrailPool (fully vectorised, zero allocation)."""
+        if self._trail_pool is not None:
+            self._trail_pool.update(dt)
 
     def _submit_engine_trail(self, renderer):
-        for x, y, z, vx, vy, vz, life, color, base_size in self.engine_trail:
-            ratio = max(0.0, life / (self.trail_life or TRAIL_LIFE_DIVISOR))
-            # Fade color out as it dies
-            r = min(255, max(0, int(color[0] * ratio)))
-            g = min(255, max(0, int(color[1] * ratio)))
-            b = min(255, max(0, int(color[2] * ratio)))
-
-            renderer.submit_sprite(x, y, z, (r, g, b), base_size * 4 * ratio, layer='alpha')
+        """Submit live trail particles to the renderer."""
+        if self._trail_pool is not None:
+            self._trail_pool.submit_to_renderer(renderer, self.trail_life)
 
     def _submit_engine_glow(self, renderer):
         pulse = (math.sin(self.engine_time * self.engine_pulse_rate) + 1.0) * 0.5

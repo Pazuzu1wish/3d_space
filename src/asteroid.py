@@ -1,5 +1,6 @@
 import math
 import random
+import numpy as np
 import pygame
 from src.math_engine import world_to_camera
 from src.constants import (
@@ -56,7 +57,19 @@ class Asteroid:
             
         self.verts, self.faces = self._generate_mesh()
         # Pre-calculate bounding radius for fast frustum culling
-        self.bounding_radius = self.scale * 1.5 # Padding for jittered verts
+        self.bounding_radius = self.scale * 1.5  # Padding for jittered verts
+
+        # Pre-bake numpy arrays so the renderer never re-converts on cache-hit frames.
+        # verts is already a plain list of (x,y,z) tuples from _generate_mesh.
+        self._verts_np = np.array(self.verts, dtype=np.float64)            # (12, 3)
+        self._face_idx_np = np.array(
+            [[f['v'][0], f['v'][1], f['v'][2]] for f in self.faces],
+            dtype=np.int32
+        )  # (20, 3)
+        self._face_col_np = np.array(
+            [f['color'] for f in self.faces],
+            dtype=np.int32
+        )  # (20, 3)
         
     def _generate_mesh(self):
         # Start with an icosahedron for more roundness
@@ -169,25 +182,33 @@ class Asteroid:
         cx, sx = math.cos(self.angle_x), math.sin(self.angle_x)
         cy, sy = math.cos(self.angle_y), math.sin(self.angle_y)
         cz, sz = math.cos(self.angle_z), math.sin(self.angle_z)
-        
+
         # Correct derivation of basis vectors for Rz * Rx * Ry
         # Right (1, 0, 0)
         rx = cy * cz - sy * sx * sz
         ry = cy * sz + sy * sx * cz
         rz = -sy * cx
-        
+
         # Up (0, 1, 0)
         ux = -cx * sz
         uy = cx * cz
         uz = sx
-        
+
         # Forward (0, 0, 1)
         fx = sy * cz + cy * sx * sz
         fy = sy * sz - cy * sx * cz
         fz = cy * cx
-        
-        renderer.submit_mesh((self.x, self.y, self.z), (rx, ry, rz), (ux, uy, uz), (fx, fy, fz), 
-                             self.verts, self.faces, layer='opaque', radius=self.bounding_radius)
+
+        # Pass the pre-baked numpy vertex array; the renderer's mesh_cache
+        # will use _verts_np on every subsequent frame without allocation.
+        renderer.submit_mesh(
+            (self.x, self.y, self.z),
+            (rx, ry, rz), (ux, uy, uz), (fx, fy, fz),
+            self._verts_np,   # pre-baked numpy array (no dict walk)
+            self.faces,
+            layer='opaque',
+            radius=self.bounding_radius,
+        )
 
 class AsteroidField:
     def __init__(self, origin, count=10, radius=2000):
