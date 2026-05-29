@@ -127,6 +127,8 @@ class GameplayState(State):
         ]
         self.show_prograde = True
         self.show_coords = False
+        # FPS debug toggle
+        self.show_fps = True
 
         # Force all Numba JIT compilations to happen now (during load),
         # not on the first gameplay frame.
@@ -166,6 +168,9 @@ class GameplayState(State):
                 self.show_prograde = not self.show_prograde
             elif event.key == pygame.K_c:
                 self.show_coords = not self.show_coords
+            elif event.key == pygame.K_o:
+                # Toggle lightweight FPS debug HUD
+                self.show_fps = not self.show_fps
         self.context.handler.process_event(event)
 
     def update(self, dt, manager):
@@ -262,6 +267,9 @@ class GameplayState(State):
         # Draw sniper beams on screen
         self.draw_sniper_beams(screen, sniper_beams_to_draw)
         
+        # Lightweight FPS value from the shared clock (smoothed by pygame)
+        fps_val = self.context.clock.get_fps()
+
         hud = HUDData(
             W=self.W,
             H=self.H,
@@ -290,6 +298,8 @@ class GameplayState(State):
             drift_mode=self.player.drift_mode,
             show_prograde=self.show_prograde,
             show_coords=self.show_coords,
+            show_fps=self.show_fps,
+            fps=fps_val,
         )
         draw_cockpit_hud(screen, hud)
 

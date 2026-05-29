@@ -34,4 +34,7 @@ class HUDData:
     drift_mode: bool = False
     show_prograde: bool = True
     show_coords: bool = False
+    # Debug HUD options
+    show_fps: bool = False
+    fps: float = 0.0
 

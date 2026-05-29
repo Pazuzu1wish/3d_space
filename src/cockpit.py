@@ -69,6 +69,37 @@ def _cached_label(font_size, text, color):
     return _LABEL_CACHE[key]
 
 
+# Small FPS label cache to avoid re-rendering every frame if value unchanged
+_FPS_CACHE = {
+    'key': None,   # int(fps * 10)
+    'surf': None,
+}
+
+
+def draw_fps(surface, x, y, fps):
+    """Draw a compact, low-overhead FPS readout.
+    Caches the rendered surface while the rounded FPS value stays the same.
+    """
+    if fps is None:
+        return
+    # Key at 0.1 FPS precision
+    key = int(fps * 10)
+    if _FPS_CACHE['key'] != key or _FPS_CACHE['surf'] is None:
+        ms = 1000.0 / max(0.1, fps)
+        txt = f"FPS {fps:4.1f}  {ms:4.1f}ms"
+        # Use a small font to keep the readout unobtrusive
+        surf = custom_font(14).render(txt, True, HUD_GREEN)
+        # Add subtle background for readability
+        bg = pygame.Surface((surf.get_width() + 6, surf.get_height() + 4), pygame.SRCALPHA)
+        bg.fill((0, 0, 0, 120))
+        bg.blit(surf, (3, 2))
+        _FPS_CACHE['key'] = key
+        _FPS_CACHE['surf'] = bg
+
+    s = _FPS_CACHE['surf']
+    surface.blit(s, (x - s.get_width(), y))
+
+
 # ──────────────────────────────────────────────
 #  HEADING TAPE (COMPASS)
 # ──────────────────────────────────────────────
@@ -1198,6 +1229,8 @@ def draw_cockpit_hud(surface, hud: HUDData):
                 missile_lock_timer,
                 missile_locked
             )
+
+        draw_fps(_HUD_OVERLAY, W - 10, 10, hud.fps)
 
     # ── 3. Stamp the finished semi-transparent HUD overlay on top ───────────
     surface.blit(_HUD_STATIC_GLASS, shake_offset)
