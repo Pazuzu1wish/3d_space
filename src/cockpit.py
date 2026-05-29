@@ -138,7 +138,7 @@ def draw_heading_tape(surface, cx, y, orientation, basis=None):
 def draw_pitch_ladder(surface, cx, cy, orientation, basis=None):
     forward, right, up = basis if basis else get_basis_from_quat(orientation)
 
-    pitch_angle = math.asin(max(-1.0, min(1.0, -forward[1])))
+    pitch_angle = math.asin(max(-1.0, min(1.0, forward[1])))
     roll_angle = math.atan2(right[1], up[1])
 
     px_per_rad = 400.0

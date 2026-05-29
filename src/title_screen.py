@@ -36,7 +36,7 @@ CAM_DETONATE_Z = -400   # world Z; negative = in front of camera origin
 # DOGFIGHTER SPAWN  (tune X until ship enters from right edge)
 # ─────────────────────────────────────────────────────────────────
 DOG_SPAWN_X   =  1000    # positive X = screen right in camera space
-DOG_SPAWN_Y   =  -300    # slightly above center
+DOG_SPAWN_Y   =  300    # slightly above center
 DOG_SPAWN_Z   =  450    # comfortable Z depth
 DOG_VELOCITY  = -400    # negative X = flies left; tune speed here
 
@@ -56,9 +56,9 @@ TRAIL_COOL     = (0, 255, 128)     # oldest = green ember (brand color)
 
 CINEMATIC_ASTEROIDS = [
         # (x,      y,     z,      scale)
-        ( 3700,  -3000,  5000,   400),
-        (-2900,   600,  3000,   280),
-        ( 4200,   500,  4500,   220)
+        ( 3700,   3000,  5000,   400),
+        (-2900,   -600,  3000,   280),
+        ( 4200,   -500,  4500,   220)
     ]
 
 
@@ -175,7 +175,7 @@ class TitleCinematic:
 
         # ── CAMERA DRIFT (gentle upward pan) ──────────────────
         # Slow drift upward and slightly forward to give sense of motion
-        self.cam_y = t * -80.0
+        self.cam_y = t * 80.0
         self.cam_z = t * 30.0
         cam_pos = (0.0, self.cam_y, self.cam_z)
         self.camera.update(cam_pos, (1, 0, 0, 0))   # identity quaternion = looking forward

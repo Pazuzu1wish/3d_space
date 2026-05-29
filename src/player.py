@@ -627,9 +627,9 @@ class Player:
 
         if not dodge_mode:
             if abs(ly) > 0.01:
-                self.orientation = rotate_pitch(self.orientation, ly * PITCH_RATE * dt)
+                self.orientation = rotate_pitch(self.orientation, -ly * PITCH_RATE * dt)
             if abs(lx) > 0.01:
-                self.orientation = rotate_roll(self.orientation, lx * ROLL_RATE * dt)
+                self.orientation = rotate_roll(self.orientation, -lx * ROLL_RATE * dt)
 
         if abs(rx) > 0.01:
             self.orientation = rotate_yaw(self.orientation, rx * YAW_RATE * dt)

@@ -70,7 +70,7 @@ class Camera:
             return None
         scale = self.fov / cz
         sx = int(cx * scale + self.cx + self.shake_offset[0])
-        sy = int(cy * scale + self.cy + self.shake_offset[1])
+        sy = int(-cy * scale + self.cy + self.shake_offset[1])
         return sx, sy, scale
         
     def project_batch(self, cam_verts_array):
@@ -125,7 +125,7 @@ class Camera:
         screen_radius = radius * scale
         
         sx = cx * scale + self.cx
-        sy = cy * scale + self.cy
+        sy = -cy * scale + self.cy
         
         # Check if sphere bounding box on screen intersects screen bounding box
         if sx + screen_radius < 0 or sx - screen_radius > self.W:
@@ -174,7 +174,7 @@ def sphere_in_frustum_batch(centers, radii, px, py, pz, r_coeffs, near_clip, fov
         screen_radius = radius * scale
         
         sx = c_x * scale + cx
-        sy = c_y * scale + cy
+        sy = -c_y * scale + cy
         
         if sx + screen_radius < 0 or sx - screen_radius > W:
             out[i] = False

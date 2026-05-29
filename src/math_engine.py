@@ -213,7 +213,7 @@ def project_to_screen(x, y, z, fov=400, cx=640, cy=370):
         return None
     scale = fov / z
     sx = int(x * scale + cx)
-    sy = int(y * scale + cy)
+    sy = int(-y * scale + cy)
     return sx, sy, scale
 
 @njit
@@ -239,7 +239,7 @@ def project_to_screen_batch(cam_verts, fov, cx, cy, ox, oy, near_clip):
             
         scale = fov / z
         out[i, 0] = x * scale + cx + ox
-        out[i, 1] = y * scale + cy + oy
+        out[i, 1] = -y * scale + cy + oy
         out[i, 2] = scale
         
     return out
