@@ -98,7 +98,7 @@ class RenderPipeline:
         }
 
         # Cache for nebula/soft sprite rendering
-        self._puff_cache = self._create_puff_texture(128)
+        #self._puff_cache = self._create_puff_texture(128)
 
         # Color tinted cache to avoid re-tinting every frame
         self._tinted_puffs = {}  # (r, g, b, alpha) -> surface
@@ -125,14 +125,40 @@ class RenderPipeline:
         self._stg_fcol = np.empty((cap, 3), dtype=np.int32)
         self._stg_cap  = cap
 
-    def _create_puff_texture(self, size):
-        """Create a soft, radial gradient puff texture for nebulae."""
-        surf = pygame.Surface((size, size), pygame.SRCALPHA)
-        center = size // 2
-        for r in range(center, 0, -1):
-            alpha = int(180 * (1.0 - (r / center) ** 1.5))
-            pygame.draw.circle(surf, (255, 255, 255, alpha), (center, center), r)
-        return surf
+    def submit_nebula_cloud(self, x, y, z, surface, world_radius, layer='alpha'):
+        """
+        Submit a pre-rendered nebula cloud billboard.
+        Single project call, single blit — replaces N submit_nebula calls.
+        """
+        cx, cy, cz = self.camera.world_to_camera(x, y, z)
+        if cz < 10 or cz > 80000:
+            return
+
+        proj = self.camera.project(cx, cy, cz)
+        if not proj:
+            return
+
+        sx, sy, scale = proj
+
+        # Scale the pre-rendered surface to screen size
+        # world_radius in world units → screen pixels via projection scale
+        screen_r = int(scale * world_radius)
+        if screen_r < 2:
+            return
+
+        screen_d = screen_r * 2
+        self._layers[layer].append((
+            cz, 'nebula_cloud', (sx, sy), screen_d, surface
+        ))
+
+        def _create_puff_texture(self, size):
+            """Create a soft, radial gradient puff texture for nebulae."""
+            surf = pygame.Surface((size, size), pygame.SRCALPHA)
+            center = size // 2
+            for r in range(center, 0, -1):
+                alpha = int(180 * (1.0 - (r / center) ** 1.5))
+                pygame.draw.circle(surf, (255, 255, 255, alpha), (center, center), r)
+            return surf
 
     def clear(self):
         for layer in self._layers.values():
@@ -326,27 +352,24 @@ class RenderPipeline:
             t = p[1]
             if t == 'sprite':
                 draw_circle(surface, p[4], p[2], p[3])
-            elif t == 'nebula':
-                s = p[3] * 2
-                if s < 2 or s > 2000: continue
-                s = (s // 4) * 4
-                cache_key = (*p[4], p[5])
-                if cache_key not in self._tinted_puffs:
-                    tinted = self._puff_cache.copy()
-                    tint_surf = pygame.Surface(self._puff_cache.get_size(), pygame.SRCALPHA)
-                    tint_surf.fill(cache_key)
-                    tinted.blit(tint_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                    self._tinted_puffs[cache_key] = tinted
+            elif t == 'nebula_cloud':
+                sx, sy   = p[2]
+                screen_d = p[3]
+                src_surf = p[4]
 
-                scaled_key = (cache_key, s)
+                # Cache scaled version — key is (id(surface), screen_d)
+                # id is stable per cloud since surfaces live in NebulaCloud objects
+                scaled_key = (id(src_surf), screen_d)
                 if scaled_key not in self._scaled_nebulae:
                     try:
-                        self._scaled_nebulae[scaled_key] = pygame.transform.scale(self._tinted_puffs[cache_key], (s, s))
+                        self._scaled_nebulae[scaled_key] = pygame.transform.smoothscale(
+                            src_surf, (screen_d, screen_d)
+                        )
                     except pygame.error:
                         continue
 
                 puff = self._scaled_nebulae[scaled_key]
-                surface.blit(puff, (p[2][0] - s // 2, p[2][1] - s // 2))
+                surface.blit(puff, (sx - screen_d // 2, sy - screen_d // 2))
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
 

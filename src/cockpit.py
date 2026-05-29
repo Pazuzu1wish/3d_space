@@ -682,6 +682,51 @@ def draw_coordinates(surface, cx, cy, player_pos):
 
 
 # ──────────────────────────────────────────────
+#  FPS DIAGNOSTICS OVERLAY
+# ──────────────────────────────────────────────
+
+_FPS_SURFACE_CACHE = {}
+
+def get_fps_surface(fps_val: int, font, color):
+    """Retrieve zero-allocation pre-rendered FPS surface."""
+    if fps_val not in _FPS_SURFACE_CACHE:
+        _FPS_SURFACE_CACHE[fps_val] = font.render(f"FPS: {fps_val:3d}", True, color)
+    return _FPS_SURFACE_CACHE[fps_val]
+
+def draw_fps_overlay(surface, W, H, fps_val):
+    font = custom_font(12)
+    color = (0, 220, 200)  # Bright cyan matching high-tech theme
+    
+    box_w = 140
+    box_h = 36
+    x = W - box_w - 20
+    y = 30
+    
+    # Translucent glass panel
+    bg_surf = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+    bg_surf.fill((0, 20, 15, 120))
+    surface.blit(bg_surf, (x, y))
+    
+    # Tech borders/corner brackets
+    pygame.draw.line(surface, color, (x, y), (x + 20, y), 1)
+    pygame.draw.line(surface, color, (x + box_w - 20, y), (x + box_w, y), 1)
+    pygame.draw.line(surface, color, (x, y + box_h), (x + 20, y + box_h), 1)
+    pygame.draw.line(surface, color, (x + box_w - 20, y + box_h), (x + box_w, y + box_h), 1)
+    
+    pygame.draw.line(surface, color, (x, y), (x, y + 10), 1)
+    pygame.draw.line(surface, color, (x, y + box_h - 10), (x, y + box_h), 1)
+    pygame.draw.line(surface, color, (x + box_w, y), (x + box_w, y + 10), 1)
+    pygame.draw.line(surface, color, (x + box_w, y + box_h - 10), (x + box_w, y + box_h), 1)
+
+    hdr_lbl = _cached_label(9, "SYS STATUS", color)
+    surface.blit(hdr_lbl, (x + 8, y + 4))
+
+    fps_int = max(0, min(999, int(fps_val)))
+    fps_lbl = get_fps_surface(fps_int, font, color)
+    surface.blit(fps_lbl, (x + 8, y + 18))
+
+
+# ──────────────────────────────────────────────
 #  TARGET BRACKETS + LEAD INDICATOR (PIP)
 # ──────────────────────────────────────────────
 
@@ -1104,6 +1149,8 @@ def draw_cockpit_hud(surface, hud: HUDData):
     drift_mode = hud.drift_mode
     show_prograde = hud.show_prograde
     show_coords = hud.show_coords
+    show_fps = hud.show_fps
+    fps = hud.fps
 
     # ── 1. Draw pre-baked cockpit geometry directly onto the game surface ──
     ticks = pygame.time.get_ticks()
@@ -1198,6 +1245,10 @@ def draw_cockpit_hud(surface, hud: HUDData):
                 missile_lock_timer,
                 missile_locked
             )
+
+    # ── Draw FPS Diagnostics Overlay ──────────
+    if show_fps:
+        draw_fps_overlay(_HUD_OVERLAY, W, H, fps)
 
     # ── 3. Stamp the finished semi-transparent HUD overlay on top ───────────
     surface.blit(_HUD_STATIC_GLASS, shake_offset)

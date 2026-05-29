@@ -104,16 +104,19 @@ class GameplayState(State):
         self.aim_scope = AimScope(self.camera, self.laser_pool, self.particle_pool)
         
         # Environment & Entities
-        self.stars = [Star(self.player.pos) for _ in range(250)]
-        self.nebulae = NebulaSystem(count=12, area_radius=30000)
+        self.stars = [Star(self.player.pos) for _ in range(150)]
+        self.nebulae = NebulaSystem(count=2, area_radius=10000)
         self.enemies = []
         self.enemy_projectiles = []
         self.player_missiles = []
         self.asteroids = []
 
+        self.nebula_system = NebulaSystem(count=5)
+        self.nebula_system.build_caches(self.renderer._create_puff_texture)
+
         # Spawn Asteroids
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=25, radius=25000)
+            field = AsteroidField(enc['origin'], count=10, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
@@ -127,6 +130,7 @@ class GameplayState(State):
         ]
         self.show_prograde = True
         self.show_coords = False
+        self.show_fps = True
 
         # Force all Numba JIT compilations to happen now (during load),
         # not on the first gameplay frame.
@@ -166,6 +170,8 @@ class GameplayState(State):
                 self.show_prograde = not self.show_prograde
             elif event.key == pygame.K_c:
                 self.show_coords = not self.show_coords
+            elif event.key == pygame.K_o:
+                self.show_fps = not self.show_fps
         self.context.handler.process_event(event)
 
     def update(self, dt, manager):
@@ -290,6 +296,8 @@ class GameplayState(State):
             drift_mode=self.player.drift_mode,
             show_prograde=self.show_prograde,
             show_coords=self.show_coords,
+            show_fps=self.show_fps,
+            fps=self.context.clock.get_fps(),
         )
         draw_cockpit_hud(screen, hud)
 

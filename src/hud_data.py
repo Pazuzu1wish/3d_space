@@ -34,4 +34,6 @@ class HUDData:
     drift_mode: bool = False
     show_prograde: bool = True
     show_coords: bool = False
+    show_fps: bool = True
+    fps: float = 0.0
 
