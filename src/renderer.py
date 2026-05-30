@@ -282,11 +282,11 @@ class RenderPipeline:
         if cz < 10 or cz > 50000:
             return
 
-        # 1. PROXIMITY FADING: Fade out smoothly as we get close.
-        # Starts fading at 1200 units away, completely invisible by 200 units.
-        # (Tune these numbers based on your ship's speed and scale!)
-        fade_start = 1200.0
-        fade_end = 200.0
+        # 1. PROXIMITY FADING (OPTIMIZED)
+        # Fade out smoothly as we get close so they don't fill the entire screen.
+        # Starts fading at 3000 units away, completely invisible by 800 units.
+        fade_start = 3000.0
+        fade_end = 800.0
         if cz < fade_start:
             fade_ratio = max(0.0, (cz - fade_end) / (fade_start - fade_end))
             alpha = int(alpha * fade_ratio)
@@ -343,17 +343,23 @@ class RenderPipeline:
             elif t == 'nebula':
                 s = p[3] * 2
 
-                # Hard cap size to prevent fill-rate death
+                # 2. SIZE CAP (OPTIMIZED)
+                # Hard cap size to prevent fill-rate death from massive scaling
                 if s < 2: continue
-                s = min(s, 1200)
+                s = min(s, 600)  # Lowered from 1200 to drastically reduce pixel blending load
 
-                # Adaptive binning
+                # 3. ADAPTIVE BINNING (OPTIMIZED)
+                # Group sizes into larger steps as they get bigger to aggressively
+                # reuse cached textures instead of triggering expensive rescales.
                 if s < 128:
                     step = 4
-                elif s < 512:
+                elif s < 256:
                     step = 16
+                elif s < 512:
+                    step = 32
                 else:
-                    step = 64
+                    step = 128
+
                 s = (s // step) * step
 
                 color_key = p[4]  # KEY CHANGE: Only use RGB for cache, NOT alpha!
@@ -391,6 +397,7 @@ class RenderPipeline:
                 surface.blit(puff, (px, py))
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
+
 
     def _ensure_staging(self, n_verts, n_faces):
         """Grow pre-allocated staging buffers if the current frame needs more space.

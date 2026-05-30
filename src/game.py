@@ -105,7 +105,7 @@ class GameplayState(State):
         
         # Environment & Entities
         self.stars = [Star(self.player.pos) for _ in range(200)]
-        self.nebulae = NebulaSystem(count=1, area_radius=30000)
+        self.nebulae = NebulaSystem(count=10, area_radius=30000)
         self.enemies = []
         self.enemy_projectiles = []
         self.player_missiles = []

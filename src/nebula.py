@@ -3,7 +3,6 @@ import math
 
 
 class NebulaCloud:
-    # Changed default num_puffs from 10 to 6
     def __init__(self, x, y, z, color=None, num_puffs=6, radius=1000):
         self.x, self.y, self.z = x, y, z
 
@@ -19,22 +18,30 @@ class NebulaCloud:
         self.color = color if color else random.choice(palette)
 
         self.puffs = []
-        for _ in range(num_puffs):
+        for i in range(num_puffs):
             ox = random.uniform(-radius, radius)
             oy = random.uniform(-radius, radius)
             oz = random.uniform(-radius, radius)
 
-            # KEY CHANGE: Scaled up from (0.5 - 1.5) to (0.8 - 2.0)
-            # This makes the 6 puffs cover the same volume as the 10 puffs did!
-            p_size = random.uniform(radius * 0.8, radius * 2.0)
-            p_alpha = random.randint(20, 50)
+            # --- OPTIMIZATION: SPLIT INTO 'BASE' AND 'CORE' PUFFS ---
+            # By doing this, we avoid having 6 screen-filling sprites drawn on top
+            # of each other, drastically reducing the CPU pixel blending load!
+
+            if i < 2:
+                # 2 massive, faint background puffs to give volume
+                p_size = random.uniform(radius * 1.5, radius * 2.0)
+                p_alpha = random.randint(15, 25)  # Fainter
+            else:
+                # 4 smaller, denser core puffs to give texture (renders much faster!)
+                p_size = random.uniform(radius * 0.4, radius * 0.8)
+                p_alpha = random.randint(30, 60)  # Denser
 
             self.puffs.append({
                 'rel_pos': (ox, oy, oz),
                 'size': p_size,
                 'alpha': p_alpha
             })
-            
+
     def submit_to_renderer(self, renderer):
         for p in self.puffs:
             px = self.x + p['rel_pos'][0]
