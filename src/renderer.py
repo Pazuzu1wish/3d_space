@@ -343,14 +343,11 @@ class RenderPipeline:
             elif t == 'nebula':
                 s = p[3] * 2
 
-                # 2. SIZE CAP (OPTIMIZED)
-                # Hard cap size to prevent fill-rate death from massive scaling
-                if s < 2: continue
-                s = min(s, 600)  # Lowered from 1200 to drastically reduce pixel blending load
+                if s < 2:
+                    continue
+                s = min(s, 600)
 
-                # 3. ADAPTIVE BINNING (OPTIMIZED)
-                # Group sizes into larger steps as they get bigger to aggressively
-                # reuse cached textures instead of triggering expensive rescales.
+                # Adaptive binning
                 if s < 128:
                     step = 4
                 elif s < 256:
@@ -359,41 +356,43 @@ class RenderPipeline:
                     step = 32
                 else:
                     step = 128
-
                 s = (s // step) * step
 
-                color_key = p[4]  # KEY CHANGE: Only use RGB for cache, NOT alpha!
-                alpha_val = p[5]
+                color_key = p[4]  # RGB tuple
+                alpha_val = p[5]  # int 0-255
 
-                if color_key not in self._tinted_puffs:
-                    tinted = self._puff_cache.copy()
-                    tint_surf = pygame.Surface(self._puff_cache.get_size(), pygame.SRCALPHA)
-                    # Tint using full alpha so the base cache image is solid
-                    tint_surf.fill((color_key[0], color_key[1], color_key[2], 255))
-                    tinted.blit(tint_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                    self._tinted_puffs[color_key] = tinted
+                # ⚡ KEY CHANGE: Include alpha in the cache key
+                cache_key = (color_key[0], color_key[1], color_key[2], s, alpha_val)
 
-                scaled_key = (color_key, s)
-                if scaled_key not in self._scaled_nebulae:
+                if cache_key not in self._scaled_nebulae:
+                    # Get or create tinted base puff
+                    if color_key not in self._tinted_puffs:
+                        tinted = self._puff_cache.copy()
+                        tint_surf = pygame.Surface(self._puff_cache.get_size(), pygame.SRCALPHA)
+                        tint_surf.fill((color_key[0], color_key[1], color_key[2], 255))
+                        tinted.blit(tint_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+                        self._tinted_puffs[color_key] = tinted
+
+                    # Scale the tinted puff
                     try:
-                        self._scaled_nebulae[scaled_key] = pygame.transform.scale(
-                            self._tinted_puffs[color_key], (s, s)
-                        )
+                        scaled = pygame.transform.scale(self._tinted_puffs[color_key], (s, s))
                     except pygame.error:
                         continue
 
-                puff = self._scaled_nebulae[scaled_key]
+                    # ⚡ Pre-multiply alpha into the surface (no set_alpha() needed!)
+                    scaled.fill((255, 255, 255, alpha_val), special_flags=pygame.BLEND_RGBA_MULT)
+                    self._scaled_nebulae[cache_key] = scaled
 
-                # SCREEN CULLING: Don't blit if it's completely off the screen
+                puff = self._scaled_nebulae[cache_key]
+
+                # Screen culling
                 px = p[2][0] - s // 2
                 py = p[2][1] - s // 2
                 W, H = surface.get_size()
                 if px > W or px + s < 0 or py > H or py + s < 0:
                     continue
 
-                # Set global alpha on the cached surface right before blitting!
-                # Pygame 2.x safely multiplies this with the image's per-pixel alpha.
-                puff.set_alpha(alpha_val)
+                # ⚡ Direct blit — alpha is already baked in
                 surface.blit(puff, (px, py))
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
