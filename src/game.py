@@ -94,7 +94,7 @@ class GameplayState(State):
         self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
 
         # Spatial system
-        self.spatial = SpatialPartition(cell_size=1000.0)
+        self.spatial = SpatialPartition(cell_size=15000.0)
 
         # Render tools
         self.camera = Camera(self.W, self.H)
@@ -465,10 +465,11 @@ class GameplayState(State):
         for e in enemies:
             nearby = self.spatial.query_nearby((e.x, e.y, e.z), e.hit_radius + 500.0)
             for obj in nearby:
-                if obj in self.asteroids:
-                    dist_sq = (e.x - obj.x)**2 + (e.y - obj.y)**2 + (e.z - obj.z)**2
-                    if dist_sq < (e.hit_radius + obj.hit_radius)**2:
-                        e.on_hit(999) 
+                # OPTIMIZATION: 'hasattr' is instant. 'in list' is extremely slow!
+                if hasattr(obj, 'split'):
+                    dist_sq = (e.x - obj.x) ** 2 + (e.y - obj.y) ** 2 + (e.z - obj.z) ** 2
+                    if dist_sq < (e.hit_radius + obj.hit_radius) ** 2:
+                        e.on_hit(999)
                         obj.on_hit(2)
                         for _ in range(PARTICLES_ON_DESTROY):
                             self.particle_pool.spawn(e.x, e.y, e.z)

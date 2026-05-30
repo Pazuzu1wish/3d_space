@@ -31,8 +31,8 @@ ENEMY_HIT_RADIUS_SQ = 6400          # squared radius for laser-enemy collision (
 ENEMY_CULL_DISTANCE = -30000         # enemies behind this are culled
 HOMING_TURN_RATE = 1.4              # homing projectile turn rate per second
 PARTICLES_ON_HIT = 12                # particles spawned when enemy hit
-PARTICLES_ON_DESTROY = 25           # particles spawned when enemy destroyed
-PARTICLES_ON_PLAYER_HIT = 10        # particles spawned when player hit
+PARTICLES_ON_DESTROY = 20           # particles spawned when enemy destroyed
+PARTICLES_ON_PLAYER_HIT = 8        # particles spawned when player hit
 COLLISION_DAMAGE = 20               # damage taken from enemy collision
 BARREL_ROLL_DURATION = 2.5          # seconds for a full barrel roll
 
@@ -113,7 +113,7 @@ ASTEROID_MAX_SCALE = 1000.0
 ASTEROID_SPAWN_RADIUS = 8500.0
 ASTEROID_ROTATION_SPEED_MAX = 1.5
 ASTEROID_DRIFT_SPEED_MAX = 20.0
-ASTEROID_PARTICLES_ON_DESTROY = 40
+ASTEROID_PARTICLES_ON_DESTROY = 8
 
 # ──────────────────────────────────────────────
 # AIM MODE / MAGNIFICATION
