@@ -276,9 +276,23 @@ class RenderPipeline:
             ))
 
     def submit_nebula(self, x, y, z, color, size, alpha=40, layer='alpha'):
-        """Submit a soft, semi-transparent nebula puff."""
+        """Submit a soft, semi-transparent nebula puff with proximity fading."""
         cx, cy, cz = self.camera.world_to_camera(x, y, z)
+
         if cz < 10 or cz > 50000:
+            return
+
+        # 1. PROXIMITY FADING: Fade out smoothly as we get close.
+        # Starts fading at 1200 units away, completely invisible by 200 units.
+        # (Tune these numbers based on your ship's speed and scale!)
+        fade_start = 1200.0
+        fade_end = 200.0
+        if cz < fade_start:
+            fade_ratio = max(0.0, (cz - fade_end) / (fade_start - fade_end))
+            alpha = int(alpha * fade_ratio)
+
+        # Skip rendering entirely if it's invisible
+        if alpha <= 0:
             return
 
         proj = self.camera.project(cx, cy, cz)
@@ -328,9 +342,27 @@ class RenderPipeline:
                 draw_circle(surface, p[4], p[2], p[3])
             elif t == 'nebula':
                 s = p[3] * 2
-                if s < 2 or s > 2000: continue
-                s = (s // 4) * 4
-                cache_key = (*p[4], p[5])
+
+                # 2. HARD CAP SIZE: Prevent fill-rate death.
+                # Even at 1080p, a soft cloud scaled past 1000px is mostly
+                # gradient noise. Capping it saves massive CPU overhead.
+                if s < 2: continue
+                s = min(s, 1200)
+
+                # 3. ADAPTIVE BINNING:
+                # Small puffs can step by 4px. Massive puffs should step by 64px
+                # to prevent caching hundreds of gigantic, nearly-identical surfaces.
+                if s < 128:
+                    step = 4
+                elif s < 512:
+                    step = 16
+                else:
+                    step = 64
+
+                s = (s // step) * step
+
+                cache_key = (*p[4], p[5])  # color + alpha
+
                 if cache_key not in self._tinted_puffs:
                     tinted = self._puff_cache.copy()
                     tint_surf = pygame.Surface(self._puff_cache.get_size(), pygame.SRCALPHA)
@@ -341,7 +373,11 @@ class RenderPipeline:
                 scaled_key = (cache_key, s)
                 if scaled_key not in self._scaled_nebulae:
                     try:
-                        self._scaled_nebulae[scaled_key] = pygame.transform.scale(self._tinted_puffs[cache_key], (s, s))
+                        # Scaling massive surfaces is slow, which is why
+                        # the adaptive binning (step=64) above is so crucial.
+                        self._scaled_nebulae[scaled_key] = pygame.transform.scale(
+                            self._tinted_puffs[cache_key], (s, s)
+                        )
                     except pygame.error:
                         continue
 
