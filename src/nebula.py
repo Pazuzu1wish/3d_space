@@ -1,33 +1,34 @@
 import random
 import math
 
+
 class NebulaCloud:
-    def __init__(self, x, y, z, color=None, num_puffs=10, radius=1000):
+    # Changed default num_puffs from 10 to 6
+    def __init__(self, x, y, z, color=None, num_puffs=6, radius=1000):
         self.x, self.y, self.z = x, y, z
-        
+
         # Vibrant Nebula Palette
         palette = [
-            (180, 50, 255), # Purple
-            (50, 255, 220), # Teal
-            (50, 100, 255), # Deep Blue
-            (255, 100, 50), # Orange
-            (255, 50, 150), # Pink
+            (180, 50, 255),  # Purple
+            (50, 255, 220),  # Teal
+            (50, 100, 255),  # Deep Blue
+            (255, 100, 50),  # Orange
+            (255, 50, 150),  # Pink
             (100, 255, 50)  # Green
         ]
         self.color = color if color else random.choice(palette)
-        
+
         self.puffs = []
         for _ in range(num_puffs):
-            # Random offset within the cloud radius
             ox = random.uniform(-radius, radius)
             oy = random.uniform(-radius, radius)
             oz = random.uniform(-radius, radius)
-            
-            # Random size for each puff
-            p_size = random.uniform(radius * 0.5, radius * 1.5)
-            # Random alpha for variety
+
+            # KEY CHANGE: Scaled up from (0.5 - 1.5) to (0.8 - 2.0)
+            # This makes the 6 puffs cover the same volume as the 10 puffs did!
+            p_size = random.uniform(radius * 0.8, radius * 2.0)
             p_alpha = random.randint(20, 50)
-            
+
             self.puffs.append({
                 'rel_pos': (ox, oy, oz),
                 'size': p_size,

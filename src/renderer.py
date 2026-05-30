@@ -343,46 +343,52 @@ class RenderPipeline:
             elif t == 'nebula':
                 s = p[3] * 2
 
-                # 2. HARD CAP SIZE: Prevent fill-rate death.
-                # Even at 1080p, a soft cloud scaled past 1000px is mostly
-                # gradient noise. Capping it saves massive CPU overhead.
+                # Hard cap size to prevent fill-rate death
                 if s < 2: continue
                 s = min(s, 1200)
 
-                # 3. ADAPTIVE BINNING:
-                # Small puffs can step by 4px. Massive puffs should step by 64px
-                # to prevent caching hundreds of gigantic, nearly-identical surfaces.
+                # Adaptive binning
                 if s < 128:
                     step = 4
                 elif s < 512:
                     step = 16
                 else:
                     step = 64
-
                 s = (s // step) * step
 
-                cache_key = (*p[4], p[5])  # color + alpha
+                color_key = p[4]  # KEY CHANGE: Only use RGB for cache, NOT alpha!
+                alpha_val = p[5]
 
-                if cache_key not in self._tinted_puffs:
+                if color_key not in self._tinted_puffs:
                     tinted = self._puff_cache.copy()
                     tint_surf = pygame.Surface(self._puff_cache.get_size(), pygame.SRCALPHA)
-                    tint_surf.fill(cache_key)
+                    # Tint using full alpha so the base cache image is solid
+                    tint_surf.fill((color_key[0], color_key[1], color_key[2], 255))
                     tinted.blit(tint_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                    self._tinted_puffs[cache_key] = tinted
+                    self._tinted_puffs[color_key] = tinted
 
-                scaled_key = (cache_key, s)
+                scaled_key = (color_key, s)
                 if scaled_key not in self._scaled_nebulae:
                     try:
-                        # Scaling massive surfaces is slow, which is why
-                        # the adaptive binning (step=64) above is so crucial.
                         self._scaled_nebulae[scaled_key] = pygame.transform.scale(
-                            self._tinted_puffs[cache_key], (s, s)
+                            self._tinted_puffs[color_key], (s, s)
                         )
                     except pygame.error:
                         continue
 
                 puff = self._scaled_nebulae[scaled_key]
-                surface.blit(puff, (p[2][0] - s // 2, p[2][1] - s // 2))
+
+                # SCREEN CULLING: Don't blit if it's completely off the screen
+                px = p[2][0] - s // 2
+                py = p[2][1] - s // 2
+                W, H = surface.get_size()
+                if px > W or px + s < 0 or py > H or py + s < 0:
+                    continue
+
+                # Set global alpha on the cached surface right before blitting!
+                # Pygame 2.x safely multiplies this with the image's per-pixel alpha.
+                puff.set_alpha(alpha_val)
+                surface.blit(puff, (px, py))
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
 
