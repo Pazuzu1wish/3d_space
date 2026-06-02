@@ -5,7 +5,7 @@ import math
 import numpy as np
 from src.save_data import RunResult, SaveData
 from src.camera import Camera
-from src.renderer import RenderPipeline
+from src.renderer import RenderPipeline, process_faces_batch_numba
 from src.cockpit import draw_cockpit_hud
 from src.controller import DS4Input
 from src.star import Star
@@ -32,6 +32,8 @@ from src.title_screen import TitleCinematic
 from src.hud_data import HUDData
 from src.state import State, StateManager
 from src.aim_scope import AimScope
+from src.math_engine import world_to_camera_batch, project_to_screen_batch, get_forward_from_quat, quat_from_axis_angle, quat_mul
+from collections import Counter
 
 # ──────────────────────────────────────────────
 # State Classes
@@ -141,8 +143,6 @@ class GameplayState(State):
         during the title / loading phase rather than causing a stutter on
         the very first gameplay frame.
         """
-        from src.renderer import process_faces_batch_numba
-        from src.math_engine import world_to_camera_batch, project_to_screen_batch
 
         # Minimal dummy data — 1 vert, 1 face
         dummy_verts = np.zeros((3, 3), dtype=np.float64)
@@ -595,8 +595,7 @@ class GameOverState(State):
  
         # ── kill breakdown ────────────────────────────────────────────────
         draw_line("KILLS", self._font_med, (180, 180, 180), H * 0.21)
- 
-        from collections import Counter
+
         counts = Counter(r.kills)
         kill_y = H * 0.27
         for etype, count in sorted(counts.items(), key=lambda x: -x[1]):
@@ -912,7 +911,6 @@ class PauseState(State):
             return
             
         # 1. Calculate Orbit Camera coordinates
-        from src.math_engine import get_forward_from_quat, quat_from_axis_angle, quat_mul
         
         q_yaw = quat_from_axis_angle(0.0, 1.0, 0.0, self.orbit_yaw)
         q_pitch = quat_from_axis_angle(1.0, 0.0, 0.0, self.orbit_pitch)
@@ -1088,7 +1086,7 @@ class Game:
 
     def main(self):
         while self.running:
-            dt = self.clock.tick(60) / 1000.0
+            dt = self.clock.tick(40) / 1000.0
 
             # Event Delegation
             for event in pygame.event.get():

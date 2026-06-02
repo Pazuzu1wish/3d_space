@@ -5,6 +5,7 @@ Efficient collision detection and entity culling using spatial hash grid.
 
 import math
 from typing import List, Optional, Tuple, Set
+import numpy as np
 
 class SpatialHash:
     """
@@ -142,7 +143,7 @@ class SpatialPartition:
         # Sphere radius that encompasses a cell (diagonal / 2)
         cell_radius = math.sqrt(3 * (half_cell**2))
         
-        import numpy as np
+
         cells = list(self.spatial_hash.grid.keys())
         centers = np.empty((len(cells), 3), dtype=np.float64)
         for i, cell_coords in enumerate(cells):
