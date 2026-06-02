@@ -1086,7 +1086,7 @@ class Game:
 
     def main(self):
         while self.running:
-            dt = self.clock.tick(40) / 1000.0
+            dt = self.clock.tick(60) / 1000.0
 
             # Event Delegation
             for event in pygame.event.get():

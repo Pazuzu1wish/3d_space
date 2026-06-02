@@ -1,174 +1,152 @@
 """
-Spatial Partitioning System
-Efficient collision detection and entity culling using spatial hash grid.
+Spatial Partitioning System (Optimized Vectorized Broadphase)
+Efficient collision detection and entity culling using dense NumPy arrays and Numba.
 """
 
 import math
-from typing import List, Optional, Tuple, Set
+from typing import List, Tuple, Optional
 import numpy as np
+from numba import njit
 
-class SpatialHash:
+@njit(cache=True, fastmath=True)
+def _query_nearby_numba(target_pos, positions, active, sq_radius):
     """
-    Efficient spatial partitioning using a hash grid.
-    Optimized for fast insertion, removal, and incremental updates.
+    Highly optimized brute-force distance query over flat contiguous arrays.
+    With Numba and fastmath, this vectorizes beautifully and outpaces Python dict
+    spatial-hashes for thousands of entities.
     """
-    
-    def __init__(self, cell_size: float = 500.0):
-        self.cell_size = cell_size
-        self.inv_cell_size = 1.0 / cell_size
-        self.grid: dict = {}
-    
-    def _hash_position(self, x: float, y: float, z: float) -> Tuple[int, int, int]:
-        """Convert world position to grid cell coordinates using fast truncation."""
-        return (
-            int(x * self.inv_cell_size),
-            int(y * self.inv_cell_size),
-            int(z * self.inv_cell_size)
-        )
-    
-    def insert(self, entity: object, pos: Tuple[float, float, float]) -> None:
-        """Insert an entity into the spatial hash."""
-        cell = self._hash_position(*pos)
-        if cell not in self.grid:
-            self.grid[cell] = []
-        self.grid[cell].append(entity)
-    
-    def remove(self, entity: object, pos: Tuple[float, float, float]) -> bool:
-        """Remove an entity from the spatial hash."""
-        cell = self._hash_position(*pos)
-        if cell in self.grid:
-            try:
-                self.grid[cell].remove(entity)
-                if not self.grid[cell]:
-                    del self.grid[cell]
-                return True
-            except ValueError:
-                return False
-        return False
+    n = positions.shape[0]
+    result = np.empty(n, dtype=np.int32)
+    count = 0
 
-    def move(self, entity: object, old_pos: Tuple[float, float, float], 
-             new_pos: Tuple[float, float, float]) -> None:
-        """Incrementally move an entity between cells."""
-        old_cell = self._hash_position(*old_pos)
-        new_cell = self._hash_position(*new_pos)
-        
-        if old_cell != new_cell:
-            self.remove(entity, old_pos)
-            self.insert(entity, new_pos)
-    
-    def query_radius(self, center: Tuple[float, float, float],
-                    radius: float) -> List[object]:
-        """Query all entities within a sphere."""
-        results = []
-        
-        # Calculate range of cells to check
-        cx, cy, cz = self._hash_position(*center)
-        cells_radius = int(math.ceil(radius * self.inv_cell_size))
-        
-        # If the query volume is large, it's faster to iterate over active cells
-        if (2 * cells_radius + 1) ** 3 > len(self.grid):
-            for cell, entities in self.grid.items():
-                if abs(cell[0] - cx) <= cells_radius and abs(cell[1] - cy) <= cells_radius and abs(cell[2] - cz) <= cells_radius:
-                    results.extend(entities)
-        else:
-            for dx in range(-cells_radius, cells_radius + 1):
-                gx = cx + dx
-                for dy in range(-cells_radius, cells_radius + 1):
-                    gy = cy + dy
-                    for dz in range(-cells_radius, cells_radius + 1):
-                        cell = (gx, gy, cz + dz)
-                        if cell in self.grid:
-                            results.extend(self.grid[cell])
-        
-        return results    
-    def clear(self) -> None:
-        """Clear all entities from the hash."""
-        self.grid.clear()
+    tx = target_pos[0]
+    ty = target_pos[1]
+    tz = target_pos[2]
+
+    for i in range(n):
+        if active[i]:
+            dx = positions[i, 0] - tx
+            dy = positions[i, 1] - ty
+            dz = positions[i, 2] - tz
+            if (dx*dx + dy*dy + dz*dz) <= sq_radius:
+                result[count] = i
+                count += 1
+
+    return result[:count]
 
 
 class SpatialPartition:
     """
-    Main spatial partitioning manager for the game.
-    Manages entity lifecycle and provides fast spatial queries.
+    Main entity manager for spatial queries.
+    Replaces the dict-based spatial hash grid with parallel NumPy arrays and Numba filtering.
     """
-    
-    def __init__(self, cell_size: float = 500.0):
-        self.spatial_hash = SpatialHash(cell_size)
+
+    def __init__(self, cell_size: float = 15000.0, max_entities: int = 8192):
+        # cell_size is kept for API compatibility, though we don't use grid cells anymore
         self.cell_size = cell_size
-        # Track entity positions for removal/moving
-        self.entity_positions: dict = {} # id(entity) -> pos
-    
+        self.max_entities = max_entities
+
+        # Pre-allocate contiguous blocks of memory for all entities
+        self.positions = np.zeros((max_entities, 3), dtype=np.float64)
+        self.active = np.zeros(max_entities, dtype=np.bool_)
+
+        # Mapping between Python object IDs and array indices
+        self.entity_positions: dict = {} # Retained for API compatibility
+        self.entity_to_idx: dict = {}
+        self.idx_to_entity: List[Optional[object]] = [None] * max_entities
+
+        # Free list to provide O(1) slot allocation
+        self.free_indices = list(range(max_entities - 1, -1, -1))
+
     def register_entity(self, entity: object, pos: Tuple[float, float, float]) -> None:
         """Register a new entity."""
         eid = id(entity)
-        self.spatial_hash.insert(entity, pos)
+        if eid in self.entity_to_idx:
+            return
+
+        if not self.free_indices:
+            print("WARNING: SpatialPartition is full! Consider increasing max_entities.")
+            return
+
+        idx = self.free_indices.pop()
+
+        self.positions[idx, 0] = pos[0]
+        self.positions[idx, 1] = pos[1]
+        self.positions[idx, 2] = pos[2]
+        self.active[idx] = True
+
+        self.entity_to_idx[eid] = idx
+        self.idx_to_entity[idx] = entity
         self.entity_positions[eid] = pos
-    
+
     def unregister_entity(self, entity: object) -> None:
         """Remove an entity from the system."""
         eid = id(entity)
-        if eid in self.entity_positions:
-            pos = self.entity_positions[eid]
-            self.spatial_hash.remove(entity, pos)
-            del self.entity_positions[eid]
+        if eid in self.entity_to_idx:
+            idx = self.entity_to_idx.pop(eid)
+            self.active[idx] = False
+            self.idx_to_entity[idx] = None
+            self.free_indices.append(idx)
+
+            if eid in self.entity_positions:
+                del self.entity_positions[eid]
 
     def update_entity(self, entity: object, new_pos: Tuple[float, float, float]) -> None:
         """
-        Update an entity's position incrementally.
-        Call this every frame for moving objects.
+        Update an entity's position. Contiguous memory writes are MUCH faster
+        than removing and appending to python lists in dictionary grid cells.
         """
         eid = id(entity)
-        if eid in self.entity_positions:
-            old_pos = self.entity_positions[eid]
-            self.spatial_hash.move(entity, old_pos, new_pos)
+        if eid in self.entity_to_idx:
+            idx = self.entity_to_idx[eid]
+            self.positions[idx, 0] = new_pos[0]
+            self.positions[idx, 1] = new_pos[1]
+            self.positions[idx, 2] = new_pos[2]
             self.entity_positions[eid] = new_pos
         else:
             self.register_entity(entity, new_pos)
-    
+
     def query_nearby(self, pos: Tuple[float, float, float], radius: float) -> List[object]:
-        """Query entities near a position."""
-        return self.spatial_hash.query_radius(pos, radius)
+        """Query entities near a position using Numba."""
+        target = np.array(pos, dtype=np.float64)
+        sq_radius = radius * radius
+        indices = _query_nearby_numba(target, self.positions, self.active, sq_radius)
+        return [self.idx_to_entity[i] for i in indices]
 
     def query_visible(self, camera) -> List[object]:
         """
         Query all entities that might be visible to the camera.
-        Uses cell-level frustum culling.
+        Directly frustum culls the active entity positions precisely.
         """
-        visible_entities = []
-        if not self.spatial_hash.grid:
-            return visible_entities
-            
-        cell_size = self.cell_size
-        half_cell = cell_size * 0.5
-        # Sphere radius that encompasses a cell (diagonal / 2)
-        cell_radius = math.sqrt(3 * (half_cell**2))
-        
+        active_indices = np.where(self.active)[0]
+        if len(active_indices) == 0:
+            return []
 
-        cells = list(self.spatial_hash.grid.keys())
-        centers = np.empty((len(cells), 3), dtype=np.float64)
-        for i, cell_coords in enumerate(cells):
-            centers[i, 0] = cell_coords[0] * cell_size + half_cell
-            centers[i, 1] = cell_coords[1] * cell_size + half_cell
-            centers[i, 2] = cell_coords[2] * cell_size + half_cell
-            
-        radii = np.full(len(cells), cell_radius, dtype=np.float64)
-        
+        centers = self.positions[active_indices]
+
+        # We use a generous bounding radius (e.g., 2500) to prevent large entities popping
+        # out of view when their center is just outside the frustum bounds.
+        radii = np.full(len(active_indices), 2500.0, dtype=np.float64)
+
         visible_mask = camera.sphere_in_frustum_batch_call(centers, radii)
-        
-        for i, cell_coords in enumerate(cells):
-            if visible_mask[i]:
-                visible_entities.extend(self.spatial_hash.grid[cell_coords])
-                
+
+        visible_entities = []
+        for i, is_vis in enumerate(visible_mask):
+            if is_vis:
+                visible_entities.append(self.idx_to_entity[active_indices[i]])
+
         return visible_entities
 
     def clear(self) -> None:
         """Clear all entities."""
-        self.spatial_hash.clear()
+        self.active.fill(False)
+        self.entity_to_idx.clear()
         self.entity_positions.clear()
-    
+        self.idx_to_entity = [None] * self.max_entities
+        self.free_indices = list(range(self.max_entities - 1, -1, -1))
+
     def get_stats(self) -> dict:
         return {
-            'entity_count': len(self.entity_positions),
-            'active_cells': len(self.spatial_hash.grid)
+            'entity_count': len(self.entity_to_idx),
+            'active_cells': 1  # Returned as 1 for API compatibility (Unified array)
         }
-
