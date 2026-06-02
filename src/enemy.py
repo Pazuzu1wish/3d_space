@@ -275,6 +275,84 @@ class Enemy:
         dx, dy, dz = self.x - px, self.y - py, self.z - pz
         return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
 
+    def compute_avoidance_force(self, spatial, player_pos, avoid_player=True, max_range=2000.0):
+        """
+        Compute a lateral avoidance force to dodge asteroids, enemies, and optionally the player.
+        
+        Returns a (vx, vy, vz) force vector pointing away from nearby obstacles.
+        Scaled by strength to be applied as lateral force.
+        
+        Note: The player is not in the spatial partition, so avoid_player doesn't prevent
+        collision with the player. However, it's kept for semantic clarity about intent.
+        """
+        if spatial is None:
+            return None
+        
+        avoidance = [0.0, 0.0, 0.0]
+        nearby = spatial.query_nearby((self.x, self.y, self.z), max_range)
+        
+        for obj in nearby:
+            # Skip self
+            if obj is self:
+                continue
+            
+            # Only process objects with position
+            if not hasattr(obj, 'x') or not hasattr(obj, 'y') or not hasattr(obj, 'z'):
+                continue
+            
+            # Avoid asteroids and enemies
+            is_asteroid = hasattr(obj, 'split')
+            is_enemy = hasattr(obj, 'on_hit') and hasattr(obj, 'hit_radius')
+            
+            if not (is_asteroid or is_enemy):
+                continue
+            
+            # Calculate direction away from obstacle
+            dx = self.x - obj.x
+            dy = self.y - obj.y
+            dz = self.z - obj.z
+            dist_sq = dx * dx + dy * dy + dz * dz
+            
+            # Skip if too close (avoid divide by zero and extreme forces)
+            if dist_sq < 1.0:
+                continue
+            
+            dist = math.sqrt(dist_sq)
+            
+            # Get combined hit radius (obstacle's radius + our safety margin)
+            other_radius = getattr(obj, 'hit_radius', 100.0)
+            combined_radius = self.hit_radius + other_radius + 200.0  # 200 unit safety margin
+            
+            # Only avoid if within combined radius * 1.5
+            if dist > combined_radius * 1.5:
+                continue
+            
+            # Inverse distance weighting: closer obstacles have stronger effect
+            strength = max(0.0, 1.0 - (dist / (combined_radius * 1.5)))
+            strength = strength ** 2  # Quadratic falloff for smoother behavior
+            
+            # Normalize direction and scale by strength
+            nx = (dx / dist) * strength
+            ny = (dy / dist) * strength
+            nz = (dz / dist) * strength
+            
+            avoidance[0] += nx
+            avoidance[1] += ny
+            avoidance[2] += nz
+        
+        # If no avoidance needed, return None
+        if avoidance[0] == 0.0 and avoidance[1] == 0.0 and avoidance[2] == 0.0:
+            return None
+        
+        # Normalize and scale by thrust
+        avoid_len = math.sqrt(avoidance[0]**2 + avoidance[1]**2 + avoidance[2]**2)
+        if avoid_len > 0:
+            avoidance[0] = (avoidance[0] / avoid_len) * self.thrust * 0.6
+            avoidance[1] = (avoidance[1] / avoid_len) * self.thrust * 0.6
+            avoidance[2] = (avoidance[2] / avoid_len) * self.thrust * 0.6
+        
+        return tuple(avoidance)
+
     def submit_to_renderer(self, renderer):
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
@@ -462,6 +540,18 @@ class SuicideDrone(Enemy):
             self.engine_pulse_rate = 15.0 + proximity_factor * 30.0
 
         desired_heading = (nx, ny, nz)
+        
+        # Compute collision avoidance (avoid asteroids and enemies, but NOT the player - this is a suicide drone!)
+        avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=False, max_range=2500.0)
+        
+        # Blend avoidance with pattern-based movement
+        if avoidance_force is not None:
+            lat_force = (
+                lat_force[0] + avoidance_force[0] * 0.7,
+                lat_force[1] + avoidance_force[1] * 0.7,
+                lat_force[2] + avoidance_force[2] * 0.7,
+            )
+        
         self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
@@ -661,6 +751,10 @@ class Dogfighter(Enemy):
             spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
             desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
 
+        # Compute collision avoidance force (avoid asteroids, enemies, and player except when attacking)
+        avoid_player = self.mode != 'attack_run'  # Don't avoid player while attacking
+        avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=avoid_player, max_range=3000.0)
+
         # During positioning orbit, add a persistent lateral force to curve the path
         if self.mode == 'positioning':
             lat_force = (
@@ -668,8 +762,15 @@ class Dogfighter(Enemy):
                 self.right[1] * self.circle_sign * self.thrust * 0.45,
                 self.right[2] * self.circle_sign * self.thrust * 0.45,
             )
+            # Blend avoidance force with orbital force
+            if avoidance_force is not None:
+                lat_force = (
+                    lat_force[0] + avoidance_force[0] * 0.5,
+                    lat_force[1] + avoidance_force[1] * 0.5,
+                    lat_force[2] + avoidance_force[2] * 0.5,
+                )
         else:
-            lat_force = None
+            lat_force = avoidance_force
 
         self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
 
@@ -713,9 +814,11 @@ class Dogfighter(Enemy):
             vy = ay * proj_speed + self.vy * 0.3
             vz = az * proj_speed + self.vz * 0.3
 
-            global_projectiles.append(MachineGunBolt(
+            bolt = MachineGunBolt(
                 self.x, self.y, self.z, vx, vy, vz
-            ))
+            )
+            bolt.owner = self
+            global_projectiles.append(bolt)
 
         elif w_type == 'bolt':
             proj_speed = 2200
@@ -723,9 +826,11 @@ class Dogfighter(Enemy):
             vy = aim_dir[1] * proj_speed + self.vy * 0.5
             vz = aim_dir[2] * proj_speed + self.vz * 0.5
 
-            global_projectiles.append(HomingBolt(
+            bolt = HomingBolt(
                 self.x, self.y, self.z, vx, vy, vz
-            ))
+            )
+            bolt.owner = self
+            global_projectiles.append(bolt)
 
     def on_hit(self, damage=1):
         self.hp -= damage
@@ -915,7 +1020,8 @@ class Sniper(Enemy):
         if self.state == 'fleeing':
             # Rotate away from player and thrust
             desired_heading = (-nx, -ny, -nz)
-            self._apply_newtonian(desired_heading, dt)
+            avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=False, max_range=2500.0)
+            self._apply_newtonian(desired_heading, dt, lateral_force=avoidance_force)
         elif self.state == 'aiming':
             # Face player (for accurate raycast), drift laterally
             desired_heading = (nx, ny, nz)
@@ -924,13 +1030,22 @@ class Sniper(Enemy):
                 self.right[1] * self.thrust * 0.18,
                 self.right[2] * self.thrust * 0.18,
             )
+            # Blend with avoidance
+            avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=True, max_range=2500.0)
+            if avoidance_force is not None:
+                lat_force = (
+                    lat_force[0] + avoidance_force[0] * 0.6,
+                    lat_force[1] + avoidance_force[1] * 0.6,
+                    lat_force[2] + avoidance_force[2] * 0.6,
+                )
             self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
         elif self.state == 'charging':
             # Hold position: face player for raycast but no thrust (drag bleeds speed)
             desired_heading = (nx, ny, nz)
+            avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=False, max_range=2500.0)
             saved = self.thrust
             self.thrust = 0.0
-            self._apply_newtonian(desired_heading, dt)
+            self._apply_newtonian(desired_heading, dt, lateral_force=avoidance_force)
             self.thrust = saved
 
         self._spawn_engine_trail()
@@ -1082,7 +1197,9 @@ class Corvette(Enemy):
         self._last_dist = dist
         nx, ny, nz = dx / dist, dy / dist, dz / dist
 
-        self._apply_newtonian((nx, ny, nz), dt)
+        # Compute collision avoidance
+        avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=False, max_range=3500.0)
+        self._apply_newtonian((nx, ny, nz), dt, lateral_force=avoidance_force)
 
         # Weaponry
         if dist < self.FIRE_RANGE and self.turret_timer <= 0:
@@ -1093,12 +1210,14 @@ class Corvette(Enemy):
                 n = math.sqrt(ax * ax + ay * ay + az * az) or 1
                 ax, ay, az = ax / n, ay / n, az / n
 
-                global_projectiles.append(CorvetteTurret(
+                bolt = CorvetteTurret(
                     self.x, self.y, self.z,
                     ax * 4000 + self.vx * 0.5,
                     ay * 4000 + self.vy * 0.5,
                     az * 4000 + self.vz * 0.5
-                ))
+                )
+                bolt.owner = self
+                global_projectiles.append(bolt)
 
         # Drone Spawning
         if self.spawn_timer <= 0 and dist < 12000:
@@ -1246,7 +1365,9 @@ class Minelayer(Enemy):
             self.bombing_timer -= dt
             if int(self.bombing_timer * 8) % 8 == 0 and random.random() < 0.3:
                 if global_projectiles is not None:
-                    global_projectiles.append(Mine(self.x, self.y, self.z, 0, 0, 0))
+                    mine = Mine(self.x, self.y, self.z, 0, 0, 0)
+                    mine.owner = self
+                    global_projectiles.append(mine)
             
             if self.bombing_timer <= 0:
                 self.state = 'traveling'
@@ -1273,6 +1394,7 @@ class Minelayer(Enemy):
                     bolt = MachineGunBolt(self.x, self.y, self.z, ax * proj_speed, ay * proj_speed, az * proj_speed)
                     bolt.damage = 4.0  # Even heavier damage
                     bolt.color = (255, 100, 0)
+                    bolt.owner = self
                     global_projectiles.append(bolt)
 
         tdx, tdy, tdz = target_x - self.x, target_y - self.y, target_z - self.z
@@ -1284,7 +1406,10 @@ class Minelayer(Enemy):
             spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
             desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
 
-        self._apply_newtonian(desired_heading, dt)
+        # Compute collision avoidance (avoid player except when defensive)
+        avoid_player = self.state == 'traveling'
+        avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=avoid_player, max_range=3000.0)
+        self._apply_newtonian(desired_heading, dt, lateral_force=avoidance_force)
 
         if not self.stealthed:
             self.engine_size = 6.0
@@ -1417,10 +1542,12 @@ class StealthInterceptor(Enemy):
                 for _ in range(7):
                     spread = WEAPON_SPREAD
                     ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
-                    global_projectiles.append(StealthShotgun(
+                    bolt = StealthShotgun(
                         self.x, self.y, self.z,
                         ax * 3000, ay * 3000, az * 3000
-                    ))
+                    )
+                    bolt.owner = self
+                    global_projectiles.append(bolt)
             self.state = 'fleeing'
             self.stealthed = True
             self.base_color = (20, 20, 30)
@@ -1444,7 +1571,10 @@ class StealthInterceptor(Enemy):
             spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
             desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
 
-        self._apply_newtonian(desired_heading, dt)
+        # Compute collision avoidance (avoid player except when attacking)
+        avoid_player = self.state != 'attacking'
+        avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=avoid_player, max_range=2800.0)
+        self._apply_newtonian(desired_heading, dt, lateral_force=avoidance_force)
 
         if not self.stealthed:
             self.engine_size = 6.0
@@ -1569,7 +1699,9 @@ class Carrier(Enemy):
             # Hold at distance — thrust laterally to avoid hovering dead still
             desired_heading = (self.right[0], self.right[1], self.right[2])
 
-        self._apply_newtonian(desired_heading, dt)
+        # Compute collision avoidance
+        avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=False, max_range=4000.0)
+        self._apply_newtonian(desired_heading, dt, lateral_force=avoidance_force)
 
         # --- ARSENAL ---
         
@@ -1591,7 +1723,9 @@ class Carrier(Enemy):
                     player.take_damage(20)
                 
                 if global_projectiles is not None:
-                    global_projectiles.append(SniperBeam(self.x, self.y, self.z, self.forward[0]*32000, self.forward[1]*32000, self.forward[2]*32000))
+                    beam = SniperBeam(self.x, self.y, self.z, self.forward[0]*32000, self.forward[1]*32000, self.forward[2]*32000)
+                    beam.owner = self
+                    global_projectiles.append(beam)
                 
                 self.state = 'idle'
                 self.sniper_timer = random.uniform(8.0, 12.0)
@@ -1606,7 +1740,9 @@ class Carrier(Enemy):
                 for _ in range(3):
                     spread = 0.3
                     bx, by, bz = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
-                    global_projectiles.append(HomingBolt(self.x, self.y, self.z, bx * 2000, by * 2000, bz * 2000))
+                    bolt = HomingBolt(self.x, self.y, self.z, bx * 2000, by * 2000, bz * 2000)
+                    bolt.owner = self
+                    global_projectiles.append(bolt)
 
         # 3. Point Defense MG
         if self.mg_timer <= 0 and dist < 4000:
@@ -1614,7 +1750,9 @@ class Carrier(Enemy):
             if global_projectiles is not None:
                 spread = 0.1
                 mx, my, mz = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
-                global_projectiles.append(MachineGunBolt(self.x, self.y, self.z, mx * 8000, my * 8000, mz * 8000))
+                bolt = MachineGunBolt(self.x, self.y, self.z, mx * 8000, my * 8000, mz * 8000)
+                bolt.owner = self
+                global_projectiles.append(bolt)
 
         # --- SPAWNING ---
         if self.spawn_timer <= 0 and dist < 15000:

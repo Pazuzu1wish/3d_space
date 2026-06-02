@@ -475,10 +475,40 @@ class GameplayState(State):
                             self.particle_pool.spawn(e.x, e.y, e.z)
                         break
 
+        # Enemy vs Enemy collisions
+        for i, e1 in enumerate(enemies):
+            nearby = self.spatial.query_nearby((e1.x, e1.y, e1.z), e1.hit_radius + 500.0)
+            for e2 in nearby:
+                # Skip if it's the same enemy or not an enemy (check for enemy-specific attributes)
+                if e2 is e1 or not isinstance(e2, type(e1).__bases__[0] if e1.__class__.__bases__ else object):
+                    continue
+                # Check if it has hit_radius and on_hit (enemy attributes)
+                if not hasattr(e2, 'hit_radius') or not hasattr(e2, 'on_hit'):
+                    continue
+                # Skip asteroids (they have 'split' method)
+                if hasattr(e2, 'split'):
+                    continue
+                # Check if it's actually in the enemies list
+                if e2 not in enemies:
+                    continue
+                
+                dist_sq = (e1.x - e2.x) ** 2 + (e1.y - e2.y) ** 2 + (e1.z - e2.z) ** 2
+                if dist_sq < (e1.hit_radius + e2.hit_radius) ** 2:
+                    e1.on_hit(1)
+                    e2.on_hit(1)
+                    for _ in range(PARTICLES_ON_HIT):
+                        self.particle_pool.spawn(e1.x, e1.y, e1.z)
+                    break
+
         # Projectiles
         for bolt in enemy_projectiles[:]:
             bolt.update(dt, player.pos)
             if bolt.check_asteroid_collision(self.spatial, self.particle_pool):
+                if bolt in enemy_projectiles:
+                    enemy_projectiles.remove(bolt)
+                continue
+
+            if bolt.check_enemy_collision(self.spatial, self.particle_pool):
                 if bolt in enemy_projectiles:
                     enemy_projectiles.remove(bolt)
                 continue

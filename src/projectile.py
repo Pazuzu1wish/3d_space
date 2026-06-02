@@ -3,7 +3,7 @@ import pygame
 from src.math_engine import world_to_camera, project_to_screen
 from src.constants import HOMING_TURN_RATE, PARTICLES_ON_HIT, PLAYER_COLLISION_RADIUS
 class EnemyProjectile:
-    def __init__(self, x, y, z, vx, vy, vz, life, damage, color, size_mult, homing=False):
+    def __init__(self, x, y, z, vx, vy, vz, life, damage, color, size_mult, homing=False, owner=None):
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
@@ -15,6 +15,7 @@ class EnemyProjectile:
         self.color = color
         self.size_mult = float(size_mult)
         self.homing = homing
+        self.owner = owner  # Reference to the enemy that fired this projectile
 
     def update(self, dt, player_pos):
         self.x += self.vx * dt
@@ -54,6 +55,33 @@ class EnemyProjectile:
                 for _ in range(PARTICLES_ON_HIT):
                     particles.spawn(self.x, self.y, self.z)
                 return True
+        return False
+
+    def check_enemy_collision(self, spatial, particles):
+        """Check if this projectile hits an enemy (excluding the owner). Returns True if collision occurred."""
+        # Using a fixed radius to check for enemy proximity
+        nearby = spatial.query_nearby((self.x, self.y, self.z), 500.0)
+
+        for obj in nearby:
+            # Skip if this is the owner of the projectile (no friendly fire on self)
+            if obj is self.owner:
+                continue
+            # Check if it's an enemy (has hit_radius and on_hit methods)
+            if hasattr(obj, 'hit_radius') and hasattr(obj, 'on_hit'):
+                # Don't collide with asteroids (they have 'split' method)
+                if hasattr(obj, 'split'):
+                    continue
+                # Use spherical collision check
+                dx = self.x - obj.x
+                dy = self.y - obj.y
+                dz = self.z - obj.z
+                dist_sq = dx * dx + dy * dy + dz * dz
+                if dist_sq < (obj.hit_radius ** 2):
+                    obj.on_hit(int(self.damage))
+                    self.life = 0
+                    for _ in range(PARTICLES_ON_HIT):
+                        particles.spawn(self.x, self.y, self.z)
+                    return True
         return False
 
 class MachineGunBolt(EnemyProjectile):
