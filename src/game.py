@@ -394,6 +394,10 @@ class GameplayState(State):
         for e in enemies[:]:
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies, player, spatial=self.spatial)
             self.spatial.update_entity(e, (e.x, e.y, e.z))
+            
+            # Decrement spawn immunity timer
+            if e.spawn_immunity_timer > 0:
+                e.spawn_immunity_timer -= dt
 
             if e.hp <= 0:
                 self.context.sound.play_sfx("explosion")
@@ -463,6 +467,10 @@ class GameplayState(State):
 
         # Enemy vs Asteroid collisions
         for e in enemies:
+            # Skip collision check if enemy is in spawn immunity period
+            if e.spawn_immunity_timer > 0:
+                continue
+            
             nearby = self.spatial.query_nearby((e.x, e.y, e.z), e.hit_radius + 500.0)
             for obj in nearby:
                 # OPTIMIZATION: 'hasattr' is instant. 'in list' is extremely slow!
@@ -490,6 +498,10 @@ class GameplayState(State):
                     continue
                 # Check if it's actually in the enemies list
                 if e2 not in enemies:
+                    continue
+                
+                # Skip collision if either enemy is in spawn immunity period
+                if e1.spawn_immunity_timer > 0 or e2.spawn_immunity_timer > 0:
                     continue
                 
                 dist_sq = (e1.x - e2.x) ** 2 + (e1.y - e2.y) ** 2 + (e1.z - e2.z) ** 2

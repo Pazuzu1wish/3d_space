@@ -41,8 +41,11 @@ class Enemy:
 
         # --- ADD THIS: Default hit radius for small enemies ---
         self.hit_radius = 50.0
+        
+        # --- Spawn immunity timer (prevents collision damage right after spawning) ---
+        self.spawn_immunity_timer = 0.0
 
-        # Enhanced visual properties
+        # ... existing code ...
         self.base_color = (255, 255, 255)
         # engine_trail kept as empty list for legacy compatibility;
         # the live TrailPool is created after subclass sets engine_offsets
@@ -1226,6 +1229,7 @@ class Corvette(Enemy):
                 drone = SuicideDrone(self.x, self.y - 40, self.z)
                 drone.vx, drone.vy, drone.vz = self.vx, self.vy - 300, self.vz
                 drone.set_pattern(random.choice(['weave', 'wobble', 'spiral', 'zigzag', 'corkscrew']))
+                drone.spawn_immunity_timer = 10.0  # 10 second grace period
                 global_enemies.append(drone)
 
         self._spawn_engine_trail()
@@ -1766,6 +1770,7 @@ class Carrier(Enemy):
                 else:
                     new_e = Dogfighter(self.x + self.right[0]*150, self.y + self.right[1]*150, self.z + self.right[2]*150)
                     new_e.vx, new_e.vy, new_e.vz = self.vx + 200, self.vy, self.vz
+                new_e.spawn_immunity_timer = 10.0  # 10 second grace period
                 global_enemies.append(new_e)
 
         self._spawn_engine_trail()
