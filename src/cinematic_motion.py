@@ -1,4 +1,5 @@
 import math
+from src.math_engine import basis_from_forward
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -49,7 +50,6 @@ class CinematicScript:
             enemy.z += vz * dt
             spd = math.sqrt(vx*vx + vy*vy + vz*vz)
             if spd > 1e-3:
-                from src.math_engine import basis_from_forward
                 enemy.forward, enemy.right, enemy.up = basis_from_forward(
                     (vx/spd, vy/spd, vz/spd)
                 )
@@ -96,7 +96,6 @@ class CinematicScript:
 
             spd = math.sqrt(vx*vx + vy_helix*vy_helix + vz*vz)
             if spd > 1e-3:
-                from src.math_engine import basis_from_forward
                 enemy.forward, enemy.right, enemy.up = basis_from_forward(
                     (vx/spd, vy_helix/spd, vz/spd)
                 )
@@ -156,7 +155,6 @@ class CinematicScript:
 
             # ── 4. Orientation: nose points down the Z axis ───────
             # forward = toward camera, right = tangential, up = outward
-            from src.math_engine import basis_from_forward
             # pure forward along -Z (toward camera)
             enemy.forward = (0.0, 0.0, -1.0)
             # right = tangential direction on the ring

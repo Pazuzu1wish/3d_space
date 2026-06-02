@@ -40,7 +40,6 @@ _CAPS = {
 }
 
 # ── Encounter etype → class map (for _spawn_encounter) ───────────────────
-from .enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
 
 _ETYPE_MAP = {
     'drone':    SuicideDrone,

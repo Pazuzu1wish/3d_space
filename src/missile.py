@@ -2,6 +2,7 @@ import math
 import random
 import pygame
 from src.math_engine import basis_from_forward
+from src.constants import PLAYER_MISSILE_TURN_RATE
 
 class PlayerMissile:
     def __init__(self, x, y, z, vx, vy, vz, life, damage, color=(200, 200, 200), size_mult=3.5, homing=False):
@@ -148,7 +149,6 @@ class HomingMissile(PlayerMissile):
         self.target = target
 
     def update(self, dt):
-        from src.constants import PLAYER_MISSILE_TURN_RATE
         if self.target and self.target.hp > 0:
             dx = self.target.x - self.x
             dy = self.target.y - self.y

@@ -12,7 +12,9 @@ from src.math_engine import (
 from src.hud_data import HUDData
 
 # ── Palette (R, G, B, Alpha) ──────────────────
-from src.constants import HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION, PLAYER_LASER_SPEED
+from src.constants import (HUD_GREEN, HUD_DIM, HUD_AMBER, HUD_RED, HUD_WAYPOINT, DODGE_FLASH_DURATION, PLAYER_LASER_SPEED,
+    PLAYER_MISSILE_LOCK_TIME)
+
 from src.cockpit_geometry import draw_cockpit_frame
 
 def interpolate_color(val, c0, c1, c2):
@@ -820,7 +822,6 @@ def draw_target_brackets(
             surface.blit(hull_lbl, (sx - hull_lbl.get_width() // 2, sy + 22 + 14))
 
             # ── MISSILE LOCK-ON HUD ────────────────────────
-            from src.constants import PLAYER_MISSILE_LOCK_TIME
             if missile_locked:
                 pulse = int((math.sin(pygame.time.get_ticks() * 0.015) + 1) * 60)
                 col = (0, min(100 + pulse, 255), 0)

@@ -1,8 +1,7 @@
 import math
 import pygame
 from src.math_engine import world_to_camera, project_to_screen
-from src.constants import HOMING_TURN_RATE, PARTICLES_ON_HIT
-
+from src.constants import HOMING_TURN_RATE, PARTICLES_ON_HIT, PLAYER_COLLISION_RADIUS
 class EnemyProjectile:
     def __init__(self, x, y, z, vx, vy, vz, life, damage, color, size_mult, homing=False):
         self.x = float(x)
@@ -32,7 +31,6 @@ class EnemyProjectile:
 
     def check_player_collision(self, player, particles):
         """Check if this projectile hits the player. Returns True if collision occurred."""
-        from src.constants import PLAYER_COLLISION_RADIUS
         dist = math.dist((self.x, self.y, self.z), player.pos)
         if dist < PLAYER_COLLISION_RADIUS:
             player.take_damage(self.damage)

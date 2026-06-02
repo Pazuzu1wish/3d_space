@@ -1,4 +1,3 @@
-# TODO: move physics out of enemy.py 
 # TODO: rename to ship so these could have alignments (friendly, neutral, hostile)
 
 import math
@@ -13,7 +12,8 @@ from src.math_engine import (
 from src.constants import (
     MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR,
     DRONE_DETONATION_RANGE, DRONE_EXPLOSION_RADIUS, DRONE_MAX_DAMAGE,
-    BARREL_ROLL_DURATION
+    BARREL_ROLL_DURATION, PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY
+
 )
 from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
@@ -885,8 +885,7 @@ class Sniper(Enemy):
                 self.base_color = (255, flash, flash)
 
                 if self.timer <= 0:
-                    from src.constants import PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY
-                    
+
                     # closest approach of beam line to player center
                     cx = (dy_p/dist_f)*self.forward[2] - (dz_p/dist_f)*self.forward[1]
                     cy = (dz_p/dist_f)*self.forward[0] - (dx_p/dist_f)*self.forward[2]

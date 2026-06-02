@@ -6,6 +6,9 @@ from src.math_engine import (
     project_to_screen_batch
 )
 from numba import njit
+import random
+from src.constants import SCREEN_SHAKE_MAX, SCREEN_SHAKE_DECAY
+
 
 class Camera:
     def __init__(self, W, H, fov=400.0, near_clip=0.1):
@@ -86,12 +89,10 @@ class Camera:
         )
 
     def trigger_shake(self, intensity):
-        from src.constants import SCREEN_SHAKE_MAX
         self.shake_amount = min(SCREEN_SHAKE_MAX, self.shake_amount + intensity)
 
     def update_shake(self, dt):
-        import random
-        from src.constants import SCREEN_SHAKE_DECAY
+
         self.shake_amount = max(0.0, self.shake_amount - SCREEN_SHAKE_DECAY * dt)
         if self.shake_amount > 0:
             dx = (random.random() * 2 - 1) * self.shake_amount
