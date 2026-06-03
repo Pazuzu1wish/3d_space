@@ -401,3 +401,4 @@ def ray_sphere_intersection(ro, rd, sc, sr):
         return t2
         
     return -1.0
+

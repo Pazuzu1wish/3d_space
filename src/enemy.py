@@ -1739,7 +1739,6 @@ class StealthInterceptor(Enemy):
 # =============================================================
 
 class Carrier(Enemy):
-    SPEED = 200
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
@@ -1758,7 +1757,7 @@ class Carrier(Enemy):
         self.engine_color = (200, 100, 255)
         self.engine_size = 25.0
         self.engine_pulse_rate = 1.5
-        self.trail_life = 1.5
+        self.trail_life = 0.5
         self.trail_drift = 20.0
 
         self.spawn_timer = 5.0
