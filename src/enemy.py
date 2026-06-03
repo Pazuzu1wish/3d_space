@@ -43,7 +43,7 @@ class Enemy:
         self.hit_radius = 50.0
         
         # --- Spawn immunity timer (prevents collision damage right after spawning) ---
-        self.spawn_immunity_timer = 0.0
+        self.spawn_immunity_timer = 10.0
 
         # ... existing code ...
         self.base_color = (255, 255, 255)
@@ -432,7 +432,7 @@ PATTERN_MAP = {
 # ──────────────────────────────────────────────
 
 class SuicideDrone(Enemy):
-    SPEED = 2500
+    SPEED = 3500
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
@@ -489,6 +489,8 @@ class SuicideDrone(Enemy):
             {'v': ['v2', 'v1', 'v4'], 'color': C_DARK},
         ]
 
+        self.spawn_immunity_timer = 20.0
+
     def set_pattern(self, pattern_name):
         if pattern_name in PATTERN_MAP:
             self.pattern = PATTERN_MAP[pattern_name]
@@ -533,7 +535,7 @@ class SuicideDrone(Enemy):
         )
 
         # Proximity detonation (Ballistic Missile behavior)
-        if dist < DRONE_DETONATION_RANGE:
+        if dist < DRONE_DETONATION_RANGE and self.spawn_immunity_timer <= 0.0:
             self.detonate(player)
             return
 

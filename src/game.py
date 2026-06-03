@@ -96,7 +96,7 @@ class GameplayState(State):
         self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
 
         # Spatial system
-        self.spatial = SpatialPartition(cell_size=15000.0)
+        self.spatial = SpatialPartition(cell_size=500.0)
 
         # Render tools
         self.camera = Camera(self.W, self.H)
@@ -115,7 +115,7 @@ class GameplayState(State):
 
         # Spawn Asteroids
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=10, radius=25000)
+            field = AsteroidField(enc['origin'], count=0, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
