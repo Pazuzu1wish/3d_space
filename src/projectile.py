@@ -138,35 +138,6 @@ class CorvetteTurret(EnemyProjectile):
         )
 
 
-class Mine(EnemyProjectile):
-    def __init__(self, x, y, z, vx, vy, vz):
-        super().__init__(
-            x, y, z, vx, vy, vz,
-            life=25.0, damage=100.0, color=(255, 30, 30), size_mult=10.0, homing=False
-        )
-
-    def submit_to_renderer(self, renderer):
-        # Flash every 200ms
-        flash = (pygame.time.get_ticks() // 200) % 2 == 0
-        draw_color = (255, 255, 255) if flash else self.color
-        renderer.submit_sprite(self.x, self.y, self.z, draw_color, self.size_mult * 2)
-
-    def check_player_collision(self, player, particles):
-        dist = math.dist((self.x, self.y, self.z), player.pos)
-        EXPLOSION_RADIUS = 2000.0
-        if dist < EXPLOSION_RADIUS:
-            # Damage falloff: 100% damage at 0 distance, 0% at EXPLOSION_RADIUS
-            falloff = 1.0 - (dist / EXPLOSION_RADIUS * .8)
-            actual_damage = self.damage * falloff
-            player.take_damage(actual_damage)
-            self.life = 0
-            # Bigger explosion for mines
-            for _ in range(25):
-                particles.spawn(self.x, self.y, self.z)
-            return True
-        return False
-
-
 class StealthShotgun(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(

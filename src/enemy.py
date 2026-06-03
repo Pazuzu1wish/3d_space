@@ -18,7 +18,7 @@ from src.constants import (
 
 from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
-    CorvetteTurret, Mine, StealthShotgun
+    CorvetteTurret, StealthShotgun
 )
 from src.physics import (newtonian_integrate, approaching_too_fast,
 update_orientation_from_velocity)
@@ -1253,6 +1253,113 @@ class Corvette(Enemy):
 
 
 # =============================================================
+# Space Mine (Stationary Explosive)
+# =============================================================
+
+class Mine(Enemy):
+    def __init__(self, x, y, z):
+        super().__init__(x, y, z)
+        self.hp = 1
+        self.max_hp = 1
+        self.hit_radius = 200.0
+        self.base_color = (255, 30, 30)
+        self.size_mult = 10.0
+
+        self.engine_offsets = []
+        self.trail_life = 0.0
+
+        self.did_detonate = False
+        self.spawn_immunity_timer = 10.0
+        self.life = 25.0
+
+        # Override physical movement speeds so it sits perfectly still
+        self.max_speed = 0.0
+        self.thrust = 0.0
+        self.vx = self.vy = self.vz = 0.0
+
+        self.verts = {}
+        self.faces = []
+
+        self._last_player = None
+        self._last_spatial = None
+
+    def detonate(self, player=None, spatial=None):
+        if self.did_detonate:
+            return  # Prevent infinite loop if mines explode near each other
+
+        self.did_detonate = True
+        self.hp = 0  # Flags for removal in game.py loop
+
+        EXPLOSION_RADIUS = 2000.0
+        MAX_DAMAGE = 100.0
+
+        # 1. Damage Player
+        if player:
+            dist = self.dist_to_player(player.pos)
+            if dist < EXPLOSION_RADIUS:
+                falloff = max(0.0, 1.0 - (dist / EXPLOSION_RADIUS * 0.8))
+                player.take_damage(MAX_DAMAGE * falloff)
+
+        # 2. Damage nearby Enemies and Asteroids
+        if spatial:
+            nearby = spatial.query_nearby((self.x, self.y, self.z), EXPLOSION_RADIUS)
+            for obj in nearby:
+                if obj is self:
+                    continue
+                if hasattr(obj, 'on_hit') and hasattr(obj, 'hit_radius'):
+                    # Accurate distance check for AoE application
+                    dist_sq = (self.x - obj.x) ** 2 + (self.y - obj.y) ** 2 + (self.z - obj.z) ** 2
+                    if dist_sq < EXPLOSION_RADIUS ** 2:
+                        obj.on_hit(int(MAX_DAMAGE))
+
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None,
+               spatial=None):
+        # Cache references so the on_hit hook can still access them for AoE
+        self._last_player = player
+        self._last_spatial = spatial
+
+        self.life -= dt
+        if self.life <= 0:
+            self.hp = 0
+            return
+
+        if self.spawn_immunity_timer > 0:
+            self.spawn_immunity_timer -= dt
+
+        if self.spawn_immunity_timer <= 0:
+            TRIGGER_RADIUS = 2000.0
+
+            # Check player proximity
+            if self.dist_to_player(player_pos) < TRIGGER_RADIUS:
+                self.detonate(player, spatial)
+                return
+
+            # Check asteroid or enemy proximity
+            if spatial:
+                nearby = spatial.query_nearby((self.x, self.y, self.z), TRIGGER_RADIUS)
+                for obj in nearby:
+                    if obj is self:
+                        continue
+                    # Check if it's an asteroid (has 'split') or enemy
+                    if hasattr(obj, 'split') or (hasattr(obj, 'on_hit') and hasattr(obj, 'hit_radius')):
+                        dist_sq = (self.x - obj.x) ** 2 + (self.y - obj.y) ** 2 + (self.z - obj.z) ** 2
+                        if dist_sq < TRIGGER_RADIUS ** 2:
+                            self.detonate(player, spatial)
+                            return
+
+    def on_hit(self, damage=1):
+        # Explode instantly if struck by a laser or projectile
+        if self.spawn_immunity_timer <= 0:
+            self.detonate(self._last_player, self._last_spatial)
+
+    def submit_to_renderer(self, renderer):
+        # Discard the mesh rendering completely and render the blinking sprite
+        flash = (pygame.time.get_ticks() // 200) % 2 == 0
+        draw_color = (255, 255, 255) if flash else self.base_color
+        renderer.submit_sprite(self.x, self.y, self.z, draw_color, self.size_mult * 2)
+
+
+# =============================================================
 # Minelayer
 # =============================================================
 
@@ -1387,15 +1494,14 @@ class Minelayer(Enemy):
                     else:
                         # Fallback if stationary
                         drop_x, drop_y, drop_z = -self.up[0], -self.up[1], -self.up[2]
-                    spawn_offset = self.hit_radius + 50.0
+                    spawn_offset = self.hit_radius + 200.0
                     mine = Mine(
                         self.x + drop_x * spawn_offset,
                         self.y + drop_y * spawn_offset,
-                        self.z + drop_z * spawn_offset,
-                        0, 0, 0
+                        self.z + drop_z * spawn_offset
                     )
-                    mine.owner = self
-                    global_projectiles.append(mine)
+                    mine.spawn_immunity_timer = 10
+                    global_enemies.append(mine)
             
             if self.bombing_timer <= 0:
                 self.state = 'traveling'
