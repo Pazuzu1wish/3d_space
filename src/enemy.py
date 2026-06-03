@@ -12,9 +12,10 @@ from src.math_engine import (
 from src.constants import (
     MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR,
     DRONE_DETONATION_RANGE, DRONE_EXPLOSION_RADIUS, DRONE_MAX_DAMAGE,
-    BARREL_ROLL_DURATION, PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY
-
+    BARREL_ROLL_DURATION, PLAYER_COLLISION_RADIUS, SNIPER_ACCURACY,
+    PLAYER_COLLISION_RADIUS
 )
+
 from src.projectile import (
     MachineGunBolt, HomingBolt, SniperBeam,
     CorvetteTurret, Mine, StealthShotgun
@@ -806,6 +807,12 @@ class Dogfighter(Enemy):
     def _fire_projectile(self, aim_dir, global_projectiles, w_type='mg'):
         if global_projectiles is None: return
 
+        # Offset spawn position outside the ship's hit radius to prevent self-collision
+        spawn_offset = self.hit_radius + 20.0
+        ox = self.x + aim_dir[0] * spawn_offset
+        oy = self.y + aim_dir[1] * spawn_offset
+        oz = self.z + aim_dir[2] * spawn_offset
+
         if w_type == 'mg':
             proj_speed = 15000
             spread = 0.13
@@ -819,9 +826,7 @@ class Dogfighter(Enemy):
             vy = ay * proj_speed + self.vy * 0.3
             vz = az * proj_speed + self.vz * 0.3
 
-            bolt = MachineGunBolt(
-                self.x, self.y, self.z, vx, vy, vz
-            )
+            bolt = MachineGunBolt(ox, oy, oz, vx, vy, vz)
             bolt.owner = self
             global_projectiles.append(bolt)
 
@@ -831,9 +836,7 @@ class Dogfighter(Enemy):
             vy = aim_dir[1] * proj_speed + self.vy * 0.5
             vz = aim_dir[2] * proj_speed + self.vz * 0.5
 
-            bolt = HomingBolt(
-                self.x, self.y, self.z, vx, vy, vz
-            )
+            bolt = HomingBolt(ox, oy, oz, vx, vy, vz)
             bolt.owner = self
             global_projectiles.append(bolt)
 
@@ -1011,8 +1014,11 @@ class Sniper(Enemy):
                     
                     # spawn visual beam regardless of hit
                     if global_projectiles is not None:
+                        spawn_offset = self.hit_radius + 20.0
                         global_projectiles.append(SniperBeam(
-                            self.x, self.y, self.z,
+                            self.x + self.forward[0] * spawn_offset,
+                            self.y + self.forward[1] * spawn_offset,
+                            self.z + self.forward[2] * spawn_offset,
                             self.forward[0] * 32000,
                             self.forward[1] * 32000,
                             self.forward[2] * 32000
@@ -1215,8 +1221,11 @@ class Corvette(Enemy):
                 n = math.sqrt(ax * ax + ay * ay + az * az) or 1
                 ax, ay, az = ax / n, ay / n, az / n
 
+                spawn_offset = self.hit_radius + 20.0
                 bolt = CorvetteTurret(
-                    self.x, self.y, self.z,
+                    self.x + ax * spawn_offset,
+                    self.y + ay * spawn_offset,
+                    self.z + az * spawn_offset,
                     ax * 4000 + self.vx * 0.5,
                     ay * 4000 + self.vy * 0.5,
                     az * 4000 + self.vz * 0.5
@@ -1363,7 +1372,7 @@ class Minelayer(Enemy):
         elif self.state == 'bombing':
             self.stealthed = False
             self.base_color = self.visible_color
-            self.hit_radius = 100.0
+            self.hit_radius = 200.0
             
             # Fly across
             target_x, target_y, target_z = px - p_fwd[0] * 3000, py - p_fwd[1] * 3000, pz - p_fwd[2] * 3000
@@ -1371,7 +1380,20 @@ class Minelayer(Enemy):
             self.bombing_timer -= dt
             if int(self.bombing_timer * 8) % 8 == 0 and random.random() < 0.3:
                 if global_projectiles is not None:
-                    mine = Mine(self.x, self.y, self.z, 0, 0, 0)
+                    # Determine safe drop direction (directly opposite to current velocity)
+                    v_mag = math.sqrt(self.vx ** 2 + self.vy ** 2 + self.vz ** 2)
+                    if v_mag > 1.0:
+                        drop_x, drop_y, drop_z = -self.vx / v_mag, -self.vy / v_mag, -self.vz / v_mag
+                    else:
+                        # Fallback if stationary
+                        drop_x, drop_y, drop_z = -self.up[0], -self.up[1], -self.up[2]
+                    spawn_offset = self.hit_radius + 50.0
+                    mine = Mine(
+                        self.x + drop_x * spawn_offset,
+                        self.y + drop_y * spawn_offset,
+                        self.z + drop_z * spawn_offset,
+                        0, 0, 0
+                    )
                     mine.owner = self
                     global_projectiles.append(mine)
             
@@ -1382,7 +1404,7 @@ class Minelayer(Enemy):
         elif self.state == 'defensive':
             self.stealthed = False
             self.base_color = self.visible_color
-            self.hit_radius = 100.0
+            self.hit_radius = 200.0
             
             # Close in somewhat aggressively if still far, then back away
             if dist > 2000:
@@ -1394,10 +1416,16 @@ class Minelayer(Enemy):
             if self.heavy_mg_timer <= 0:
                 self.heavy_mg_timer = 0.15 # Faster refire
                 if global_projectiles is not None:
+                    spawn_offset = self.hit_radius + 20.0
                     proj_speed = 12000
                     spread = 0.08
                     ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
-                    bolt = MachineGunBolt(self.x, self.y, self.z, ax * proj_speed, ay * proj_speed, az * proj_speed)
+                    bolt = MachineGunBolt(
+                        self.x + ax * spawn_offset,
+                        self.y + ay * spawn_offset,
+                        self.z + az * spawn_offset,
+                        ax * proj_speed, ay * proj_speed, az * proj_speed
+                    )
                     bolt.damage = 4.0  # Even heavier damage
                     bolt.color = (255, 100, 0)
                     bolt.owner = self
@@ -1540,16 +1568,19 @@ class StealthInterceptor(Enemy):
                     self.state = 'attacking'
                     self.stealthed = False
                     self.base_color = (100, 100, 255)
-                    self.hit_radius = 100.0
+                    self.hit_radius = 200.0
 
         elif self.state == 'attacking':
             target_x, target_y, target_z = px, py, pz
             if global_projectiles is not None:
+                spawn_offset = self.hit_radius + 10.0
                 for _ in range(7):
                     spread = WEAPON_SPREAD
                     ax, ay, az = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
                     bolt = StealthShotgun(
-                        self.x, self.y, self.z,
+                        self.x + ax * spawn_offset,
+                        self.y + ay * spawn_offset,
+                        self.z + az * spawn_offset,
                         ax * 3000, ay * 3000, az * 3000
                     )
                     bolt.owner = self
@@ -1557,7 +1588,7 @@ class StealthInterceptor(Enemy):
             self.state = 'fleeing'
             self.stealthed = True
             self.base_color = (20, 20, 30)
-            self.hit_radius = 200.0
+            self.hit_radius = 100.0
 
         elif self.state == 'fleeing':
             self.stealthed = True
@@ -1715,7 +1746,6 @@ class Carrier(Enemy):
         if self.state == 'charging':
             if self.sniper_timer <= 0:
                 # Fire Raycast
-                from src.constants import PLAYER_COLLISION_RADIUS
                 dx_p, dy_p, dz_p = px - self.x, py - self.y, pz - self.z
                 dist_f = math.sqrt(dx_p*dx_p + dy_p*dy_p + dz_p*dz_p) or 1.0
                 # closest approach
@@ -1729,7 +1759,13 @@ class Carrier(Enemy):
                     player.take_damage(20)
                 
                 if global_projectiles is not None:
-                    beam = SniperBeam(self.x, self.y, self.z, self.forward[0]*32000, self.forward[1]*32000, self.forward[2]*32000)
+                    spawn_offset = self.hit_radius + 20.0
+                    beam = SniperBeam(
+                        self.x + self.forward[0] * spawn_offset,
+                        self.y + self.forward[1] * spawn_offset,
+                        self.z + self.forward[2] * spawn_offset,
+                        self.forward[0] * 32000, self.forward[1] * 32000, self.forward[2] * 32000
+                    )
                     beam.owner = self
                     global_projectiles.append(beam)
                 
@@ -1743,20 +1779,32 @@ class Carrier(Enemy):
         if self.bolt_timer <= 0 and dist < 8000:
             self.bolt_timer = 4.0
             if global_projectiles is not None:
+                spawn_offset = self.hit_radius + 20.0
                 for _ in range(3):
                     spread = 0.3
                     bx, by, bz = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
-                    bolt = HomingBolt(self.x, self.y, self.z, bx * 2000, by * 2000, bz * 2000)
+                    bolt = HomingBolt(
+                        self.x + bx * spawn_offset,
+                        self.y + by * spawn_offset,
+                        self.z + bz * spawn_offset,
+                        bx * 2000, by * 2000, bz * 2000
+                    )
                     bolt.owner = self
                     global_projectiles.append(bolt)
 
         # 3. Point Defense MG
         if self.mg_timer <= 0 and dist < 4000:
             self.mg_timer = 0.1
+            spawn_offset = self.hit_radius + 20.0
             if global_projectiles is not None:
                 spread = 0.1
                 mx, my, mz = nx + random.uniform(-spread, spread), ny + random.uniform(-spread, spread), nz + random.uniform(-spread, spread)
-                bolt = MachineGunBolt(self.x, self.y, self.z, mx * 8000, my * 8000, mz * 8000)
+                bolt = MachineGunBolt(
+                    self.x + mx * spawn_offset,
+                    self.y + my * spawn_offset,
+                    self.z + mz * spawn_offset,
+                    mx * 8000, my * 8000, mz * 8000
+                )
                 bolt.owner = self
                 global_projectiles.append(bolt)
 
