@@ -142,7 +142,7 @@ class Mine(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(
             x, y, z, vx, vy, vz,
-            life=25.0, damage=50.0, color=(255, 30, 30), size_mult=6.0, homing=False
+            life=25.0, damage=100.0, color=(255, 30, 30), size_mult=10.0, homing=False
         )
 
     def submit_to_renderer(self, renderer):
@@ -153,10 +153,10 @@ class Mine(EnemyProjectile):
 
     def check_player_collision(self, player, particles):
         dist = math.dist((self.x, self.y, self.z), player.pos)
-        EXPLOSION_RADIUS = 400.0
+        EXPLOSION_RADIUS = 2000.0
         if dist < EXPLOSION_RADIUS:
             # Damage falloff: 100% damage at 0 distance, 0% at EXPLOSION_RADIUS
-            falloff = 1.0 - (dist / EXPLOSION_RADIUS)
+            falloff = 1.0 - (dist / EXPLOSION_RADIUS * .8)
             actual_damage = self.damage * falloff
             player.take_damage(actual_damage)
             self.life = 0
