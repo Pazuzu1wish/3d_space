@@ -892,7 +892,7 @@ class PauseState(State):
 
         # Keyboard interactions
         elif event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_p, pygame.K_ESCAPE):
+            if event.key in (pygame.K_p):
                 manager.pop()
             elif event.key in (pygame.K_UP, pygame.K_w):
                 self.selected_item = (self.selected_item - 1) % len(self.menu_items)
