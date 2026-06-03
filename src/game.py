@@ -107,7 +107,7 @@ class GameplayState(State):
         
         # Environment & Entities
         self.stars = [Star(self.player.pos) for _ in range(200)]
-        self.nebulae = NebulaSystem(count=10, area_radius=30000)
+        self.nebulae = NebulaSystem(count=2, area_radius=30000)
         self.enemies = []
         self.enemy_projectiles = []
         self.player_missiles = []
@@ -115,7 +115,7 @@ class GameplayState(State):
 
         # Spawn Asteroids
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=0, radius=25000)
+            field = AsteroidField(enc['origin'], count=20, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
