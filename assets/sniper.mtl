@@ -1,0 +1,9 @@
+newmtl sniper_mat_1
+Kd 0.8627 0.1176 0.1176
+
+newmtl sniper_mat_2
+Kd 0.8235 0.6471 0.1765
+
+newmtl sniper_mat_3
+Kd 0.7059 0.7059 0.7451
+

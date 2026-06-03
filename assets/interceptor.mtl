@@ -1,0 +1,9 @@
+newmtl interceptor_mat_1
+Kd 0.3137 0.0000 0.4706
+
+newmtl interceptor_mat_2
+Kd 0.0588 0.0588 0.0784
+
+newmtl interceptor_mat_3
+Kd 0.0000 1.0000 1.0000
+

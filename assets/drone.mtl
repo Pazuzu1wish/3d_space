@@ -1,0 +1,9 @@
+newmtl drone_mat_1
+Kd 1.0000 0.1176 0.1176
+
+newmtl drone_mat_2
+Kd 1.0000 0.5490 0.0000
+
+newmtl drone_mat_3
+Kd 0.1569 0.1569 0.1765
+

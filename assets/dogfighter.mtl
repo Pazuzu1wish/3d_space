@@ -1,0 +1,9 @@
+newmtl dogfighter_mat_1
+Kd 0.7059 0.7059 0.7451
+
+newmtl dogfighter_mat_2
+Kd 0.1961 0.3137 1.0000
+
+newmtl dogfighter_mat_3
+Kd 0.0000 0.7059 0.7059
+

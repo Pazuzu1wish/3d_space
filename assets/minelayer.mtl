@@ -1,0 +1,9 @@
+newmtl minelayer_mat_1
+Kd 1.0000 0.8235 0.0000
+
+newmtl minelayer_mat_2
+Kd 0.1176 0.1176 0.1373
+
+newmtl minelayer_mat_3
+Kd 0.7059 0.2745 0.0784
+

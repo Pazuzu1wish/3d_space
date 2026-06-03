@@ -1,0 +1,33 @@
+mtllib carrier.mtl
+
+v 0 -20 800
+v 0 80 -200
+v 0 180 -450
+v -400 -20 -500
+v 400 -20 -500
+v -150 60 -500
+v 150 60 -500
+v -150 -80 -500
+v 150 -80 -500
+v 0 -120 -100
+
+usemtl carrier_mat_1
+f 1 6 4
+usemtl carrier_mat_2
+f 1 2 6
+f 1 7 2
+usemtl carrier_mat_1
+f 1 5 7
+usemtl carrier_mat_3
+f 2 3 6
+f 2 7 3
+f 6 3 7
+usemtl carrier_mat_1
+f 1 4 8
+f 1 8 10
+f 1 10 9
+f 1 9 5
+f 6 8 4
+f 7 5 9
+f 6 9 8
+f 6 7 9
