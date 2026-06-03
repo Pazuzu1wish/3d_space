@@ -13,7 +13,7 @@ from src.star import Star
 from src.player import Player
 from src.laser import Laser
 from src.spatial_partition import SpatialPartition
-from src.asteroid import AsteroidField
+from src.asteroid import AsteroidField, init_asteroid_bank
 from src.nebula import NebulaSystem
 from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
@@ -107,8 +107,8 @@ class GameplayState(State):
         self.aim_scope = AimScope(self.camera, self.laser_pool, self.particle_pool)
         
         # Environment & Entities
-        self.stars = [Star(self.player.pos) for _ in range(200)]
-        self.nebulae = NebulaSystem(count=2, area_radius=30000)
+        self.stars = [Star(self.player.pos) for _ in range(150)]
+        self.nebulae = NebulaSystem(count=6, area_radius=30000)
         self.enemies = []
         self.enemy_projectiles = []
         self.player_missiles = []
@@ -116,7 +116,7 @@ class GameplayState(State):
 
         # Spawn Asteroids
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=2, radius=25000)
+            field = AsteroidField(enc['origin'], count=12, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
@@ -1085,6 +1085,7 @@ class Game:
 
         # Pre-load all ship OBJ/MTL files so spawning never hits the disk
         preload_all_meshes()
+        init_asteroid_bank()
 
         # Shared Audio Resource Setup
         self.sound_folder = "assets/sounds/"
