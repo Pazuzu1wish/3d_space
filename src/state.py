@@ -5,7 +5,6 @@ import numpy as np
 from src.save_data import RunResult, SaveData
 from src.camera import Camera
 from src.renderer import RenderPipeline, process_faces_batch_numba
-
 from src.cockpit import draw_cockpit_hud
 from src.controller import DS4Input
 from src.star import Star
@@ -30,7 +29,6 @@ from src.sound_handler import SoundHandler
 from src.ship_ai import ShipAI
 from src.title_screen import TitleCinematic
 from src.hud_data import HUDData
-
 from src.aim_scope import AimScope
 from src.math_engine import world_to_camera_batch, project_to_screen_batch, get_forward_from_quat, quat_from_axis_angle, quat_mul
 from collections import Counter

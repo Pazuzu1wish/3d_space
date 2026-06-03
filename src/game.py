@@ -19,32 +19,10 @@ class Game:
     def __init__(self):
         pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
         pygame.init()
-
-        # Pre-load all ship OBJ/MTL files so spawning never hits the disk
         preload_all_meshes()
         init_asteroid_bank()
-
-        # Shared Audio Resource Setup
-        self.sound_folder = "assets/sounds/"
-        self.sound = SoundHandler()
-        self.sound.load_sfx("laser", self.sound_folder + "laser.wav")
-        self.sound.load_sfx("laser_strained", self.sound_folder + "laser_strained.wav")
-        self.sound.load_sfx("missile", self.sound_folder + "missile.wav")
-        self.sound.load_sfx("explosion", self.sound_folder + "explosion.wav")
-        self.sound.load_sfx("shield_hit", self.sound_folder + "shield_hit.wav")
-        self.sound.load_sfx("armor_hit", self.sound_folder + "armor_hit.wav")
-        self.sound.load_sfx("engine_hum_low", self.sound_folder + "engine_hum_low.wav")
-        self.sound.load_sfx("engine_hum_mid", self.sound_folder + "engine_hum_mid.wav")
-        self.sound.load_sfx("engine_hum_high", self.sound_folder + "engine_hum_high.wav")
-        self.sound.load_sfx("engine_hum_overdrive", self.sound_folder + "engine_hum_overdrive.wav")
-        
-        self.sound.start_engine_hum()
-
-        self.music_file = choice([
-            self.sound_folder + "bgm_drone.wav",
-            self.sound_folder + "bgm_drone2.wav",
-            self.sound_folder + "bgm_drone3.wav"
-        ])
+        self.init_sounds()
+        self.select_random_bgm()
 
         # Window & Clock
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT
@@ -63,6 +41,46 @@ class Game:
         self.state_manager.push(TitleState(self))
         self.running = True
 
+
+
+    def setup_pygame(self):
+        pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
+        pygame.init()
+        self.screen = pygame.display.set_mode((self.W, self.H))
+        pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
+        self.clock = pygame.time.Clock()
+
+# ──────────────────────────────────────────────
+# Sound Init
+# ──────────────────────────────────────────────
+
+    def init_sounds(self):
+        # Shared Audio Resource Setup
+        self.sound_folder = "assets/sounds/"
+        self.sound = SoundHandler()
+        self.sound.load_sfx("laser", self.sound_folder + "laser.wav")
+        self.sound.load_sfx("laser_strained", self.sound_folder + "laser_strained.wav")
+        self.sound.load_sfx("missile", self.sound_folder + "missile.wav")
+        self.sound.load_sfx("explosion", self.sound_folder + "explosion.wav")
+        self.sound.load_sfx("shield_hit", self.sound_folder + "shield_hit.wav")
+        self.sound.load_sfx("armor_hit", self.sound_folder + "armor_hit.wav")
+        self.sound.load_sfx("engine_hum_low", self.sound_folder + "engine_hum_low.wav")
+        self.sound.load_sfx("engine_hum_mid", self.sound_folder + "engine_hum_mid.wav")
+        self.sound.load_sfx("engine_hum_high", self.sound_folder + "engine_hum_high.wav")
+        self.sound.load_sfx("engine_hum_overdrive", self.sound_folder + "engine_hum_overdrive.wav")
+        self.sound.start_engine_hum()
+
+# ──────────────────────────────────────────────
+# Random bgm selection
+# ──────────────────────────────────────────────
+
+    def select_random_bgm(self):
+        self.music_file = choice([
+            self.sound_folder + "bgm_drone.wav",
+            self.sound_folder + "bgm_drone2.wav",
+            self.sound_folder + "bgm_drone3.wav"
+        ])
+        return self.music_file
 
 # ──────────────────────────────────────────────
 # Main Loop
