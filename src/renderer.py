@@ -317,6 +317,33 @@ class RenderPipeline:
                 (c1z + c2z) / 2.0, 'line', (s1x, s1y), (s2x, s2y), color, thickness
             ))
 
+    def submit_baked_mesh(self, pos, right, up, forward, baked_mesh, layer='opaque', scale=1.0):
+        """
+        Hyper-fast submission of pre-compiled numpy meshes.
+        Zero allocation path. Bypasses the LRU dictionary cache entirely.
+        """
+        # Fast frustum culling using precomputed radius
+        if not self.camera.sphere_in_frustum(pos[0], pos[1], pos[2], baked_mesh.radius * scale):
+            return
+
+        # Local → World (vectorised)
+        basis = np.array([right, up, forward], dtype=np.float64)
+        pos_arr = np.array(pos, dtype=np.float64)
+
+        # Apply scaling and rotation simultaneously
+        world_verts = (baked_mesh.v_data * scale) @ basis + pos_arr
+
+        # World → Camera (Numba batch)
+        cam_verts = self.camera.world_to_camera_batch(world_verts)
+
+        # Project (Numba batch)
+        projected = self.camera.project_batch(cam_verts)
+
+        # Enqueue for batched Numba processing
+        self._mesh_submissions.append(
+            (baked_mesh.f_idx, baked_mesh.f_col, cam_verts, projected, layer)
+        )
+
     def render(self, surface):
         """Sort and render all submitted primitives by layer."""
         self._flush_mesh_submissions()
