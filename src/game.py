@@ -41,15 +41,6 @@ class Game:
         self.state_manager.push(TitleState(self))
         self.running = True
 
-
-
-    def setup_pygame(self):
-        pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
-        pygame.init()
-        self.screen = pygame.display.set_mode((self.W, self.H))
-        pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
-        self.clock = pygame.time.Clock()
-
 # ──────────────────────────────────────────────
 # Sound Init
 # ──────────────────────────────────────────────
