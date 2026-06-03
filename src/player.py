@@ -6,6 +6,7 @@ from src.weapon_system import fire_lasers, fire_missile
 from src.physics import player_integrate
 from src.math_engine import quat_identity, rotate_pitch, rotate_yaw, rotate_roll, get_forward_from_quat, get_basis_from_quat
 from src.object_pool import TrailPool
+from src.mesh_loader import get_ship_mesh
 from src.constants import (
     PLAYER_MAX_HP, HIT_FLASH_DURATION, PLAYER_MISSILE_MAX_AMMO,
     DODGE_COOLDOWN, DODGE_IMPULSE, DODGE_THRESHOLD, DODGE_FLASH_DURATION,
@@ -85,235 +86,20 @@ class Player:
         ]
         self.trail_color_index = 0
 
-        # ── PREMIUM SHIP GEOMETRY ─────────────────────────────────────────────────
-        # +Z forward, +Y up, +X right.  All faces convex outward.
-        self.verts = {
-            # Needle nose
-            'needle':       (0.0,   0.0,   90.0),
+        # ── SHIP MESH (loaded from assets/player.obj + player.mtl) ──────────
+        self.baked_mesh = get_ship_mesh('player')
 
-            # Forward fuselage ring
-            'fwd_top':      (0.0,   9.0,   55.0),
-            'fwd_l':        (-11.0, 2.0,   55.0),
-            'fwd_r':        (11.0,  2.0,   55.0),
-            'fwd_bot':      (0.0,  -7.0,   55.0),
-
-            # Dorsal spine ridge (accent stripe surface)
-            'spine_fwd':    (0.0,  18.0,   35.0),
-            'spine_mid':    (0.0,  20.0,    0.0),
-            'spine_aft':    (0.0,  16.0,  -28.0),
-
-            # Mid fuselage ring
-            'mid_top':      (0.0,  14.0,   15.0),
-            'mid_l':        (-16.0, -1.0,  15.0),
-            'mid_r':        (16.0,  -1.0,  15.0),
-            'mid_bot':      (0.0,  -13.0,  15.0),
-
-            # Aft fuselage ring
-            'aft_top':      (0.0,  10.0,  -38.0),
-            'aft_l':        (-14.0, -2.0, -38.0),
-            'aft_r':        (14.0,  -2.0, -38.0),
-            'aft_bot':      (0.0,  -10.0, -38.0),
-
-            # Canards
-            'cl_base_f':    (-13.0,  3.0,  48.0),
-            'cl_base_r':    (-13.0, -1.0,  36.0),
-            'cl_tip':       (-28.0, -2.0,  42.0),
-            'cr_base_f':    (13.0,   3.0,  48.0),
-            'cr_base_r':    (13.0,  -1.0,  36.0),
-            'cr_tip':       (28.0,  -2.0,  42.0),
-
-            # Wing roots
-            'wrl_fwd':      (-16.0,  0.0,  10.0),
-            'wrr_fwd':      (16.0,   0.0,  10.0),
-            'wrl_aft':      (-14.0, -3.0, -30.0),
-            'wrr_aft':      (14.0,  -3.0, -30.0),
-
-            # Wing mid panels (dihedral break, swept)
-            'wml_le':       (-42.0,  1.0,  20.0),
-            'wmr_le':       (42.0,   1.0,  20.0),
-            'wml_tip':      (-58.0, -5.0,  -8.0),
-            'wmr_tip':      (58.0,  -5.0,  -8.0),
-            'wml_te':       (-48.0, -6.0, -28.0),
-            'wmr_te':       (48.0,  -6.0, -28.0),
-
-            # Wing outer swept tips
-            'wtl':          (-82.0, -10.0, -15.0),
-            'wtr':          (82.0,  -10.0, -15.0),
-            'wtl_te':       (-68.0, -12.0, -40.0),
-            'wtr_te':       (68.0,  -12.0, -40.0),
-
-            # Engine nacelles — left pair
-            'enl_top_f':    (-19.0,  1.0,  -30.0),
-            'enl_bot_f':    (-19.0, -9.0,  -30.0),
-            'enl_out_f':    (-26.0, -4.0,  -30.0),
-            'enl_in_f':     (-12.0, -4.0,  -30.0),
-            'enl_top_r':    (-19.0,  1.0,  -58.0),
-            'enl_bot_r':    (-19.0, -9.0,  -58.0),
-            'enl_out_r':    (-26.0, -4.0,  -58.0),
-            'enl_in_r':     (-12.0, -4.0,  -58.0),
-
-            # Engine nacelles — right pair
-            'enr_top_f':    (19.0,   1.0,  -30.0),
-            'enr_bot_f':    (19.0,  -9.0,  -30.0),
-            'enr_out_f':    (26.0,  -4.0,  -30.0),
-            'enr_in_f':     (12.0,  -4.0,  -30.0),
-            'enr_top_r':    (19.0,   1.0,  -58.0),
-            'enr_bot_r':    (19.0,  -9.0,  -58.0),
-            'enr_out_r':    (26.0,  -4.0,  -58.0),
-            'enr_in_r':     (12.0,  -4.0,  -58.0),
-
-            # V-tail (split, canted outward +X)
-            'vtl_base':     (-8.0,  10.0, -38.0),
-            'vtr_base':     (8.0,   10.0, -38.0),
-            'vtl_tip':      (-30.0, 32.0, -60.0),
-            'vtr_tip':      (30.0,  32.0, -60.0),
-            'vtl_aft':      (-12.0,  8.0, -60.0),
-            'vtr_aft':      (12.0,   8.0, -60.0),
-
-            # Legacy aliases — engine_offsets and any code referencing old keys still work
-            'eng_l':        (-19.0, -4.0, -58.0),
-            'eng_r':        (19.0,  -4.0, -58.0),
-            'nose':         (0.0,   0.0,   90.0),   # = needle
-            'cockpit':      (0.0,   14.0,  20.0),   # ≈ spine_fwd
-            'tail_top':     (0.0,   32.0, -60.0),   # ≈ vtl_tip midpoint
-            'tail_base':    (0.0,   10.0, -38.0),
-
-            
-
-            # -----------------------------------------------------
-            # LEFT CANARD LOWER
-            # -----------------------------------------------------
-            'cl_base_f_d': (-13.0,  1.0, 48.0),
-            'cl_base_r_d': (-13.0, -3.0, 36.0),
-            'cl_tip_d':    (-28.0, -4.0, 42.0),
-
-            # RIGHT CANARD LOWER
-            'cr_base_f_d': (13.0,  1.0, 48.0),
-            'cr_base_r_d': (13.0, -3.0, 36.0),
-            'cr_tip_d':    (28.0, -4.0, 42.0),
-
-            # -----------------------------------------------------
-            # LEFT MID WING LOWER
-            # -----------------------------------------------------
-            'wml_le_d':   (-42.0, -1.5,  20.0),
-            'wml_tip_d':  (-58.0, -7.5,  -8.0),
-            'wml_te_d':   (-48.0, -8.0, -28.0),
-
-            # LEFT MID WING UPPER
-            'wml_le_u':   (-42.0,  2.5,  20.0),
-            'wml_tip_u':  (-58.0, -3.0,  -8.0),
-            'wml_te_u':   (-48.0, -4.0, -28.0),
-
-            # -----------------------------------------------------
-            # RIGHT MID WING LOWER
-            # -----------------------------------------------------
-            'wmr_le_d':   (42.0, -1.5,  20.0),
-            'wmr_tip_d':  (58.0, -7.5,  -8.0),
-            'wmr_te_d':   (48.0, -8.0, -28.0),
-
-            # RIGHT MID WING UPPER
-            'wmr_le_u':   (42.0,  2.5,  20.0),
-            'wmr_tip_u':  (58.0, -3.0,  -8.0),
-            'wmr_te_u':   (48.0, -4.0, -28.0),
-
-            # -----------------------------------------------------
-            # OUTER WING TIP THICKNESS
-            # -----------------------------------------------------
-            'wtl_u':      (-82.0, -8.0,  -15.0),
-            'wtl_d':      (-82.0, -12.0, -15.0),
-            'wtl_te_u':   (-68.0, -10.0, -40.0),
-            'wtl_te_d':   (-68.0, -13.0, -40.0),
-
-            'wtr_u':      (82.0, -8.0,  -15.0),
-            'wtr_d':      (82.0, -12.0, -15.0),
-            'wtr_te_u':   (68.0, -10.0, -40.0),
-            'wtr_te_d':   (68.0, -13.0, -40.0),
-
-            # -----------------------------------------------------
-            # ENGINE EXHAUSTS
-            # -----------------------------------------------------
-            'enl_exhaust': (-19.0, -4.0, -64.0),
-            'enr_exhaust': (19.0,  -4.0, -64.0),
-
-            # -----------------------------------------------------
-            # VENTRAL KEEL
-            # -----------------------------------------------------
-            'keel_mid': (0.0, -18.0,  -5.0),
-            'keel_aft': (0.0, -15.0, -35.0),
-        }
-
-        C_BODY = (200, 200, 210)
-        C_DARK = (45, 45, 50)
-
+        # Backwards-compat shim: rebuild verts dict and faces list from the
+        # BakedMesh so the 3D viewer and any other tool that reads .verts/.faces
+        # continues to work without modification.
         accent_color = self.trail_color
-
-        C_ACCENT = accent_color # Or accent_color
-
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['needle', 'fwd_top', 'fwd_l'], 'color': (200, 200, 210)},  # 0 OK
-            {'v': ['needle', 'fwd_r', 'fwd_top'], 'color': (200, 200, 210)},  # 1 OK
-            {'v': ['needle', 'fwd_bot', 'fwd_r'], 'color': (45, 45, 50)},  # 2 OK
-            {'v': ['needle', 'fwd_l', 'fwd_bot'], 'color': (45, 45, 50)},  # 3 OK
-            {'v': ['fwd_top', 'spine_mid', 'spine_fwd'], 'color': (0, 255, 200)},  # 4 EDGE
-            {'v': ['spine_fwd', 'spine_mid', 'mid_top'], 'color': (0, 255, 200)},  # 5 EDGE
-            {'v': ['spine_mid', 'spine_aft', 'mid_top'], 'color': (0, 255, 200)},  # 6 EDGE
-            {'v': ['spine_aft', 'aft_top', 'mid_top'], 'color': (0, 255, 200)},  # 7 EDGE
-            {'v': ['fwd_top', 'spine_fwd', 'fwd_l'], 'color': (200, 200, 210)},  # 8 OK
-            {'v': ['fwd_top', 'fwd_r', 'spine_fwd'], 'color': (200, 200, 210)},  # 9 OK
-            {'v': ['fwd_l', 'mid_l', 'fwd_bot'], 'color': (45, 45, 50)},  # 10 OK
-            {'v': ['fwd_r', 'fwd_bot', 'mid_r'], 'color': (45, 45, 50)},  # 11 OK
-            {'v': ['fwd_bot', 'mid_bot', 'mid_r'], 'color': (45, 45, 50)},  # 12 OK
-            {'v': ['fwd_bot', 'mid_l', 'mid_bot'], 'color': (45, 45, 50)},  # 13 OK
-            {'v': ['mid_top', 'mid_l', 'aft_top'], 'color': (200, 200, 210)},  # 14 FLIP?
-            {'v': ['aft_top', 'mid_l', 'aft_l'], 'color': (200, 200, 210)},  # 15 FLIP?
-            {'v': ['mid_top', 'aft_top', 'mid_r'], 'color': (200, 200, 210)},  # 16 FLIP?
-            {'v': ['aft_top', 'aft_r', 'mid_r'], 'color': (200, 200, 210)},  # 17 FLIP?
-            {'v': ['mid_l', 'aft_l', 'mid_bot'], 'color': (45, 45, 50)},  # 18 OK
-            {'v': ['aft_l', 'aft_bot', 'mid_bot'], 'color': (45, 45, 50)},  # 19 OK
-            {'v': ['mid_r', 'mid_bot', 'aft_r'], 'color': (45, 45, 50)},  # 20 OK
-            {'v': ['aft_r', 'mid_bot', 'aft_bot'], 'color': (45, 45, 50)},  # 21 OK
-            {'v': ['cl_base_f', 'cl_tip', 'cl_base_r'], 'color': (0, 255, 200)},  # 22 OK
-            {'v': ['cl_base_r', 'cl_tip', 'cl_base_f'], 'color': (0, 255, 200)},  # 23 FLIP?
-            {'v': ['cr_base_f', 'cr_base_r', 'cr_tip'], 'color': (0, 255, 200)},  # 24 OK
-            {'v': ['cr_base_r', 'cr_base_f', 'cr_tip'], 'color': (0, 255, 200)},  # 25 FLIP?
-            {'v': ['wrl_fwd', 'wml_tip', 'wml_le'], 'color': (200, 200, 210)},  # 26 FLIP?
-            {'v': ['wrl_fwd', 'mid_l', 'wml_le'], 'color': (200, 200, 210)},  # 27 FLIP?
-            {'v': ['wrl_fwd', 'wrl_aft', 'wml_tip'], 'color': (45, 45, 50)},  # 28 OK
-            {'v': ['wrl_aft', 'wml_te', 'wml_tip'], 'color': (45, 45, 50)},  # 29 OK
-            {'v': ['wrr_fwd', 'wmr_le', 'wmr_tip'], 'color': (200, 200, 210)},  # 30 FLIP?
-            {'v': ['wrr_fwd', 'mid_r', 'wmr_le'], 'color': (200, 200, 210)},  # 31 OK
-            {'v': ['wrr_fwd', 'wmr_tip', 'wrr_aft'], 'color': (45, 45, 50)},  # 32 OK
-            {'v': ['wrr_aft', 'wmr_tip', 'wmr_te'], 'color': (45, 45, 50)},  # 33 OK
-            {'v': ['wml_le', 'wml_tip', 'wtl'], 'color': (0, 255, 200)},  # 34 OK
-            {'v': ['wml_tip', 'wtl_te', 'wtl'], 'color': (0, 255, 200)},  # 35 OK
-            {'v': ['wml_tip', 'wml_te', 'wtl_te'], 'color': (200, 200, 210)},  # 36 OK
-            {'v': ['wmr_le', 'wtr', 'wmr_tip'], 'color': (0, 255, 200)},  # 37 OK
-            {'v': ['wmr_tip', 'wtr', 'wtr_te'], 'color': (0, 255, 200)},  # 38 OK
-            {'v': ['wmr_tip', 'wtr_te', 'wmr_te'], 'color': (200, 200, 210)},  # 39 OK
-            {'v': ['enl_top_f', 'enl_in_f', 'enl_top_r'], 'color': (200, 200, 210)},  # 40 FLIP?
-            {'v': ['enl_top_r', 'enl_in_f', 'enl_in_r'], 'color': (200, 200, 210)},  # 41 FLIP?
-            {'v': ['enl_out_f', 'enl_top_f', 'enl_out_r'], 'color': (200, 200, 210)},  # 42 OK
-            {'v': ['enl_out_r', 'enl_top_f', 'enl_top_r'], 'color': (200, 200, 210)},  # 43 OK
-            {'v': ['enl_bot_f', 'enl_out_f', 'enl_bot_r'], 'color': (45, 45, 50)},  # 44 OK
-            {'v': ['enl_bot_r', 'enl_out_f', 'enl_out_r'], 'color': (45, 45, 50)},  # 45 OK
-            {'v': ['enl_in_f', 'enl_bot_f', 'enl_in_r'], 'color': (45, 45, 50)},  # 46 FLIP?
-            {'v': ['enl_in_r', 'enl_bot_f', 'enl_bot_r'], 'color': (45, 45, 50)},  # 47 FLIP?
-            {'v': ['enl_top_f', 'enl_bot_f', 'enl_in_f'], 'color': (0, 255, 200)},  # 48 FLIP?
-            {'v': ['enl_top_f', 'enl_out_f', 'enl_bot_f'], 'color': (0, 255, 200)},  # 49 FLIP?
-            {'v': ['enr_top_f', 'enr_top_r', 'enr_in_f'], 'color': (200, 200, 210)},  # 50 FLIP?
-            {'v': ['enr_top_r', 'enr_in_r', 'enr_in_f'], 'color': (200, 200, 210)},  # 51 FLIP?
-            {'v': ['enr_out_f', 'enr_out_r', 'enr_top_f'], 'color': (200, 200, 210)},  # 52 OK
-            {'v': ['enr_out_r', 'enr_top_r', 'enr_top_f'], 'color': (200, 200, 210)},  # 53 OK
-            {'v': ['enr_bot_f', 'enr_bot_r', 'enr_out_f'], 'color': (45, 45, 50)},  # 54 OK
-            {'v': ['enr_bot_r', 'enr_out_r', 'enr_out_f'], 'color': (45, 45, 50)},  # 55 OK
-            {'v': ['enr_in_f', 'enr_in_r', 'enr_bot_f'], 'color': (45, 45, 50)},  # 56 FLIP?
-            {'v': ['enr_in_r', 'enr_bot_r', 'enr_bot_f'], 'color': (45, 45, 50)},  # 57 FLIP?
-            {'v': ['enr_top_f', 'enr_in_f', 'enr_bot_f'], 'color': (0, 255, 200)},  # 58 FLIP?
-            {'v': ['enr_top_f', 'enr_bot_f', 'enr_out_f'], 'color': (0, 255, 200)},  # 59 FLIP?
-            {'v': ['vtl_base', 'vtl_tip', 'vtl_aft'], 'color': (0, 255, 200)},  # 60 FLIP?
-            {'v': ['vtl_aft', 'vtl_tip', 'vtl_base'], 'color': (200, 200, 210)},  # 61 OK
-            {'v': ['vtr_base', 'vtr_aft', 'vtr_tip'], 'color': (0, 255, 200)},  # 62 FLIP?
-            {'v': ['vtr_aft', 'vtr_base', 'vtr_tip'], 'color': (200, 200, 210)},  # 63 OK
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
     @property
@@ -336,23 +122,17 @@ class Player:
     def submit_to_renderer(self, renderer):
         # 1. Submit engine trail
         self._submit_engine_trail(renderer)
-        
-        # 2. Submit ship wireframe mesh
-        faces = self.faces  
 
-        # Get player basis vectors
+        # 2. Submit ship mesh via the fast baked-mesh path
         _, right, up = get_basis_from_quat(self.orientation)
         fx, fy, fz = get_forward_from_quat(self.orientation)
-        
-        # Submit player ship mesh to the renderer!
-        renderer.submit_mesh(
+
+        renderer.submit_baked_mesh(
             self.pos,
             right,
             up,
             (fx, fy, fz),
-            self.verts,
-            faces,
-            radius=150.0
+            self.baked_mesh,
         )
 
 

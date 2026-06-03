@@ -6,6 +6,7 @@ import numpy as np
 from src.save_data import RunResult, SaveData
 from src.camera import Camera
 from src.renderer import RenderPipeline, process_faces_batch_numba
+from src.mesh_loader import preload_all_meshes
 from src.cockpit import draw_cockpit_hud
 from src.controller import DS4Input
 from src.star import Star
@@ -115,7 +116,7 @@ class GameplayState(State):
 
         # Spawn Asteroids
         for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=20, radius=25000)
+            field = AsteroidField(enc['origin'], count=2, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
                 self.spatial.register_entity(a, (a.x, a.y, a.z))
@@ -1081,6 +1082,9 @@ class Game:
     def __init__(self):
         pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=2048)
         pygame.init()
+
+        # Pre-load all ship OBJ/MTL files so spawning never hits the disk
+        preload_all_meshes()
 
         # Shared Audio Resource Setup
         self.sound_folder = "assets/sounds/"

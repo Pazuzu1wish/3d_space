@@ -80,3 +80,58 @@ def load_obj(obj_path, default_color=(200, 200, 200)):
         f_col=np.array(f_col, dtype=np.int32),
         radius=max_radius
     )
+
+
+# ── Ship-model cache ─────────────────────────────────────────────────────────
+# Maps ship-type name -> BakedMesh loaded from assets/
+_SHIP_MESH_CACHE: dict[str, BakedMesh] = {}
+
+# Canonical map from ship-type name to OBJ file (relative to project root)
+_SHIP_OBJ_MAP = {
+    'carrier':    'assets/carrier.obj',
+    'corvette':   'assets/corvette.obj',
+    'dogfighter': 'assets/dogfighter.obj',
+    'drone':      'assets/drone.obj',
+    'interceptor':'assets/interceptor.obj',
+    'minelayer':  'assets/minelayer.obj',
+    'player':     'assets/player.obj',
+    'sniper':     'assets/sniper.obj',
+}
+
+
+def get_ship_mesh(ship_type: str) -> BakedMesh:
+    """Return the cached BakedMesh for *ship_type*.
+
+    Loads and parses the OBJ/MTL on the first call; subsequent calls return the
+    in-memory BakedMesh with zero I/O.
+
+    Raises ``FileNotFoundError`` if the OBJ file is missing.
+    """
+    if ship_type in _SHIP_MESH_CACHE:
+        return _SHIP_MESH_CACHE[ship_type]
+
+    obj_path = _SHIP_OBJ_MAP.get(ship_type)
+    if obj_path is None:
+        raise KeyError(f"[mesh_loader] Unknown ship type '{ship_type}'. "
+                       f"Valid types: {list(_SHIP_OBJ_MAP.keys())}")
+
+    if not os.path.exists(obj_path):
+        raise FileNotFoundError(f"[mesh_loader] OBJ file not found: '{obj_path}'. "
+                                f"Run tools/mesh_exporter.py first.")
+
+    mesh = load_obj(obj_path)
+    _SHIP_MESH_CACHE[ship_type] = mesh
+    return mesh
+
+
+def preload_all_meshes() -> None:
+    """Load every known ship OBJ/MTL into the cache up-front.
+
+    Call this once during startup (e.g. in Game.__init__) so that spawning an
+    enemy later never touches the disk.
+    """
+    for ship_type in _SHIP_OBJ_MAP:
+        try:
+            get_ship_mesh(ship_type)
+        except FileNotFoundError as e:
+            print(f"[mesh_loader] WARNING: {e}")

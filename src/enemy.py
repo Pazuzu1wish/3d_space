@@ -23,6 +23,7 @@ from src.projectile import (
 from src.physics import (newtonian_integrate, approaching_too_fast,
 update_orientation_from_velocity)
 from src.object_pool import TrailPool
+from src.mesh_loader import get_ship_mesh
 
 
 # ──────────────────────────────────────────────
@@ -360,7 +361,9 @@ class Enemy:
     def submit_to_renderer(self, renderer):
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
-        renderer.submit_mesh((self.x, self.y, self.z), self.right, self.up, self.forward, self.verts, self.faces, radius=self.hit_radius * 1.5)
+        renderer.submit_baked_mesh(
+            (self.x, self.y, self.z), self.right, self.up, self.forward, self.baked_mesh
+        )
 
 
 # ──────────────────────────────────────────────
@@ -466,28 +469,15 @@ class SuicideDrone(Enemy):
         self.hit_radius = 200
         self.did_detonate = False
 
-        # Colors
-        C_RED = (255, 30, 30)
-        C_ORANGE = (255, 140, 0)
-        C_DARK = (40, 40, 45)
-
-        # Jagged, aggressive spike shape
-        self.verts = {
-            'v0': (0, 0, 50),        # 0: Nose
-            'v1': (-15, -10, -20),   # 1: Bottom left
-            'v2': (15, -10, -20),    # 2: Bottom right
-            'v3': (0, 20, -20),      # 3: Top fin
-            'v4': (0, 0, -30),       # 4: Engine block
-        }
+        # Mesh loaded from assets/drone.obj + drone.mtl
+        self.baked_mesh = get_ship_mesh('drone')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            # Front spikes (Red/Orange)
-            {'v': ['v0', 'v3', 'v1'], 'color': C_RED},
-            {'v': ['v0', 'v2', 'v3'], 'color': C_RED},
-            {'v': ['v0', 'v1', 'v2'], 'color': C_ORANGE},
-            # Back tapers (Dark Grey)
-            {'v': ['v1', 'v3', 'v4'], 'color': C_DARK},
-            {'v': ['v3', 'v2', 'v4'], 'color': C_DARK},
-            {'v': ['v2', 'v1', 'v4'], 'color': C_DARK},
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
         self.spawn_immunity_timer = 20.0
@@ -634,55 +624,15 @@ class Dogfighter(Enemy):
         
         self._flicker = 0
 
-        # Colors
-        C_BLUE = (50, 80, 255)
-        C_SILVER = (180, 180, 190)
-        C_TEAL = (0, 180, 180)
-
-        self.verts = {
-            'v0': (0, 8, 105),       # 0: nose top
-            'v1': (0, -8, 105),      # 1: nose bot
-            'v2': (-30, 12, 30),     # 2: mid top L
-            'v3': (30, 12, 30),      # 3: mid top R
-            'v4': (-30, -12, 30),    # 4: mid bot L
-            'v5': (30, -12, 30),     # 5: mid bot R
-            'v6': (-120, -8, -30),   # 6: tip L
-            'v7': (120, -8, -30),    # 7: tip R
-            'v8': (-22, 10, -60),    # 8: tail top L
-            'v9': (22, 10, -60),     # 9: tail top R
-            'v10': (-22, -10, -60),  # 10: tail bot L
-            'v11': (22, -10, -60),   # 11: tail bot R
-            'v12': (0, 18, 60),      # 12: cockpit ridge
-            'v13': (-65, -6, -55),   # 13: inner trail L
-            'v14': (65, -6, -55),    # 14: inner trail R
-        }
+        # Mesh loaded from assets/dogfighter.obj + dogfighter.mtl
+        self.baked_mesh = get_ship_mesh('dogfighter')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['v0', 'v12', 'v2'], 'color': C_SILVER},  # 0  nose→ridge→mid-top-L
-            {'v': ['v0', 'v3', 'v12'], 'color': C_SILVER},  # 1  nose→mid-top-R→ridge
-            {'v': ['v1', 'v0', 'v4'], 'color': C_BLUE},    # 2  belly: nose-bot→nose-top→mid-bot-L
-            {'v': ['v1', 'v5', 'v0'], 'color': C_BLUE},    # 3  belly: nose-bot→mid-bot-R→nose-top
-            {'v': ['v1', 'v4', 'v5'], 'color': C_BLUE},    # 4  belly cap
-            {'v': ['v12', 'v8', 'v2'], 'color': C_BLUE},   # 5  ridge→tail-top-L→mid-top-L
-            {'v': ['v12', 'v9', 'v8'], 'color': C_SILVER}, # 6  ridge→tail-top-R→tail-top-L
-            {'v': ['v12', 'v3', 'v9'], 'color': C_BLUE},   # 7  ridge→mid-top-R→tail-top-R
-            {'v': ['v2', 'v8', 'v13'], 'color': C_TEAL},   # 8  mid-top-L→tail-top-L→inner-trail-L
-            {'v': ['v3', 'v14', 'v9'], 'color': C_TEAL},   # 9  mid-top-R→inner-trail-R→tail-top-R
-            {'v': ['v4', 'v13', 'v10'], 'color': C_BLUE},  # 10 mid-bot-L→inner-trail-L→tail-bot-L
-            {'v': ['v5', 'v11', 'v14'], 'color': C_BLUE},  # 11 mid-bot-R→tail-bot-R→inner-trail-R
-            {'v': ['v4', 'v10', 'v5'], 'color': C_BLUE},   # 12 belly: mid-bot-L→tail-bot-L→mid-bot-R
-            {'v': ['v5', 'v10', 'v11'], 'color': C_BLUE},  # 13 belly: mid-bot-R→tail-bot-L→tail-bot-R
-            {'v': ['v2', 'v13', 'v6'], 'color': C_TEAL},   # 14 wing upper L
-            {'v': ['v3', 'v7', 'v14'], 'color': C_TEAL},   # 15 wing upper R
-            {'v': ['v4', 'v6', 'v13'], 'color': C_BLUE},   # 16 wing lower L
-            {'v': ['v5', 'v14', 'v7'], 'color': C_BLUE},   # 17 wing lower R
-            {'v': ['v0', 'v2', 'v6'], 'color': C_SILVER},  # 18 leading edge upper L
-            {'v': ['v0', 'v7', 'v3'], 'color': C_SILVER},  # 19 leading edge upper R
-            {'v': ['v0', 'v6', 'v4'], 'color': C_BLUE},    # 20 leading edge lower L
-            {'v': ['v0', 'v5', 'v7'], 'color': C_BLUE},    # 21 leading edge lower R
-            {'v': ['v8', 'v11', 'v10'], 'color': C_SILVER}, # 22 tail cap
-            {'v': ['v8', 'v9', 'v11'], 'color': C_SILVER},  # 23 tail cap
-            {'v': ['v13', 'v8', 'v10'], 'color': C_TEAL},   # 24 inner-trail-L→tail
-            {'v': ['v14', 'v11', 'v9'], 'color': C_TEAL},   # 25 inner-trail-R→tail
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
 
@@ -885,62 +835,15 @@ class Sniper(Enemy):
         self.turn_rate      = 2.0
         self.drag           = 0.35
 
-        # Colors
-        C_GOLD = (210, 165, 45)
-        C_SILVER = (180, 180, 190)
-        C_RED = (220, 30, 30)
-
-        # Symmetrical, needle-like railgun ship
-        self.verts = {
-            'v0': (0, 0, 150),       # 0: nose tip
-            'v1': (-8, 0, 40),       # 1: barrel L
-            'v2': (8, 0, 40),        # 2: barrel R
-            'v3': (0, 8, 40),        # 3: barrel top
-            'v4': (0, -8, 40),       # 4: barrel bot
-            'v5': (-18, 12, 0),      # 5: shoulder TL
-            'v6': (18, 12, 0),       # 6: shoulder TR
-            'v7': (-18, -12, 0),     # 7: shoulder BL
-            'v8': (18, -12, 0),      # 8: shoulder BR
-            'v9': (-22, 16, -60),    # 9: rear TL
-            'v10': (22, 16, -60),    # 10: rear TR
-            'v11': (-22, -16, -60),  # 11: rear BL
-            'v12': (22, -16, -60),   # 12: rear BR
-            'v13': (-10, 8, -90),    # 13: tail TL
-            'v14': (10, 8, -90),     # 14: tail TR
-            'v15': (-10, -8, -90),   # 15: tail BL
-            'v16': (10, -8, -90),    # 16: tail BR
-        }
+        # Mesh loaded from assets/sniper.obj + sniper.mtl
+        self.baked_mesh = get_ship_mesh('sniper')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['v0', 'v2', 'v3'], 'color': C_RED},    # 0  needle right
-            {'v': ['v0', 'v4', 'v2'], 'color': C_RED},    # 1  needle right-bot
-            {'v': ['v0', 'v3', 'v1'], 'color': C_RED},    # 2  needle left
-            {'v': ['v0', 'v1', 'v4'], 'color': C_RED},    # 3  needle left-bot
-            {'v': ['v3', 'v6', 'v5'], 'color': C_GOLD},   # 4  barrel→shoulder top
-            {'v': ['v3', 'v5', 'v1'], 'color': C_GOLD},   # 5  barrel→shoulder top-L
-            {'v': ['v1', 'v5', 'v7'], 'color': C_GOLD},   # 6  barrel→shoulder left
-            {'v': ['v1', 'v7', 'v4'], 'color': C_GOLD},   # 7  barrel→shoulder left-bot
-            {'v': ['v4', 'v7', 'v8'], 'color': C_GOLD},   # 8  barrel→shoulder bot
-            {'v': ['v4', 'v8', 'v2'], 'color': C_GOLD},   # 9  barrel→shoulder bot-R
-            {'v': ['v2', 'v8', 'v6'], 'color': C_GOLD},   # 10 barrel→shoulder right
-            {'v': ['v2', 'v6', 'v3'], 'color': C_GOLD},   # 11 barrel→shoulder right-top
-            {'v': ['v5', 'v10', 'v9'], 'color': C_SILVER},# 12 shoulder→rear top
-            {'v': ['v5', 'v6', 'v10'], 'color': C_SILVER},# 13 shoulder→rear top-R
-            {'v': ['v5', 'v9', 'v11'], 'color': C_SILVER},# 14 shoulder→rear left
-            {'v': ['v5', 'v11', 'v7'], 'color': C_SILVER},# 15 shoulder→rear left-bot
-            {'v': ['v6', 'v12', 'v10'], 'color': C_SILVER},# 16 shoulder→rear right
-            {'v': ['v6', 'v8', 'v12'], 'color': C_SILVER}, # 17 shoulder→rear right-bot
-            {'v': ['v7', 'v11', 'v12'], 'color': C_SILVER},# 18 shoulder→rear bot
-            {'v': ['v7', 'v12', 'v8'], 'color': C_SILVER}, # 19 shoulder→rear bot-R
-            {'v': ['v9', 'v14', 'v13'], 'color': C_SILVER},# 20 rear→tail top
-            {'v': ['v9', 'v10', 'v14'], 'color': C_SILVER},# 21 rear→tail top-R
-            {'v': ['v9', 'v13', 'v15'], 'color': C_SILVER},# 22 rear→tail left
-            {'v': ['v9', 'v15', 'v11'], 'color': C_SILVER},# 23 rear→tail left-bot
-            {'v': ['v10', 'v16', 'v14'], 'color': C_SILVER},# 24 rear→tail right
-            {'v': ['v10', 'v12', 'v16'], 'color': C_SILVER},# 25 rear→tail right-bot
-            {'v': ['v11', 'v15', 'v16'], 'color': C_SILVER},# 26 rear→tail bot
-            {'v': ['v11', 'v16', 'v12'], 'color': C_SILVER},# 27 rear→tail bot-R
-            {'v': ['v13', 'v16', 'v15'], 'color': C_GOLD},  # 28 tail cap
-            {'v': ['v13', 'v14', 'v16'], 'color': C_GOLD},  # 29 tail cap
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
     
@@ -1107,95 +1010,17 @@ class Corvette(Enemy):
         self.turn_rate      = 1.2
         self.drag           = 0.15
 
-        # Colors
-        C_STEEL = (70, 75, 85)
-        C_GOLD = (210, 170, 50)
-        C_CRIMSON = (160, 20, 30)
-
-        self.verts = {
-            # --- Forward pod ---
-            'v0': (0, 20, 250),      # 0  nose top      (windshield top edge, set back)
-            'v1': (0, -25, 270),     # 1  nose chin     (windshield bot edge, juts forward+down)
-            'v2': (-40, 20, 180),    # 2  pod top-left
-            'v3': (40, 20, 180),     # 3  pod top-right
-            'v4': (-40, -15, 180),   # 4  pod bot-left
-            'v5': (40, -15, 180),    # 5  pod bot-right
-            # --- Central spine ---
-            'v6': (-15, 8, 80),      # 6  spine front top-left
-            'v7': (15, 8, 80),       # 7  spine front top-right
-            'v8': (-15, -8, 80),     # 8  spine front bot-left
-            'v9': (15, -8, 80),      # 9  spine front bot-right
-            'v10': (-15, 8, -200),   # 10 spine rear top-left
-            'v11': (15, 8, -200),    # 11 spine rear top-right
-            'v12': (-15, -8, -200),  # 12 spine rear bot-left
-            'v13': (15, -8, -200),   # 13 spine rear bot-right
-            # --- Left nacelle ---
-            'v14': (-40, -5, 80),    # 14 nacelle-L front top-inner
-            'v15': (-90, -5, 80),    # 15 nacelle-L front top-outer
-            'v16': (-40, -20, 80),   # 16 nacelle-L front bot-inner
-            'v17': (-90, -20, 80),   # 17 nacelle-L front bot-outer
-            'v18': (-40, -5, -180),  # 18 nacelle-L rear top-inner
-            'v19': (-90, -5, -180),  # 19 nacelle-L rear top-outer
-            'v20': (-40, -20, -180), # 20 nacelle-L rear bot-inner
-            'v21': (-90, -20, -180), # 21 nacelle-L rear bot-outer
-            # --- Right nacelle ---
-            'v22': (40, -5, 80),     # 22 nacelle-R front top-inner
-            'v23': (90, -5, 80),     # 23 nacelle-R front top-outer
-            'v24': (40, -20, 80),    # 24 nacelle-R front bot-inner
-            'v25': (90, -20, 80),    # 25 nacelle-R front bot-outer
-            'v26': (40, -5, -180),   # 26 nacelle-R rear top-inner
-            'v27': (90, -5, -180),   # 27 nacelle-R rear top-outer
-            'v28': (40, -20, -180),  # 28 nacelle-R rear bot-inner
-            'v29': (90, -20, -180),  # 29 nacelle-R rear bot-outer
-        }
+        # Mesh loaded from assets/corvette.obj + corvette.mtl
+        self.baked_mesh = get_ship_mesh('corvette')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['v0', 'v1', 'v5'], 'color': C_GOLD},    # 0 pod front top
-            {'v': ['v0', 'v4', 'v1'], 'color': C_GOLD},    # 1 pod front top
-            {'v': ['v0', 'v3', 'v2'], 'color': C_GOLD},    # 2 pod top
-            {'v': ['v0', 'v2', 'v4'], 'color': C_GOLD},    # 3 pod side L
-            {'v': ['v0', 'v5', 'v3'], 'color': C_GOLD},    # 4 pod side R
-            {'v': ['v1', 'v5', 'v4'], 'color': C_STEEL},   # 5 pod bot
-            {'v': ['v2', 'v5', 'v3'], 'color': C_STEEL},   # 6 pod back
-            {'v': ['v2', 'v4', 'v5'], 'color': C_STEEL},   # 7 pod back
-            {'v': ['v2', 'v7', 'v6'], 'color': C_STEEL},   # 8 spine join top
-            {'v': ['v2', 'v3', 'v7'], 'color': C_STEEL},   # 9 spine join top
-            {'v': ['v4', 'v9', 'v8'], 'color': C_STEEL},   # 10 spine join bot
-            {'v': ['v4', 'v5', 'v9'], 'color': C_STEEL},   # 11 spine join bot
-            {'v': ['v6', 'v7', 'v11'], 'color': C_STEEL},  # 12 spine top
-            {'v': ['v6', 'v11', 'v10'], 'color': C_STEEL}, # 13 spine top
-            {'v': ['v8', 'v13', 'v9'], 'color': C_STEEL},  # 14 spine bot
-            {'v': ['v8', 'v12', 'v13'], 'color': C_STEEL}, # 15 spine bot
-            {'v': ['v6', 'v10', 'v12'], 'color': C_STEEL}, # 16 spine side L
-            {'v': ['v6', 'v12', 'v8'], 'color': C_STEEL},  # 17 spine side L
-            {'v': ['v7', 'v9', 'v13'], 'color': C_STEEL},  # 18 spine side R
-            {'v': ['v7', 'v13', 'v11'], 'color': C_STEEL}, # 19 spine side R
-            {'v': ['v10', 'v11', 'v13'], 'color': C_STEEL},# 20 spine back
-            {'v': ['v10', 'v13', 'v12'], 'color': C_STEEL},# 21 spine back
-            {'v': ['v14', 'v15', 'v17'], 'color': C_CRIMSON}, # 22 nacelle L front
-            {'v': ['v14', 'v17', 'v16'], 'color': C_CRIMSON}, # 23 nacelle L front
-            {'v': ['v18', 'v20', 'v21'], 'color': C_STEEL}, # 24 nacelle L back
-            {'v': ['v18', 'v21', 'v19'], 'color': C_STEEL}, # 25 nacelle L back
-            {'v': ['v15', 'v19', 'v21'], 'color': C_CRIMSON}, # 26 nacelle L outer
-            {'v': ['v15', 'v21', 'v17'], 'color': C_CRIMSON}, # 27 nacelle L outer
-            {'v': ['v14', 'v20', 'v16'], 'color': C_STEEL}, # 28 nacelle L inner
-            {'v': ['v14', 'v18', 'v20'], 'color': C_STEEL}, # 29 nacelle L inner
-            {'v': ['v14', 'v19', 'v15'], 'color': C_CRIMSON}, # 30 nacelle L top
-            {'v': ['v14', 'v18', 'v19'], 'color': C_CRIMSON}, # 31 nacelle L top
-            {'v': ['v16', 'v17', 'v21'], 'color': C_STEEL}, # 32 nacelle L bot
-            {'v': ['v16', 'v21', 'v20'], 'color': C_STEEL}, # 33 nacelle L bot
-            {'v': ['v22', 'v25', 'v23'], 'color': C_CRIMSON}, # 34 nacelle R front
-            {'v': ['v22', 'v24', 'v25'], 'color': C_CRIMSON}, # 35 nacelle R front
-            {'v': ['v26', 'v29', 'v28'], 'color': C_STEEL}, # 36 nacelle R back
-            {'v': ['v26', 'v27', 'v29'], 'color': C_STEEL}, # 37 nacelle R back
-            {'v': ['v23', 'v25', 'v29'], 'color': C_CRIMSON}, # 38 nacelle R outer
-            {'v': ['v23', 'v29', 'v27'], 'color': C_CRIMSON}, # 39 nacelle R outer
-            {'v': ['v22', 'v28', 'v26'], 'color': C_STEEL}, # 40 nacelle R inner
-            {'v': ['v22', 'v24', 'v28'], 'color': C_STEEL}, # 41 nacelle R inner
-            {'v': ['v22', 'v23', 'v27'], 'color': C_CRIMSON}, # 42 nacelle R top
-            {'v': ['v22', 'v27', 'v26'], 'color': C_CRIMSON}, # 43 nacelle R top
-            {'v': ['v24', 'v29', 'v25'], 'color': C_STEEL}, # 44 nacelle R bot
-            {'v': ['v24', 'v28', 'v29'], 'color': C_STEEL}, # 45 nacelle R bot
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
+
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.t += dt
         self.engine_time += dt
@@ -1401,29 +1226,15 @@ class Minelayer(Enemy):
         self.turn_rate      = 2.5
         self.drag           = 0.35
 
-        # Colors
-        C_YELLOW = (255, 210, 0)
-        C_BLACK = (30, 30, 35)
-        C_RUST = (180, 70, 20)
-
-        # Wide, flat wing shape
-        self.verts = {
-            'v0': (0, 0, 40),        # 0: Center Nose
-            'v1': (-80, -5, -10),    # 1: Far Left
-            'v2': (80, -5, -10),     # 2: Far Right
-            'v3': (-30, 15, -20),    # 3: Mid Left Bulk
-            'v4': (30, 15, -20),     # 4: Mid Right Bulk
-            'v5': (0, -15, -30),     # 5: Underbelly
-        }
+        # Mesh loaded from assets/minelayer.obj + minelayer.mtl
+        self.baked_mesh = get_ship_mesh('minelayer')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['v0', 'v3', 'v1'], 'color': C_YELLOW},
-            {'v': ['v0', 'v2', 'v4'], 'color': C_YELLOW},
-            {'v': ['v0', 'v4', 'v3'], 'color': C_BLACK},
-            {'v': ['v0', 'v1', 'v5'], 'color': C_RUST},
-            {'v': ['v0', 'v5', 'v2'], 'color': C_RUST},
-            {'v': ['v1', 'v3', 'v5'], 'color': C_BLACK},
-            {'v': ['v2', 'v5', 'v4'], 'color': C_BLACK},
-            {'v': ['v3', 'v4', 'v5'], 'color': C_BLACK},
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
     def _pick_flank_offset(self, p_fwd):
@@ -1604,26 +1415,15 @@ class StealthInterceptor(Enemy):
         self.turn_rate      = 5.0
         self.drag           = 0.5
 
-        # Colors
-        C_VOID = (15, 15, 20)
-        C_PURPLE = (80, 0, 120)
-        C_CYAN = (0, 255, 255)
-
-        # Extremely thin, planar dart
-        self.verts = {
-            'v0': (0, 0, 60),        # 0: Needle point
-            'v1': (-25, 0, -30),     # 1: Left Wing
-            'v2': (25, 0, -30),      # 2: Right Wing
-            'v3': (0, 5, -20),       # 3: Top ridge
-            'v4': (0, -5, -20),      # 4: Bottom ridge
-        }
+        # Mesh loaded from assets/interceptor.obj + interceptor.mtl
+        self.baked_mesh = get_ship_mesh('interceptor')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['v0', 'v3', 'v1'], 'color': C_PURPLE},
-            {'v': ['v0', 'v2', 'v3'], 'color': C_PURPLE},
-            {'v': ['v0', 'v1', 'v4'], 'color': C_VOID},
-            {'v': ['v0', 'v4', 'v2'], 'color': C_VOID},
-            {'v': ['v1', 'v3', 'v2'], 'color': C_CYAN},
-            {'v': ['v1', 'v2', 'v4'], 'color': C_VOID},
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
     def _pick_flank_offset(self, p_fwd):
@@ -1774,39 +1574,15 @@ class Carrier(Enemy):
         self.turn_rate      = 0.6
         self.drag           = 0.08
 
-        # Colors
-        C_ROYAL = (90, 45, 130)
-        C_GOLD = (210, 165, 45)
-        C_WHITE = (235, 235, 240)
-
-        self.verts = {
-            'v0': (0, -20, 800),     # 0: Ultimate Nose
-            'v1': (0, 80, -200),     # 1: Command Ridge Top Front
-            'v2': (0, 180, -450),    # 2: Command Tower High
-            'v3': (-400, -20, -500), # 3: Far Wingtip L
-            'v4': (400, -20, -500),  # 4: Far Wingtip R
-            'v5': (-150, 60, -500),  # 5: Back Top L
-            'v6': (150, 60, -500),   # 6: Back Top R
-            'v7': (-150, -80, -500), # 7: Back Bot L
-            'v8': (150, -80, -500),  # 8: Back Bot R
-            'v9': (0, -120, -100),   # 9: Deep Belly
-        }
+        # Mesh loaded from assets/carrier.obj + carrier.mtl
+        self.baked_mesh = get_ship_mesh('carrier')
+        self.verts = {f'v{i}': tuple(row) for i, row in enumerate(self.baked_mesh.v_data)}
         self.faces = [
-            {'v': ['v0', 'v5', 'v3'], 'color': C_ROYAL},
-            {'v': ['v0', 'v1', 'v5'], 'color': C_WHITE},
-            {'v': ['v0', 'v6', 'v1'], 'color': C_WHITE},
-            {'v': ['v0', 'v4', 'v6'], 'color': C_ROYAL},
-            {'v': ['v1', 'v2', 'v5'], 'color': C_GOLD},
-            {'v': ['v1', 'v6', 'v2'], 'color': C_GOLD},
-            {'v': ['v5', 'v2', 'v6'], 'color': C_GOLD},
-            {'v': ['v0', 'v3', 'v7'], 'color': C_ROYAL},
-            {'v': ['v0', 'v7', 'v9'], 'color': C_ROYAL},
-            {'v': ['v0', 'v9', 'v8'], 'color': C_ROYAL},
-            {'v': ['v0', 'v8', 'v4'], 'color': C_ROYAL},
-            {'v': ['v5', 'v7', 'v3'], 'color': C_ROYAL},
-            {'v': ['v6', 'v4', 'v8'], 'color': C_ROYAL},
-            {'v': ['v5', 'v8', 'v7'], 'color': C_ROYAL},
-            {'v': ['v5', 'v6', 'v8'], 'color': C_ROYAL},
+            {'v': [f'v{self.baked_mesh.f_idx[i, 0]}',
+                   f'v{self.baked_mesh.f_idx[i, 1]}',
+                   f'v{self.baked_mesh.f_idx[i, 2]}'],
+             'color': tuple(self.baked_mesh.f_col[i])}
+            for i in range(len(self.baked_mesh.f_idx))
         ]
 
     def is_hit(self, px, py, pz):
