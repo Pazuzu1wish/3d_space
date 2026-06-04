@@ -603,7 +603,7 @@ class TitleCinematic:
         # Main popup box
         box_w, box_h = 930, 180
         box_x = (self.W - box_w) // 2
-        box_y = (self.H - box_h) // 2
+        box_y = (self.H - box_h) // 2 - 50
 
         # Draw box frame (dark background, glowing green border)
         pygame.draw.rect(screen, (10, 10, 25), (box_x, box_y, box_w, box_h))
