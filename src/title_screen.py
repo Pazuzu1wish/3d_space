@@ -156,8 +156,8 @@ class TitleCinematic:
         
 
         self.dogfighter.cinematic_script = CinematicScript(
-            CinematicStep(0.7, CinematicScript.linear(-1000, 0, 0)),
-            CinematicStep(1.4, CinematicScript.barrel_roll(-1000, 0, 0,
+            CinematicStep(0.7, CinematicScript.linear(-1000, 60, 0)),
+            CinematicStep(1.4, CinematicScript.barrel_roll(-1000, 60, 0,
                                                             roll_speed=1.2,
                                                             direction=-1.0)),
             CinematicStep(None, CinematicScript.linear(-1800, 0, 0)),   
