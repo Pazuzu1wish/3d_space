@@ -1,3 +1,5 @@
+# src/state.py
+
 from random import choice
 import pygame
 import sys
@@ -34,36 +36,28 @@ from src.aim_scope import AimScope
 from src.math_engine import world_to_camera_batch, project_to_screen_batch, get_forward_from_quat, quat_from_axis_angle, quat_mul
 from collections import Counter
 
-
+# ── Import newly designed level system ──
+from src.level import ArcadeLevel
 
 
 class State:
-    """Base class for all game states.
-    
-    Provides standard lifecycle hooks and loop hooks for event handling,
-    updating, and drawing.
-    """
+    """Base class for all game states."""
     def __init__(self, context):
         self.context = context
 
     def on_enter(self, manager):
-        """Called when this state is pushed onto the stack."""
         pass
 
     def on_exit(self, manager):
-        """Called when this state is popped off the stack."""
         pass
 
     def handle_event(self, event):
-        """Called for every pygame event."""
         pass
 
     def update(self, dt, manager):
-        """Called every frame to update state logic."""
         pass
 
     def draw(self, screen):
-        """Called every frame to draw state visuals."""
         pass
 
 
@@ -75,16 +69,13 @@ class StateManager:
 
     @property
     def current(self):
-        """Returns the current active state at the top of the stack, or None if empty."""
         return self.stack[-1] if self.stack else None
 
     def push(self, state):
-        """Pushes a new state onto the stack and enters it."""
         self.stack.append(state)
         state.on_enter(self)
 
     def pop(self):
-        """Pops the top state off the stack and exits it, returning it."""
         if self.stack:
             state = self.stack.pop()
             state.on_exit(self)
@@ -92,20 +83,8 @@ class StateManager:
         return None
 
     def change(self, state):
-        """Replaces the top state of the stack with a new state."""
         self.pop()
         self.push(state)
-
-
-# ──────────────────────────────────────────────
-# State Classes
-# ──────────────────────────────────────────────
-
-# ──────────────────────────────────────────────
-# Title State
-# ──────────────────────────────────────────────
-
-
 
 
 class TitleState(State):
@@ -114,26 +93,19 @@ class TitleState(State):
         self.title_cinematic = TitleCinematic(context.W, context.H, context.sound)
 
     def handle_event(self, event):
-        # ALWAYS allow the input handler to process events first so controller 
-        # states (like button tracking) stay up-to-date.
         self.context.handler.process_event(event)
 
-        # ── 1. CINEMATIC SKIP (Keyboard) ─────────────────────────────────────
         if not self.title_cinematic.cinematic_done:
             if event.type == pygame.KEYDOWN:
                 self.title_cinematic.skip_cinematic()
                 return
-
-        # ── 2. MENU CONTROLS (Cinematic Done) ────────────────────────────────
         elif self.title_cinematic.cinematic_done:
-            # If the pop-up is showing, listen for key dismissals and block other navigation
             if self.title_cinematic.show_popup:
                 if event.type == pygame.KEYDOWN:
                     if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
                         self.title_cinematic.show_popup = False
                 return
 
-            # Normal Menu Keyboard Navigation
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_UP, pygame.K_w):
                     self.title_cinematic.navigate_menu(-1)
@@ -144,26 +116,22 @@ class TitleState(State):
                     self.handle_menu_selection(selected)
 
     def update(self, dt, manager):
-        # ── 1. CINEMATIC SKIP (Controller X button) ─────────────────────────
         if not self.title_cinematic.cinematic_done:
             if self.context.handler.just_pressed('X'):
                 self.title_cinematic.skip_cinematic()
                 return
 
-        # ── 2. POP-UP DISMISS (Controller X button) ─────────────────────────
         if self.title_cinematic.cinematic_done:
             if self.title_cinematic.show_popup:
                 if self.context.handler.just_pressed('X'):
                     self.title_cinematic.show_popup = False
                 return
 
-        # ── 3. STANDARD CONTROLLER MENU SELECTION ───────────────────────────
         selected = self.title_cinematic.update(dt, self.context.handler)
         if selected:
             self.handle_menu_selection(selected)
 
     def handle_menu_selection(self, selected_item):
-        """Defines behaviors for each selected menu choice."""
         if selected_item == "ARCADE":
             self.start_game()
         elif selected_item in ("NEW GAME", "CONTINUE", "OPTIONS"):
@@ -173,96 +141,62 @@ class TitleState(State):
             sys.exit()
 
     def start_game(self):
-        """Transitions into the running Gameplay State."""
         self.context.sound.play_music(self.context.music_file, loops=-1, volume=0.55)
         self.context.state_manager.change(GameplayState(self.context))
 
     def draw(self, screen):
         self.title_cinematic.draw(screen)
 
-# ──────────────────────────────────────────────
-# Gameplay Class
-# ──────────────────────────────────────────────
 
 class GameplayState(State):
     def __init__(self, context):
         super().__init__(context)
-        # Pull parameters from global context
         self.W, self.H = context.W, context.H
 
-        # Initialize players & gameplay managers
+        # Initialize core physics objects & managers
         self.player = Player()
         self.player.sound = context.sound
-        self.director = WaveDirector(ENCOUNTER_SCRIPT)
         self.ship_ai = ShipAI(context.sound)
 
-        # Initialize object pools
+        # Initialize pools & spacial partition
         self.particle_pool = ParticlePool(initial_size=500, max_size=2000)
         self.laser_pool = LaserPool(Laser, initial_size=50, max_size=150)
-
-        # Spatial system
         self.spatial = SpatialPartition(cell_size=500.0)
 
-        # Render tools
+        # Camera & Pipeline
         self.camera = Camera(self.W, self.H)
         self.renderer = RenderPipeline(self.camera)
-
-        # Initialize aim scope
         self.aim_scope = AimScope(self.camera, self.laser_pool, self.particle_pool)
 
-        # Environment & Entities
-        self.stars = [Star(self.player.pos) for _ in range(150)]
-        self.nebulae = NebulaSystem(count=6, area_radius=30000)
+        # Environment Entities
         self.enemies = []
         self.enemy_projectiles = []
         self.player_missiles = []
-        self.asteroids = []
 
-        # Spawn Asteroids
-        for enc in ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=12, radius=25000)
-            for a in field.asteroids:
-                self.asteroids.append(a)
-                self.spatial.register_entity(a, (a.x, a.y, a.z))
+        # ── INITIALIZE ACTIVE LEVEL ──
+        # Default Arcade Mode level instantiated and initialized dynamically
+        self.level = ArcadeLevel(context, self)
+        self.level.initialize()
 
-        # Waypoint & HUD toggles
+        # HUD / Render Toggles
         self.show_waypoints = True
-        self.waypoints = [
-            {'pos': (0, 0, 75000), 'label': 'Enemy Stronghold', 'active': True, 'color': (0, 255, 100, 200)},
-            {'pos': (2000, -500, 25000), 'label': 'CARRIER STRIKE GROUP', 'active': True, 'color': (255, 200, 0, 200)},
-            {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)}
-        ]
         self.show_prograde = True
         self.show_coords = False
-        # FPS debug toggle
         self.show_fps = True
 
-        # Force all Numba JIT compilations to happen now (during load),
-        # not on the first gameplay frame.
         self._warmup_numba()
 
     def _warmup_numba(self):
-        """Pre-compile every @njit function used in the hot render path.
-
-        Each call uses tiny dummy arrays so the compile finishes in ~1-2 s
-        during the title / loading phase rather than causing a stutter on
-        the very first gameplay frame.
-        """
-
-        # Minimal dummy data — 1 vert, 1 face
         dummy_verts = np.zeros((3, 3), dtype=np.float64)
         dummy_cam = np.zeros((3, 3), dtype=np.float64)
-        dummy_cam[:, 2] = 1.0  # Z > near-clip so projection doesn’t sentinel
+        dummy_cam[:, 2] = 1.0
         dummy_proj = np.zeros((3, 3), dtype=np.float64)
         dummy_fidx = np.array([[0, 1, 2]], dtype=np.int32)
         dummy_fcol = np.array([[200, 200, 200]], dtype=np.int32)
-        dummy_rcoef = np.eye(3, dtype=np.float64).ravel()  # identity rotation
+        dummy_rcoef = np.eye(3, dtype=np.float64).ravel()
 
-        # world_to_camera_batch
         world_to_camera_batch(dummy_verts, 0.0, 0.0, 0.0, dummy_rcoef)
-        # project_to_screen_batch
         project_to_screen_batch(dummy_cam, 400.0, 640.0, 360.0, 0.0, 0.0, 0.1)
-        # process_faces_batch_numba (main face shading + depth sort)
         process_faces_batch_numba(dummy_cam, dummy_proj, dummy_fidx, dummy_fcol)
 
     def handle_event(self, event):
@@ -274,52 +208,46 @@ class GameplayState(State):
             elif event.key == pygame.K_c:
                 self.show_coords = not self.show_coords
             elif event.key == pygame.K_o:
-                # Toggle lightweight FPS debug HUD
                 self.show_fps = not self.show_fps
         self.context.handler.process_event(event)
 
     def update(self, dt, manager):
-        # Polling/DS4 options check
         if self.context.handler.just_pressed('Options'):
             manager.push(PauseState(self.context))
             return
 
         if self.context.handler.just_pressed('DPad Left'):
             self.show_waypoints = not self.show_waypoints
-
         if self.context.handler.just_pressed('DPad Right'):
             self.show_prograde = not self.show_prograde
-
         if self.context.handler.just_pressed('DPad Down'):
             self.show_coords = not self.show_coords
 
         keys = pygame.key.get_pressed()
 
-        # Update dynamic objects
-        self.player.update(dt, self.context.handler, keys, self.laser_pool, self.particle_pool, self.enemy_projectiles,
-                           self.player_missiles, self.context.sound)
+        # Core system updates
+        self.player.update(dt, self.context.handler, keys, self.laser_pool, self.particle_pool, 
+                           self.enemy_projectiles, self.player_missiles, self.context.sound)
         self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
-        self.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
-        self.ship_ai.update(self.player, self.enemies, self.enemy_projectiles, self.director, dt)
+        
+        # ── EXPIRED TRIGGER LOGIC DIRECTED DOWN TO LEVEL SYSTEM ──
+        self.level.on_update(dt)
+        self.level.director.update(dt, self.player.pos, self.player.orientation, self.enemies)
+        
+        self.ship_ai.update(self.player, self.enemies, self.enemy_projectiles, self.level.director, dt)
 
-        # Targeting Checks
         self.player.clear_dead_target(self.enemies)
         if self.player._key_target_closest:
             self.player.target_closest(self.enemies)
         elif self.player._key_cycle_target:
             self.player.cycle_targets(self.enemies)
 
-        # Update aim scope
-        self.aim_scope.update(
-            self.context.handler.trigger_left(),
-            keys,
-        )
+        self.aim_scope.update(self.context.handler.trigger_left(), keys)
 
-        # Handle Death
         if self.player.hp <= 0:
             result = RunResult(
-                kills=self.director.kills,
-                survival_time=self.director.elapsed,
+                kills=self.level.director.kills,
+                survival_time=self.level.director.elapsed,
                 shots_fired=self.player.shots_fired,
                 shots_hit=self.player.shots_hit,
                 damage_taken=self.player.damage_taken,
@@ -328,7 +256,6 @@ class GameplayState(State):
             manager.change(GameOverState(self.context, result))
             return
 
-        # Handle Camera Shake
         if self.player.shake_queued > 0:
             self.camera.trigger_shake(self.player.shake_queued)
             self.player.shake_queued = 0.0
@@ -336,18 +263,16 @@ class GameplayState(State):
     def draw(self, screen):
         screen.fill((5, 5, 15))
 
-        # Use clock delta to update camera shake offset
-        # Note: dt is retrieved from context inside standard loops
         dt = self.context.clock.get_time() / 1000.0
-
         shake_offset = self.camera.update_shake(dt)
         self.camera.update(self.player.pos, self.player.orientation)
         self.renderer.clear()
 
         visible_entities = self.spatial.query_visible(self.camera)
 
-        Star.submit_batch_to_renderer(self.stars, self.renderer, self.player.pos)
-        self.nebulae.submit_to_renderer(self.renderer)
+        # Draw environment through active level instances
+        Star.submit_batch_to_renderer(self.level.stars, self.renderer, self.player.pos)
+        self.level.nebulae.submit_to_renderer(self.renderer)
 
         sniper_beams_to_draw = []
         for obj in visible_entities:
@@ -370,10 +295,8 @@ class GameplayState(State):
         self.particle_pool.submit_to_renderer(self.renderer, self.camera)
         self.renderer.render(screen)
 
-        # Draw sniper beams on screen
         self.draw_sniper_beams(screen, sniper_beams_to_draw)
 
-        # Lightweight FPS value from the shared clock (smoothed by pygame)
         fps_val = self.context.clock.get_fps()
 
         hud = HUDData(
@@ -386,7 +309,7 @@ class GameplayState(State):
             player_pos=self.player.pos,
             player_vel=tuple(self.player.vel),
             enemies=self.enemies,
-            radar_enemies=self.spatial.query_nearby(self.player.pos, 6000.0) if hasattr(self, 'spatial') else None,
+            radar_enemies=self.spatial.query_nearby(self.player.pos, 6000.0),
             player_hp=self.player.hp,
             active_target=self.player.active_target,
             dodge_charge=self.player.dodge_charge,
@@ -396,7 +319,7 @@ class GameplayState(State):
             shield_recharging=self.player.shield_recharging,
             laser_heat=self.player.laser_heat,
             laser_overheated=self.player.overheated,
-            waypoints=self.waypoints if self.show_waypoints else None,
+            waypoints=self.level.waypoints if self.show_waypoints else None,
             shake_offset=shake_offset,
             missile_ammo=self.player.missile_ammo,
             missile_lock_timer=self.player.missile_lock_timer,
@@ -409,9 +332,12 @@ class GameplayState(State):
         )
         draw_cockpit_hud(screen, hud)
 
-        self.aim_scope.draw(screen, self.player, visible_entities, self.stars)
+        self.aim_scope.draw(screen, self.player, visible_entities, self.level.stars)
 
         draw_damage_overlay(screen, self.W, self.H, self.player.hit_flash / HIT_FLASH_DURATION)
+
+        # ── DRAW LEVEL HUD LAYER OVERLAY ──
+        self.level.draw_hud_overlay(screen)
 
     def draw_sniper_beams(self, screen, sniper_beams_to_draw):
         for e in sniper_beams_to_draw:
@@ -435,19 +361,15 @@ class GameplayState(State):
     def draw_photo_mode(self, screen, cam_pos, q_cam):
         screen.fill((5, 5, 15))
 
-        # Temp save original camera position & orientation
         orig_pos = self.camera.pos
         orig_orient = self.camera.orientation
 
-        # Set camera to the orbit camera
         self.camera.update(cam_pos, q_cam)
         self.renderer.clear()
 
-        # Submit elements to renderer
-        Star.submit_batch_to_renderer(self.stars, self.renderer, self.player.pos)
-        self.nebulae.submit_to_renderer(self.renderer)
+        Star.submit_batch_to_renderer(self.level.stars, self.renderer, self.player.pos)
+        self.level.nebulae.submit_to_renderer(self.renderer)
 
-        # Query nearby entities to render in Photo Mode
         visible_entities = self.spatial.query_nearby(self.player.pos, 15000.0)
         sniper_beams_to_draw = []
         for obj in visible_entities:
@@ -468,28 +390,20 @@ class GameplayState(State):
                 m.submit_to_renderer(self.renderer)
 
         self.particle_pool.submit_to_renderer(self.renderer, self.camera)
-
-        # Submit the Player Ship in 3D!
         self.player.submit_to_renderer(self.renderer)
 
-        # Render the 3D scene!
         self.renderer.render(screen)
-
-        # Draw sniper beams if charging
         self.draw_sniper_beams(screen, sniper_beams_to_draw)
-
-        # Restore camera
         self.camera.update(orig_pos, orig_orient)
 
     def update_entities(self, dt, player, enemies, enemy_projectiles):
-        # Update Lasers and Particles
         self.laser_pool.update(dt)
         self.particle_pool.update(dt)
 
         # Update Missiles
         for m in self.player_missiles[:]:
             m.update(dt)
-            if m.check_collisions(enemies, self.asteroids, self.spatial, self.particle_pool):
+            if m.check_collisions(enemies, self.level.asteroids, self.spatial, self.particle_pool):
                 if m in self.player_missiles:
                     self.player_missiles.remove(m)
             elif m.life <= 0:
@@ -501,13 +415,16 @@ class GameplayState(State):
             e.update(dt, player.pos, player.orientation, enemy_projectiles, enemies, player, spatial=self.spatial)
             self.spatial.update_entity(e, (e.x, e.y, e.z))
 
-            # Decrement spawn immunity timer
             if e.spawn_immunity_timer > 0:
                 e.spawn_immunity_timer -= dt
 
             if e.hp <= 0:
                 self.context.sound.play_sfx("explosion")
-                self.director.kills.append(type(e).__name__)
+                self.level.director.kills.append(type(e).__name__)
+                
+                # ── TRIGGER LEVEL CALLBACK HOOK ON DEATH ──
+                self.level.on_enemy_killed(type(e).__name__)
+
                 p_count = 100 if getattr(e, 'did_detonate', False) else PARTICLES_ON_DESTROY
                 for _ in range(p_count):
                     self.particle_pool.spawn(e.x, e.y, e.z)
@@ -528,8 +445,8 @@ class GameplayState(State):
                 self.spatial.unregister_entity(e)
                 enemies.remove(e)
 
-        # Update Asteroids
-        for a in self.asteroids[:]:
+        # Update Asteroids on Active Level object
+        for a in self.level.asteroids[:]:
             a.update(dt)
             self.spatial.update_entity(a, (a.x, a.y, a.z))
 
@@ -537,13 +454,13 @@ class GameplayState(State):
                 self.context.sound.play_sfx("explosion")
                 fragments = a.split()
                 for f in fragments:
-                    self.asteroids.append(f)
+                    self.level.asteroids.append(f)
                     self.spatial.register_entity(f, (f.x, f.y, f.z))
 
                 for _ in range(ASTEROID_PARTICLES_ON_DESTROY):
                     self.particle_pool.spawn(a.x, a.y, a.z, colors=[(120, 120, 120), (100, 100, 100), (80, 80, 80)])
                 self.spatial.unregister_entity(a)
-                self.asteroids.remove(a)
+                self.level.asteroids.remove(a)
                 continue
 
             dist_sq_to_p = (a.x - player.pos[0]) ** 2 + (a.y - player.pos[1]) ** 2 + (a.z - player.pos[2]) ** 2
@@ -556,7 +473,7 @@ class GameplayState(State):
 
             if a.z < player.pos[2] + ENEMY_CULL_DISTANCE:
                 self.spatial.unregister_entity(a)
-                self.asteroids.remove(a)
+                self.level.asteroids.remove(a)
 
         # Laser Hits
         for l in self.laser_pool.get_active()[:]:
@@ -573,13 +490,11 @@ class GameplayState(State):
 
         # Enemy vs Asteroid collisions
         for e in enemies:
-            # Skip collision check if enemy is in spawn immunity period
             if e.spawn_immunity_timer > 0:
                 continue
 
             nearby = self.spatial.query_nearby((e.x, e.y, e.z), e.hit_radius + 500.0)
             for obj in nearby:
-                # OPTIMIZATION: 'hasattr' is instant. 'in list' is extremely slow!
                 if hasattr(obj, 'split'):
                     dist_sq = (e.x - obj.x) ** 2 + (e.y - obj.y) ** 2 + (e.z - obj.z) ** 2
                     if dist_sq < (e.hit_radius + obj.hit_radius) ** 2:
@@ -593,20 +508,14 @@ class GameplayState(State):
         for i, e1 in enumerate(enemies):
             nearby = self.spatial.query_nearby((e1.x, e1.y, e1.z), e1.hit_radius + 500.0)
             for e2 in nearby:
-                # Skip if it's the same enemy or not an enemy (check for enemy-specific attributes)
                 if e2 is e1 or not isinstance(e2, type(e1).__bases__[0] if e1.__class__.__bases__ else object):
                     continue
-                # Check if it has hit_radius and on_hit (enemy attributes)
                 if not hasattr(e2, 'hit_radius') or not hasattr(e2, 'on_hit'):
                     continue
-                # Skip asteroids (they have 'split' method)
                 if hasattr(e2, 'split'):
                     continue
-                # Check if it's actually in the enemies list
                 if e2 not in enemies:
                     continue
-
-                # Skip collision if either enemy is in spawn immunity period
                 if e1.spawn_immunity_timer > 0 or e2.spawn_immunity_timer > 0:
                     continue
 
@@ -641,41 +550,17 @@ class GameplayState(State):
                     enemy_projectiles.remove(bolt)
 
 
-# ──────────────────────────────────────────────
-# Game Over Class
-# ──────────────────────────────────────────────
-
 class GameOverState(State):
-    """
-    Displays score breakdown for the completed run and top scores.
-    No gameplay systems — purely presentation.
-
-    Usage (from GameplayState.update):
-        result = RunResult(
-            kills         = self.director.kills,
-            survival_time = self.director.elapsed,
-            shots_fired   = self.player.shots_fired,
-            shots_hit     = self.player.shots_hit,
-            damage_taken  = self.player.damage_taken,
-            max_hp        = self.player.max_hp,
-        )
-        manager.change(GameOverState(self.context, result))
-    """
-
     def __init__(self, context, result: RunResult):
         super().__init__(context)
         self.result = result
-
-        # Persist immediately on construction
         self.context.save_data.record_run(result)
         self.context.save_data.save()
 
         self._build_fonts()
-        self._anim_timer = 0.0  # drives line-by-line reveal
+        self._anim_timer = 0.0
         self._lines_shown = 0
-        self._done = False  # all lines revealed
-
-    # ── State interface ───────────────────────────────────────────────────────
+        self._done = False
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -684,7 +569,6 @@ class GameOverState(State):
         self.context.handler.process_event(event)
 
     def update(self, dt, manager):
-        # Skip to fully revealed on any button
         if self.context.handler.just_pressed('X') or self.context.handler.just_pressed('Cross'):
             if not self._done:
                 self._lines_shown = 999
@@ -697,7 +581,6 @@ class GameOverState(State):
             self._go_to_retry(manager)
             return
 
-        # Timed line reveal
         self._anim_timer += dt
         target = int(self._anim_timer / 0.18)
         if target > self._lines_shown:
@@ -734,15 +617,12 @@ class GameOverState(State):
             screen.blit(ls, (cx - 260, y))
             screen.blit(rs, (cx + 260 - rs.get_width(), y))
 
-        # ── header ────────────────────────────────────────────────────────
         draw_line("MISSION COMPLETE" if r.kill_count() > 0 else "PILOT DOWN",
                   self._font_large,
                   (255, 50, 50) if r.kill_count() == 0 else (0, 220, 255),
                   H * 0.08)
 
         draw_line("─" * 48, self._font_small, (40, 80, 100), H * 0.16)
-
-        # ── kill breakdown ────────────────────────────────────────────────
         draw_line("KILLS", self._font_med, (180, 180, 180), H * 0.21)
 
         counts = Counter(r.kills)
@@ -763,7 +643,6 @@ class GameOverState(State):
             draw_line("  no kills", self._font_small, (100, 100, 100), kill_y)
             kill_y += 28
 
-        # ── modifiers ────────────────────────────────────────────────────
         mod_y = kill_y + 16
         draw_line("─" * 48, self._font_small, (40, 80, 100), mod_y)
         mod_y += 20
@@ -795,7 +674,6 @@ class GameOverState(State):
         )
         mod_y += 28
 
-        # ── final score ───────────────────────────────────────────────────
         draw_line("─" * 48, self._font_small, (40, 80, 100), mod_y + 8)
 
         draw_line_lr(
@@ -807,18 +685,14 @@ class GameOverState(State):
             mod_y + 36,
         )
 
-        # ── top scores sidebar ────────────────────────────────────────────
         scores = self.context.save_data.high_scores
         if scores and self._done:
             self._draw_high_scores(screen, scores)
 
-        # ── prompt ────────────────────────────────────────────────────────
         if self._done:
             prompt = "[ X ] Continue    [ O ] Retry"
             ps = self._font_small.render(prompt, True, (120, 120, 120))
             screen.blit(ps, (cx - ps.get_width() // 2, H * 0.92))
-
-    # ── private ───────────────────────────────────────────────────────────────
 
     def _build_fonts(self):
         path = "assets/fonts/interdictionexpand.ttf"
@@ -827,7 +701,6 @@ class GameOverState(State):
         self._font_small = pygame.font.Font(path, 18)
 
     def _total_lines(self):
-        """Approximate total drawable lines — controls when _done fires."""
         return 6 + len(self.result.kills) + 8
 
     def _draw_scanlines(self, screen):
@@ -853,7 +726,7 @@ class GameOverState(State):
             y += 24
 
     def _handle_confirm(self):
-        pass  # handled in update via just_pressed
+        pass
 
     def _go_to_title(self, manager):
         manager.change(TitleState(self.context))
@@ -862,10 +735,6 @@ class GameOverState(State):
         manager.change(GameplayState(self.context))
 
 
-# ──────────────────────────────────────────────
-# Pause Class
-# ──────────────────────────────────────────────
-
 class PauseState(State):
     def __init__(self, context):
         super().__init__(context)
@@ -873,16 +742,13 @@ class PauseState(State):
         self.menu_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 18)
         self.hint_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 11)
 
-        # 3D Orbit Camera state
         self.orbit_yaw = 0.0
         self.orbit_pitch = 0.2
         self.orbit_distance = 250.0
 
-        # Timing / Auto-Orbit
         self.idle_timer = 0.0
         self.user_rotated = False
 
-        # Menu state
         self.menu_items = ["RESUME", "TRAIL COLOR", "RESTART", "TITLE", "EXIT"]
         self.selected_item = 0
 
@@ -901,11 +767,10 @@ class PauseState(State):
 
         manager = self.context.state_manager
 
-        # Mouse interactions
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left-click
+            if event.button == 1:
                 m_x, m_y = event.pos
-                if m_x < 380:  # clicked inside the sidebar!
+                if m_x < 380:
                     for i, item in enumerate(self.menu_items):
                         y_item = 140 + i * 80
                         if 20 <= m_x <= 355 and y_item - 6 <= m_y <= y_item + 36:
@@ -919,22 +784,21 @@ class PauseState(State):
                             y_dots = y_item + 46
                             for dot_idx in range(8):
                                 cx = 50 + dot_idx * 38
-                                if (m_x - cx) ** 2 + (m_y - y_dots) ** 2 <= 144:  # inside 12px radius
+                                if (m_x - cx) ** 2 + (m_y - y_dots) ** 2 <= 144:
                                     gp.player.trail_color_index = dot_idx
                                     gp.player.change_trail_color(0)
                                     self.selected_item = i
                                     self.context.sound.play_sfx("laser")
                                     break
-            elif event.button == 4:  # Scroll Up (Zoom In)
+            elif event.button == 4:
                 self.orbit_distance = max(100.0, self.orbit_distance - 20.0)
                 self.user_rotated = True
                 self.idle_timer = 0.0
-            elif event.button == 5:  # Scroll Down (Zoom Out)
+            elif event.button == 5:
                 self.orbit_distance = min(700.0, self.orbit_distance + 20.0)
                 self.user_rotated = True
                 self.idle_timer = 0.0
 
-        # Keyboard interactions
         elif event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_p):
                 manager.pop()
@@ -962,12 +826,10 @@ class PauseState(State):
         if not gp:
             return
 
-        # Option / Pause button on controller resumes game
         if self.context.handler.just_pressed('Options'):
             manager.pop()
             return
 
-        # D-pad controls for controller menu navigation
         if self.context.handler.just_pressed('DPad Up'):
             self.selected_item = (self.selected_item - 1) % len(self.menu_items)
             self.context.sound.play_sfx("laser")
@@ -986,13 +848,11 @@ class PauseState(State):
         if self.context.handler.just_pressed('X'):
             self.trigger_action(self.menu_items[self.selected_item], manager)
 
-        # Manual Orbit Camera input checks
         lx, ly = self.context.handler.stick_left()
         rx, ry = self.context.handler.stick_right()
         cx = rx if abs(rx) > abs(lx) else lx
         cy = ry if abs(ry) > abs(ly) else ly
 
-        # Keyboard key holdings for manual orbit
         keys = pygame.key.get_pressed()
         kb_yaw = 0.0
         kb_pitch = 0.0
@@ -1016,7 +876,6 @@ class PauseState(State):
             self.user_rotated = True
             self.idle_timer = 0.0
 
-        # Mouse drag calculations
         m_pressed = pygame.mouse.get_pressed()
         m_rel = pygame.mouse.get_rel()
         m_pos = pygame.mouse.get_pos()
@@ -1036,7 +895,6 @@ class PauseState(State):
             if self.idle_timer > 3.0:
                 self.user_rotated = False
 
-        # Controller bumper/trigger zooms
         if self.context.handler.held('R1') or self.context.handler.trigger_right() > 0.1:
             self.orbit_distance = max(100.0, self.orbit_distance - dt * 400.0)
             self.user_rotated = True
@@ -1046,11 +904,9 @@ class PauseState(State):
             self.user_rotated = True
             self.idle_timer = 0.0
 
-        # Auto orbit rotation
         if not self.user_rotated:
             self.orbit_yaw += dt * 0.15
 
-        # Damped engine hum sound during pause
         if self.context.sound:
             self.context.sound.update_engine_hum(0.0, 0.0, 0.0, 0.0)
 
@@ -1059,8 +915,6 @@ class PauseState(State):
         if not gp:
             screen.fill((10, 10, 20))
             return
-
-        # 1. Calculate Orbit Camera coordinates
 
         q_yaw = quat_from_axis_angle(0.0, 1.0, 0.0, self.orbit_yaw)
         q_pitch = quat_from_axis_angle(1.0, 0.0, 0.0, self.orbit_pitch)
@@ -1074,54 +928,42 @@ class PauseState(State):
             gp.player.pos[2] - cam_fwd[2] * self.orbit_distance
         )
 
-        # 2. Draw the 3D scene from the orbital camera view!
         gp.draw_photo_mode(screen, cam_pos, q_cam)
 
-        # 3. Draw premium translucent sidebar glassmorphic overlay
         sidebar = pygame.Surface((380, self.context.H), pygame.SRCALPHA)
-        # Deep dark cybernetic glass
         sidebar.fill((10, 10, 18, 215))
-        # Sleek neon border on the right
         pygame.draw.line(sidebar, (45, 45, 65), (378, 0), (378, self.context.H), 1)
         pygame.draw.line(sidebar, (0, 180, 255), (379, 0), (379, self.context.H), 1)
 
-        # Title text: SYSTEM PAUSED
         title_text = self.title_font.render("SYSTEM PAUSED", True, (255, 255, 255))
-        # Draw a little neon highlight glow behind title
         pygame.draw.line(sidebar, (0, 180, 255), (25, 80), (355, 80), 2)
         sidebar.blit(title_text, (25, 30))
 
-        # Draw interactive menu items
         for i, item in enumerate(self.menu_items):
             y_item = 140 + i * 80
             is_sel = (self.selected_item == i)
 
             if is_sel:
-                # Glowing selection box
                 pygame.draw.rect(sidebar, (0, 180, 255, 35), (20, y_item - 6, 335, 42), border_radius=4)
                 pygame.draw.rect(sidebar, (0, 180, 255, 180), (20, y_item - 6, 335, 42), 1, border_radius=4)
 
                 text_col = (255, 255, 255)
-                # Caret indicators
                 caret_l = self.menu_font.render("> ", True, (0, 180, 255))
                 sidebar.blit(caret_l, (30, y_item))
             else:
                 text_col = (130, 130, 140)
 
-            # Render menu item text
             if item == "TRAIL COLOR":
                 val_text = self.menu_font.render(f"TRAIL: {gp.player.trail_color_name}", True,
                                                  gp.player.trail_color if is_sel else text_col)
                 sidebar.blit(val_text, (50 if is_sel else 40, y_item))
 
-                # Draw neon cycling arrow guides if selected
                 if is_sel:
                     arrow_l = self.menu_font.render("<", True, (0, 180, 255))
                     arrow_r = self.menu_font.render(">", True, (0, 180, 255))
                     sidebar.blit(arrow_l, (270, y_item))
                     sidebar.blit(arrow_r, (330, y_item))
 
-                # Draw the glowing color beads selector below the item!
                 y_dots = y_item + 46
                 for dot_idx, (name, col) in enumerate(gp.player.trail_colors):
                     cx = 50 + dot_idx * 38
@@ -1132,7 +974,6 @@ class PauseState(State):
                 lbl = self.menu_font.render(item, True, text_col)
                 sidebar.blit(lbl, (50 if is_sel else 40, y_item))
 
-        # 4. Render Mission/Tactical statistics panel at the bottom of the sidebar
         y_stats = self.context.H - 220
         pygame.draw.line(sidebar, (35, 35, 45), (25, y_stats), (355, y_stats), 1)
 
@@ -1157,7 +998,6 @@ class PauseState(State):
 
         screen.blit(sidebar, (0, 0))
 
-        # 5. Draw Orbit instructions HUD on the bottom-right side of screen!
         helper_bg = pygame.Surface((600, 40), pygame.SRCALPHA)
         helper_bg.fill((5, 5, 10, 160))
         pygame.draw.rect(helper_bg, (45, 45, 55), (0, 0, 600, 40), 1, border_radius=6)
@@ -1182,6 +1022,3 @@ class PauseState(State):
             manager.change(TitleState(self.context))
         elif action == "EXIT":
             self.context.running = False
-
-
-    
