@@ -554,12 +554,12 @@ class TitleCinematic:
                 screen.blit(bar_surf, (cx - bar_w // 2, iy + item_surf.get_height() + 4))
 
     # ─────────────────────────────────────────────────────────────
-    # PROMPT HELPER
+    # PROMPT HELPER # currently not in use, may delete later
     # ─────────────────────────────────────────────────────────────
     def _draw_prompt(self, screen):
         pulse = (math.sin(self.elapsed_time * 3.5) + 1) / 2
         alpha = int(60 + 195 * pulse)
-        prompt_surf = self.prompt_font.render("PRESS ANY KEY", True, (0, 200, 255))
+        prompt_surf = self.prompt_font.render("PRESS X TO SKIP", True, (0, 200, 255))
         prompt_surf.set_alpha(alpha)
         screen.blit(
             prompt_surf,
