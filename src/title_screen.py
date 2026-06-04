@@ -589,6 +589,10 @@ class TitleCinematic:
             surf.set_alpha(180)
             screen.blit(surf, (10, 10 + i * 18))
 
+    # ─────────────────────────────────────────────────────────────
+    # POPUP HELPER
+    # ─────────────────────────────────────────────────────────────
+
     def _draw_coming_soon_popup(self, screen):
         """Draws a themed 'Coming Soon' box overlay on screen."""
         # Semi-transparent dark background layer
@@ -597,7 +601,7 @@ class TitleCinematic:
         screen.blit(overlay, (0, 0))
 
         # Main popup box
-        box_w, box_h = 480, 180
+        box_w, box_h = 930, 180
         box_x = (self.W - box_w) // 2
         box_y = (self.H - box_h) // 2
 
