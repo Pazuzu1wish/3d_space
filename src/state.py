@@ -1,5 +1,6 @@
 from random import choice
 import pygame
+import sys
 import math
 import numpy as np
 from src.save_data import RunResult, SaveData
@@ -105,36 +106,79 @@ class StateManager:
 # ──────────────────────────────────────────────
 
 
+
+
 class TitleState(State):
     def __init__(self, context):
         super().__init__(context)
         self.title_cinematic = TitleCinematic(context.W, context.H, context.sound)
 
     def handle_event(self, event):
-        if event.type == pygame.KEYDOWN and self.title_cinematic.cinematic_done:
-            self.start_game()
+        # ALWAYS allow the input handler to process events first so controller 
+        # states (like button tracking) stay up-to-date.
         self.context.handler.process_event(event)
 
+        # ── 1. CINEMATIC SKIP (Keyboard) ─────────────────────────────────────
+        if not self.title_cinematic.cinematic_done:
+            if event.type == pygame.KEYDOWN:
+                self.title_cinematic.skip_cinematic()
+                return
+
+        # ── 2. MENU CONTROLS (Cinematic Done) ────────────────────────────────
+        elif self.title_cinematic.cinematic_done:
+            # If the pop-up is showing, listen for key dismissals and block other navigation
+            if self.title_cinematic.show_popup:
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
+                        self.title_cinematic.show_popup = False
+                return
+
+            # Normal Menu Keyboard Navigation
+            if event.type == pygame.KEYDOWN:
+                if event.key in (pygame.K_UP, pygame.K_w):
+                    self.title_cinematic.navigate_menu(-1)
+                elif event.key in (pygame.K_DOWN, pygame.K_s):
+                    self.title_cinematic.navigate_menu(1)
+                elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                    selected = self.title_cinematic.get_selected_item()
+                    self.handle_menu_selection(selected)
+
     def update(self, dt, manager):
-        self.title_cinematic.update(dt, self.context.handler)
+        # ── 1. CINEMATIC SKIP (Controller X button) ─────────────────────────
+        if not self.title_cinematic.cinematic_done:
+            if self.context.handler.just_pressed('X'):
+                self.title_cinematic.skip_cinematic()
+                return
 
-        # Handle menu navigation
-        selected = self.title_cinematic.update_menu_navigation(self.context.handler)
-        if selected:
-            self.start_game()
-
-        # Allow starting the game via controller input too
+        # ── 2. POP-UP DISMISS (Controller X button) ─────────────────────────
         if self.title_cinematic.cinematic_done:
-            if self.context.handler.just_pressed('X') or self.context.handler.just_pressed('Options'):
-                self.start_game()
+            if self.title_cinematic.show_popup:
+                if self.context.handler.just_pressed('X'):
+                    self.title_cinematic.show_popup = False
+                return
+
+        # ── 3. STANDARD CONTROLLER MENU SELECTION ───────────────────────────
+        selected = self.title_cinematic.update(dt, self.context.handler)
+        if selected:
+            self.handle_menu_selection(selected)
+
+    def handle_menu_selection(self, selected_item):
+        """Defines behaviors for each selected menu choice."""
+        if selected_item == "ARCADE":
+            self.start_game()
+        elif selected_item in ("NEW GAME", "CONTINUE", "OPTIONS"):
+            self.title_cinematic.show_popup = True
+        elif selected_item == "QUIT":
+            pygame.quit()
+            sys.exit()
 
     def start_game(self):
+        """Transitions into the running Gameplay State."""
         self.context.sound.play_music(self.context.music_file, loops=-1, volume=0.55)
         self.context.state_manager.change(GameplayState(self.context))
 
     def draw(self, screen):
         self.title_cinematic.draw(screen)
-
 
 # ──────────────────────────────────────────────
 # Gameplay Class

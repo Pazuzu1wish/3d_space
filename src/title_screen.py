@@ -137,9 +137,11 @@ class TitleCinematic:
             self.menu_font     = pygame.font.Font(None, 28)
             self.prompt_font   = pygame.font.Font(None, 22)
 
-        # ── MENU ITEMS ────────────────────────────────────────
-        self.menu_items = ["NEW GAME", "CONTINUE", "OPTIONS", "QUIT"]
+        # ── MENU ITEMS ──────────────────────────"──────────────
+        self.menu_items = ["ARCADE", "NEW GAME", "CONTINUE", "OPTIONS", "QUIT"]
         self.menu_selected = 0
+
+        self.show_popup = False
 
         # ── SHOCKWAVE ─────────────────────────────────────────
         self.shockwave_radius  = 0.0
@@ -252,8 +254,8 @@ class TitleCinematic:
             self._trigger_explosion()
  
         # ── MANUAL EXPLOSION FALLBACK ─────────────────────────
-        # if t >= T_EXPLOSION:
-        #     self._trigger_explosion()
+        if t >= T_EXPLOSION and not self.explosion_triggered:
+            self._trigger_explosion()
 
         # ── SHOCKWAVE UPDATE ──────────────────────────────────
         if self.shockwave_active:
@@ -289,6 +291,9 @@ class TitleCinematic:
 
         # ── MENU NAVIGATION ───────────────────────────────────
         if handler and self.cinematic_done:
+            # Disable menu updates if the "Coming Soon" popup is visible
+            if self.show_popup:
+                return None
             selected = self.update_menu_navigation(handler)
             if selected:
                 return selected  # Return the selected menu item
@@ -344,22 +349,6 @@ class TitleCinematic:
         
         return None  # No selection made yet
     
-    # def handle_event(self, event):
-    #     if not self.cinematic_done:
-    #         # Any key/button skips to end
-    #         if event.type in (pygame.KEYDOWN, pygame.JOYBUTTONDOWN):
-    #             self.elapsed_time = T_DONE + 0.1
-    #         return None   # no selection yet
-
-    #     if event.type == pygame.KEYDOWN:
-    #         if event.key in (pygame.K_UP, pygame.K_w):
-    #             self.menu_selected = (self.menu_selected - 1) % len(self.menu_items)
-    #         elif event.key in (pygame.K_DOWN, pygame.K_s):
-    #             self.menu_selected = (self.menu_selected + 1) % len(self.menu_items)
-    #         elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
-    #             return self.menu_items[self.menu_selected]
-
-    #     return None   # no selection yet
 
     # ─────────────────────────────────────────────────────────────
     # DRAW
@@ -422,13 +411,13 @@ class TitleCinematic:
         if self.menu_alpha > 4:
             self._draw_menu(screen)
 
-        # PRESS ANY KEY prompt
-        if self.cinematic_done: #and self.menu_alpha < 10:
-            self._draw_prompt(screen)
-
         # DEBUG PROJECTION READOUT
         if self.debug:
             self._draw_debug(screen)
+
+        # ── COMING SOON POP-UP OVERLAY ────────────────────────
+        if self.show_popup:
+            self._draw_coming_soon_popup(screen)
 
     # ─────────────────────────────────────────────────────────────
     # TRAIL + LOGO HELPER
@@ -599,3 +588,75 @@ class TitleCinematic:
             surf = self._debug_font.render(line, True, (255, 255, 0))
             surf.set_alpha(180)
             screen.blit(surf, (10, 10 + i * 18))
+
+    def _draw_coming_soon_popup(self, screen):
+        """Draws a themed 'Coming Soon' box overlay on screen."""
+        # Semi-transparent dark background layer
+        overlay = pygame.Surface((self.W, self.H), pygame.SRCALPHA)
+        overlay.fill((4, 4, 14, 200))
+        screen.blit(overlay, (0, 0))
+
+        # Main popup box
+        box_w, box_h = 480, 180
+        box_x = (self.W - box_w) // 2
+        box_y = (self.H - box_h) // 2
+
+        # Draw box frame (dark background, glowing green border)
+        pygame.draw.rect(screen, (10, 10, 25), (box_x, box_y, box_w, box_h))
+        pygame.draw.rect(screen, (0, 255, 128), (box_x, box_y, box_w, box_h), 2)
+
+        # Render elements
+        title_surf = self.sub_font.render("COMING SOON", True, (220, 40, 40))
+        desc_surf = self.prompt_font.render("This mode is currently under development.", True, (180, 180, 200))
+        dismiss_surf = self.prompt_font.render("Press ENTER or X to return", True, (0, 255, 128))
+
+        # Center and draw text surfaces
+        screen.blit(title_surf, (self.W // 2 - title_surf.get_width() // 2, box_y + 32))
+        screen.blit(desc_surf, (self.W // 2 - desc_surf.get_width() // 2, box_y + 85))
+        screen.blit(dismiss_surf, (self.W // 2 - dismiss_surf.get_width() // 2, box_y + 130))
+
+
+    # ─────────────────────────────────────────────────────────────
+    # CINEMATIC CONTROL & SKIP HELPERS
+    # ─────────────────────────────────────────────────────────────
+    def skip_cinematic(self):
+        """Skips straight to the active menu screen."""
+        self.elapsed_time = T_DONE + 0.1
+        self.cinematic_done = True
+        
+        # Snap alpha values
+        self.logo_alpha = 0.0
+        self.title_alpha = 255.0
+        self.title_scale = 1.0
+        self.sub_alpha = 255.0
+        self.menu_alpha = 255.0
+        
+        # Clear out current entities
+        self.dogfighter.hp = 0
+        self.trail_history.clear()
+        self.explosion_triggered = True
+
+    def navigate_menu(self, direction):
+        """Shifts selection index up (-1) or down (1)."""
+        self.menu_selected = (self.menu_selected + direction) % len(self.menu_items)
+
+    def get_selected_item(self):
+        """Returns the text value of the currently selected menu item."""
+        return self.menu_items[self.menu_selected]
+
+    def update_menu_navigation(self, handler):
+        """Handle menu navigation with controller input."""
+        if not self.cinematic_done or self.show_popup:
+            return None
+            
+        # D-pad up/down navigation
+        if handler.just_pressed('DPad Up'):
+            self.navigate_menu(-1)
+        elif handler.just_pressed('DPad Down'):
+            self.navigate_menu(1)
+        
+        # Controller select
+        if handler.just_pressed('X'):
+            return self.get_selected_item()
+        
+        return None
