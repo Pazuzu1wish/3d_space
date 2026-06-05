@@ -9,34 +9,24 @@ from src.save_data import RunResult, SaveData
 from src.camera import Camera
 from src.renderer import RenderPipeline, process_faces_batch_numba
 from src.cockpit import draw_cockpit_hud
-from src.controller import DS4Input
 from src.star import Star
 from src.player import Player
 from src.laser import Laser
 from src.spatial_partition import SpatialPartition
-from src.asteroid import AsteroidField, init_asteroid_bank
-from src.nebula import NebulaSystem
 from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     ENEMY_CULL_DISTANCE, PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
-    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE, FULLSCREEN,
-    SCREEN_WIDTH, SCREEN_HEIGHT
-)
+    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE)
 from src.utils import draw_damage_overlay
-from src.director import WaveDirector
-from src.encounters import ENCOUNTER_SCRIPT
 from src.object_pool import ParticlePool, LaserPool
-from src.sound_handler import SoundHandler
 from src.ship_ai import ShipAI
 from src.title_screen import TitleCinematic
 from src.hud_data import HUDData
 from src.aim_scope import AimScope
 from src.math_engine import world_to_camera_batch, project_to_screen_batch, get_forward_from_quat, quat_from_axis_angle, quat_mul
 from collections import Counter
-
-# ── Import newly designed level system ──
 from src.level import ArcadeLevel
 
 
