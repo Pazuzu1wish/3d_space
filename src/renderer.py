@@ -24,22 +24,22 @@ def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
         if projected[idx0, 0] <= -900000.0 or projected[idx1, 0] <= -900000.0 or projected[idx2, 0] <= -900000.0:
             continue
 
-        v1x = cam_verts[idx0, 0];
-        v1y = cam_verts[idx0, 1];
+        v1x = cam_verts[idx0, 0]
+        v1y = cam_verts[idx0, 1]
         v1z = cam_verts[idx0, 2]
-        v2x = cam_verts[idx1, 0];
-        v2y = cam_verts[idx1, 1];
+        v2x = cam_verts[idx1, 0]
+        v2y = cam_verts[idx1, 1]
         v2z = cam_verts[idx1, 2]
-        v3x = cam_verts[idx2, 0];
-        v3y = cam_verts[idx2, 1];
+        v3x = cam_verts[idx2, 0]
+        v3y = cam_verts[idx2, 1]
         v3z = cam_verts[idx2, 2]
 
         # Edge vectors
-        ux = v2x - v1x;
-        uy = v2y - v1y;
+        ux = v2x - v1x
+        uy = v2y - v1y
         uz = v2z - v1z
-        vx = v3x - v1x;
-        vy = v3y - v1y;
+        vx = v3x - v1x
+        vy = v3y - v1y
         vz = v3z - v1z
 
         # Cross product for normal (Z component determines facing)
