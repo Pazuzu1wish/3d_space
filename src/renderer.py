@@ -24,22 +24,22 @@ def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
         if projected[idx0, 0] <= -900000.0 or projected[idx1, 0] <= -900000.0 or projected[idx2, 0] <= -900000.0:
             continue
 
-        v1x = cam_verts[idx0, 0];
-        v1y = cam_verts[idx0, 1];
+        v1x = cam_verts[idx0, 0]
+        v1y = cam_verts[idx0, 1]
         v1z = cam_verts[idx0, 2]
-        v2x = cam_verts[idx1, 0];
-        v2y = cam_verts[idx1, 1];
+        v2x = cam_verts[idx1, 0]
+        v2y = cam_verts[idx1, 1]
         v2z = cam_verts[idx1, 2]
-        v3x = cam_verts[idx2, 0];
-        v3y = cam_verts[idx2, 1];
+        v3x = cam_verts[idx2, 0]
+        v3y = cam_verts[idx2, 1]
         v3z = cam_verts[idx2, 2]
 
         # Edge vectors
-        ux = v2x - v1x;
-        uy = v2y - v1y;
+        ux = v2x - v1x
+        uy = v2y - v1y
         uz = v2z - v1z
-        vx = v3x - v1x;
-        vy = v3y - v1y;
+        vx = v3x - v1x
+        vy = v3y - v1y
         vz = v3z - v1z
 
         # Cross product for normal (Z component determines facing)
@@ -440,13 +440,13 @@ class RenderPipeline:
 
     def _flush_mesh_submissions(self):
         """Batch all mesh submissions into a single numba call.
-        Uses pre-allocated staging arrays written with slice-assignment to avoid
-        np.vstack allocations on every frame.
+        Uses pre-allocated staging arrays and NumPy advanced indexing 
+        to bypass Python loop overhead for culled faces.
         """
         if not self._mesh_submissions:
             return
 
-        # First pass: count total verts and faces
+        # 1. First pass: count total verts and faces
         total_verts = 0
         total_faces = 0
         for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
@@ -457,52 +457,72 @@ class RenderPipeline:
             self._mesh_submissions.clear()
             return
 
-        # Grow staging buffers if needed (amortised, rarely triggers)
+        # 2. Grow staging buffers if needed (amortised, rarely triggers)
         self._ensure_staging(total_verts, total_faces)
 
-        # Second pass: fill staging arrays in-place (no allocation)
-        layer_list  = []
+        # 3. Pre-allocate a NumPy array for layer mapping (avoids Python list.extend overhead)
+        # 0: background, 1: opaque, 2: alpha, 3: overlay
+        layer_map = {'background': 0, 'opaque': 1, 'alpha': 2, 'overlay': 3}
+        layer_names = ['background', 'opaque', 'alpha', 'overlay']
+        layer_ints = np.empty(total_faces, dtype=np.int8)
+
+        # 4. Second pass: fill staging arrays in-place (zero allocation)
         vert_offset = 0
         face_offset = 0
         for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
             nv = cam_verts.shape[0]
             nf = f_idx.shape[0]
 
-            self._stg_cam [vert_offset:vert_offset + nv] = cam_verts
+            self._stg_cam[vert_offset:vert_offset + nv] = cam_verts
             self._stg_proj[vert_offset:vert_offset + nv] = projected
 
             if nf > 0:
                 self._stg_fidx[face_offset:face_offset + nf] = f_idx + vert_offset
                 self._stg_fcol[face_offset:face_offset + nf] = f_col
-                layer_list.extend([layer] * nf)
+                # Map string layer to integer for fast NumPy indexing later
+                layer_ints[face_offset:face_offset + nf] = layer_map[layer]
 
             vert_offset += nv
             face_offset += nf
 
-        # Use views into the staging arrays — zero extra allocation
-        big_cam      = self._stg_cam [:total_verts]
+        # 5. Use views into the staging arrays — zero extra allocation
+        big_cam      = self._stg_cam[:total_verts]
         big_proj     = self._stg_proj[:total_verts]
         big_face_idx = self._stg_fidx[:total_faces]
         big_face_col = self._stg_fcol[:total_faces]
 
-        # Single Numba call for all faces
+        # 6. Single Numba call for all faces
         valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(
             big_cam, big_proj, big_face_idx, big_face_col
         )
 
-        # Dispatch visible faces into layer buffers
-        layer_lists = self._layers
-        for i in range(total_faces):
-            if not valid_mask[i]:
-                continue
-            idx0 = big_face_idx[i, 0]
-            idx1 = big_face_idx[i, 1]
-            idx2 = big_face_idx[i, 2]
-            pts = [
-                (big_proj[idx0, 0], big_proj[idx0, 1]),
-                (big_proj[idx1, 0], big_proj[idx1, 1]),
-                (big_proj[idx2, 0], big_proj[idx2, 1]),
-            ]
-            layer_lists[layer_list[i]].append((avg_zs[i], 'poly', pts, tuple(shaded_colors[i])))
+        # 7. ⚡ OPTIMIZED DISPATCH: Find ONLY valid indices using NumPy
+        valid_indices = np.where(valid_mask)[0]
+        
+        if len(valid_indices) > 0:
+            # Extract ONLY the data we actually need to draw (C-level speed)
+            v_idx = big_face_idx[valid_indices]
+            v_z = avg_zs[valid_indices]
+            v_col = shaded_colors[valid_indices]
+            v_layers = layer_ints[valid_indices]
+            
+            layer_lists = self._layers
+            
+            # Loop is now drastically smaller (e.g., 20-30% of original size)
+            # and uses pre-extracted, contiguous NumPy arrays.
+            for i in range(len(valid_indices)):
+                i0, i1, i2 = v_idx[i]
+                
+                layer_lists[layer_names[v_layers[i]]].append((
+                    v_z[i],
+                    'poly',
+                    [
+                        (big_proj[i0, 0], big_proj[i0, 1]),
+                        (big_proj[i1, 0], big_proj[i1, 1]),
+                        (big_proj[i2, 0], big_proj[i2, 1])
+                    ],
+                    tuple(v_col[i])  # shaded_colors is already int32, tuple() is very fast
+                ))
 
+        # 8. Clear submissions for the next frame
         self._mesh_submissions.clear()
