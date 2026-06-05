@@ -17,8 +17,8 @@ from src.constants import (
 )
 
 SHIELD_MAX       = 100
-SHIELD_RECHARGE  = 25.0   # units per second
-SHIELD_DELAY     = 10.0    # seconds after last hit before recharge starts
+SHIELD_RECHARGE  = 15.0   # units per second
+SHIELD_DELAY     = 7.0    # seconds after last hit before recharge starts
 
 class Player:
     def __init__(self, pos=(0.0, 0.0, 0.0)):
