@@ -790,7 +790,8 @@ class PauseState(State):
                 self.idle_timer = 0.0
 
         elif event.type == pygame.KEYDOWN:
-            if event.key in (pygame.K_p):
+            # single-key check should use equality, not `in` (which expects an iterable)
+            if event.key == pygame.K_p:
                 manager.pop()
             elif event.key in (pygame.K_UP, pygame.K_w):
                 self.selected_item = (self.selected_item - 1) % len(self.menu_items)
