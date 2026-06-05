@@ -1,6 +1,5 @@
 from src.math_engine import *
 from src.constants import PLAYER_LASER_COLOR, PLAYER_LASER_SPEED
-import pygame
 
 class Laser:
     def __init__(self, ppos=None, prot=None, x=0, y=0, z=0, vx=0, vy=0, vz=0, life=1.5, color=None):
@@ -17,9 +16,9 @@ class Laser:
         if ppos is not None and prot is not None:
             fx, fy, fz = get_forward_from_quat(prot)
             # Start laser slightly ahead of the ship so it doesn't clip the camera
-            self.x = ppos[0] + fx * 50
-            self.y = ppos[1] + fy * 50
-            self.z = ppos[2] + fz * 50
+            self.x = ppos[0] + fx * 35
+            self.y = ppos[1] + fy * 35
+            self.z = ppos[2] + fz * 35
             
             speed = PLAYER_LASER_SPEED
             self.vx, self.vy, self.vz = fx * speed, fy * speed, fz * speed
@@ -51,9 +50,9 @@ class Laser:
 
     def update(self, dt):
         self.px, self.py, self.pz = self.x, self.y, self.z
-        self.x += self.vx * dt
-        self.y += self.vy * dt
-        self.z += self.vz * dt
+        self.x += self.vx * dt 
+        self.y += self.vy * dt 
+        self.z += self.vz * dt 
         self.life -= dt
 
     def submit_to_renderer(self, renderer):
