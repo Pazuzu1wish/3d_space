@@ -10,7 +10,6 @@ from src.mesh_loader import preload_all_meshes
 from src.state import (StateManager, TitleState, GameplayState, PauseState,
                           GameOverState)
 
-
 # ──────────────────────────────────────────────
 # Game Context / App Base
 # ──────────────────────────────────────────────
@@ -23,19 +22,13 @@ class Game:
         init_asteroid_bank()
         self.init_sounds()
         self.select_random_bgm()
-
-        # Window & Clock
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT
         flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
         self.screen = pygame.display.set_mode((self.W, self.H), flags)
         pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
         self.clock = pygame.time.Clock()
-
-        # Inputs
         self.handler = DS4Input()
         self.handler.init()
-
-        # State Handling setup
         self.state_manager = StateManager(self)
         self.save_data = SaveData.load()   # load persistent state
         self.state_manager.push(TitleState(self))
@@ -87,7 +80,7 @@ class Game:
                     event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE
                 ):
                     self.running = False
-                
+
                 if self.state_manager.current:
                     self.state_manager.current.handle_event(event)
 
