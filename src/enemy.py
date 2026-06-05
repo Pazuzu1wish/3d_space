@@ -280,83 +280,92 @@ class Enemy:
         dx, dy, dz = self.x - px, self.y - py, self.z - pz
         return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
 
+    import math
+
     def compute_avoidance_force(self, spatial, player_pos, avoid_player=True, max_range=2000.0):
         """
         Compute a lateral avoidance force to dodge asteroids, enemies, and optionally the player.
-        
-        Returns a (vx, vy, vz) force vector pointing away from nearby obstacles.
-        Scaled by strength to be applied as lateral force.
-        
-        Note: The player is not in the spatial partition, so avoid_player doesn't prevent
-        collision with the player. However, it's kept for semantic clarity about intent.
+
+        Returns a (vx, vy, vz) force vector pointing away from nearby obstacles,
+        scaled by thrust, or None if no avoidance is needed.
         """
         if spatial is None:
             return None
-        
-        avoidance = [0.0, 0.0, 0.0]
-        nearby = spatial.query_nearby((self.x, self.y, self.z), max_range)
-        
-        for obj in nearby:
-            # Skip self
+
+        obstacles_data = []
+
+        # 1. Gather obstacles from the spatial partition
+        for obj in spatial.query_nearby((self.x, self.y, self.z), max_range):
             if obj is self:
                 continue
-            
-            # Only process objects with position
-            if not hasattr(obj, 'x') or not hasattr(obj, 'y') or not hasattr(obj, 'z'):
-                continue
-            
-            # Avoid asteroids and enemies
+
+            # Check if the object is an asteroid or enemy
             is_asteroid = hasattr(obj, 'split')
             is_enemy = hasattr(obj, 'on_hit') and hasattr(obj, 'hit_radius')
-            
-            if not (is_asteroid or is_enemy):
-                continue
-            
-            # Calculate direction away from obstacle
-            dx = self.x - obj.x
-            dy = self.y - obj.y
-            dz = self.z - obj.z
+
+            if is_asteroid or is_enemy:
+                try:
+                    # EAFP (Easier to Ask for Forgiveness than Permission)
+                    # Faster than 3 hasattr checks (x, y, z) for objects we know are valid
+                    radius = getattr(obj, 'hit_radius', 100.0)
+                    obstacles_data.append((obj.x, obj.y, obj.z, radius))
+                except AttributeError:
+                    continue
+
+        # 2. Add the player to avoidance (Fixes the issue noted in the original docstring)
+        if avoid_player and player_pos is not None:
+            # Assuming player has a standard hit radius (e.g., 100.0)
+            obstacles_data.append((player_pos[0], player_pos[1], player_pos[2], 100.0))
+
+        avoidance_x = avoidance_y = avoidance_z = 0.0
+
+        # 3. Calculate forces
+        for ox, oy, oz, other_radius in obstacles_data:
+            dx = self.x - ox
+            dy = self.y - oy
+            dz = self.z - oz
+
             dist_sq = dx * dx + dy * dy + dz * dz
-            
-            # Skip if too close (avoid divide by zero and extreme forces)
+
+            # Skip if perfectly overlapping to avoid division by zero
             if dist_sq < 1.0:
                 continue
-            
-            dist = math.sqrt(dist_sq)
-            
-            # Get combined hit radius (obstacle's radius + our safety margin)
-            other_radius = getattr(obj, 'hit_radius', 100.0)
-            combined_radius = self.hit_radius + other_radius + 200.0  # 200 unit safety margin
-            
-            # Only avoid if within combined radius * 1.5
-            if dist > combined_radius * 1.5:
+
+            # Maximum distance at which we react to this obstacle
+            max_dist = (self.hit_radius + other_radius + 200.0) * 1.5
+
+            # Fast Rejection: Use squared distance to skip expensive math.sqrt()
+            if dist_sq > max_dist * max_dist:
                 continue
-            
-            # Inverse distance weighting: closer obstacles have stronger effect
-            strength = max(0.0, 1.0 - (dist / (combined_radius * 1.5)))
-            strength = strength ** 2  # Quadratic falloff for smoother behavior
-            
-            # Normalize direction and scale by strength
-            nx = (dx / dist) * strength
-            ny = (dy / dist) * strength
-            nz = (dz / dist) * strength
-            
-            avoidance[0] += nx
-            avoidance[1] += ny
-            avoidance[2] += nz
-        
-        # If no avoidance needed, return None
-        if avoidance[0] == 0.0 and avoidance[1] == 0.0 and avoidance[2] == 0.0:
+
+            dist = math.sqrt(dist_sq)
+
+            # Inverse distance weighting with quadratic falloff.
+            # Because we filtered with max_dist above, dist/max_dist is guaranteed <= 1.0,
+            # so we safely removed the max(0.0, ...) check.
+            strength = (1.0 - (dist / max_dist)) ** 2
+
+            # Optimization: Group the division to perform 1 division instead of 3
+            factor = strength / dist
+            avoidance_x += dx * factor
+            avoidance_y += dy * factor
+            avoidance_z += dz * factor
+
+        # 4. Normalize and scale final vector
+        avoid_sq = avoidance_x ** 2 + avoidance_y ** 2 + avoidance_z ** 2
+
+        # Check against a small epsilon rather than exact 0.0 for floating point safety
+        if avoid_sq < 1e-8:
             return None
-        
-        # Normalize and scale by thrust
-        avoid_len = math.sqrt(avoidance[0]**2 + avoidance[1]**2 + avoidance[2]**2)
-        if avoid_len > 0:
-            avoidance[0] = (avoidance[0] / avoid_len) * self.thrust * 0.6
-            avoidance[1] = (avoidance[1] / avoid_len) * self.thrust * 0.6
-            avoidance[2] = (avoidance[2] / avoid_len) * self.thrust * 0.6
-        
-        return tuple(avoidance)
+
+        # Apply thrust scaling (sqrt only computed once for the final vector)
+        scale = (self.thrust * 0.6) / math.sqrt(avoid_sq)
+
+        return (
+            avoidance_x * scale,
+            avoidance_y * scale,
+            avoidance_z * scale
+        )
 
     def submit_to_renderer(self, renderer):
         self._submit_engine_trail(renderer)
