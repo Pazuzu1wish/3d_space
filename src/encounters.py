@@ -1,4 +1,4 @@
-ENCOUNTER_SCRIPT = [
+ARCADE_ENCOUNTER_SCRIPT = [
     # ── ENCOUNTER 1: THE SNIPER GAUNTLET ─────────────────────────────────────
     # A wall of snipers protected by a screen of drones.
     {

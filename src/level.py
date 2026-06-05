@@ -6,7 +6,7 @@ from src.star import Star
 from src.nebula import NebulaSystem
 from src.asteroid import AsteroidField
 from src.director import WaveDirector
-from src.encounters import ENCOUNTER_SCRIPT
+from src.encounters import ARCADE_ENCOUNTER_SCRIPT
 
 class BaseLevel:
     """
@@ -60,10 +60,10 @@ class ArcadeLevel(BaseLevel):
         player_pos = self.gameplay_state.player.pos
         self.stars = [Star(player_pos) for _ in range(150)]
         self.nebulae = NebulaSystem(count=6, area_radius=30000)
-        self.director = WaveDirector(ENCOUNTER_SCRIPT)
+        self.director = WaveDirector(ARCADE_ENCOUNTER_SCRIPT)
 
         # Setup and register Asteroids directly into the engine's spatial partitions
-        for enc in ENCOUNTER_SCRIPT:
+        for enc in ARCADE_ENCOUNTER_SCRIPT:
             field = AsteroidField(enc['origin'], count=12, radius=25000)
             for a in field.asteroids:
                 self.asteroids.append(a)
