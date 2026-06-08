@@ -173,4 +173,4 @@ class AimScope:
             ((x+w+2,     y+h-c_len), (x+w+2, y+h+2)),
         ]
         for p1, p2 in corners:
-            pygame.draw.line(screen, (255, 255, 255), p1, p2, 2)
+            pygame.draw.line(screen, (255, 255, 255), p1, p2, 1)
