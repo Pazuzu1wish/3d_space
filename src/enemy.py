@@ -999,12 +999,12 @@ class Corvette(Enemy):
         # Huge thruster block for a massive ship
         self.engine_offsets = [
             (-50, -10, -200), (50, -10, -200),
-            (-20, 20, -200), (20, 20, -200)
+            (0, 20, -200)
         ]
         self.engine_color = (255, 140, 0)
-        self.engine_size = 12.0
-        self.engine_pulse_rate = 3.0
-        self.trail_life = 1.0
+        self.engine_size = 6.0
+        self.engine_pulse_rate = 1.0
+        self.trail_life = 0.0
         self.trail_drift = 30.0
 
         self.turret_timer = 0.0

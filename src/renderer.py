@@ -351,21 +351,20 @@ class RenderPipeline:
         draw_circle = pygame.draw.circle
         draw_line = pygame.draw.line
 
-        # 1. Background
+        # 1. Background (Stars, etc.)
         self._layers['background'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['background']:
             draw_circle(surface, p[4], p[2], p[3])
 
-        # 2. Opaque
-        self._layers['opaque'].sort(key=lambda p: p[0], reverse=True)
-        for p in self._layers['opaque']:
-            draw_poly(surface, p[3], p[2])
+        # 2 & 3. 3D Scene (Merge Opaque and Alpha for correct Painter's Algorithm depth)
+        scene_primitives = self._layers['opaque'] + self._layers['alpha']
+        scene_primitives.sort(key=lambda p: p[0], reverse=True)
 
-        # 3. Alpha
-        self._layers['alpha'].sort(key=lambda p: p[0], reverse=True)
-        for p in self._layers['alpha']:
+        for p in scene_primitives:
             t = p[1]
-            if t == 'sprite':
+            if t == 'poly':
+                draw_poly(surface, p[3], p[2])
+            elif t == 'sprite':
                 draw_circle(surface, p[4], p[2], p[3])
             elif t == 'nebula':
                 s = p[3] * 2
@@ -424,6 +423,7 @@ class RenderPipeline:
             elif t == 'line':
                 draw_line(surface, p[4], p[2], p[3], p[5])
 
+        # (If you have an Overlay section for UI, it would go here at the very end)
 
     def _ensure_staging(self, n_verts, n_faces):
         """Grow pre-allocated staging buffers if the current frame needs more space.
