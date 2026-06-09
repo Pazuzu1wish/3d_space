@@ -8,18 +8,18 @@ ARCADE_ENCOUNTER_SCRIPT = [
         'enemies': [
             # The Snipers (Rear Guard)
             ('fighter', (-1200, -1200, -500)),
-            ('fighter', ( 1200, -1200, -500)),
-            ('fighter', (-1200,  1200, -500)),
+            # ('fighter', ( 1200, -1200, -500)),
+            # ('fighter', (-1200,  1200, -500)),
             ('fighter', ( 1200,  1200, -500)),
-            # The Drone Screen (Vanguard)
-            ('fighter',  (-400,  200, 800)),
-            ('fighter',  ( 400,  200, 800)),
-            ('fighter',  (-800, -200, 1200)),
-            ('fighter',  ( 800, -200, 1200)),
-            ('fighter',  (   0,  600, 1000)),
-            ('fighter',  (   0, -600, 1000)),
-            ('fighter',  (-1200, 0,   1500)),
-            ('fighter',  ( 1200, 0,   1500)),
+            # # The Drone Screen (Vanguard)
+            # ('fighter',  (-400,  200, 800)),
+            # ('fighter',  ( 400,  200, 800)),
+            # ('fighter',  (-800, -200, 1200)),
+            # ('fighter',  ( 800, -200, 1200)),
+            # ('fighter',  (   0,  600, 1000)),
+            # ('fighter',  (   0, -600, 1000)),
+            # ('fighter',  (-1200, 0,   1500)),
+            # ('fighter',  ( 1200, 0,   1500)),
         ],
         'filler': False,
     },
@@ -34,12 +34,12 @@ ARCADE_ENCOUNTER_SCRIPT = [
             ('carrier',  (0, 0, 0)),
             # Escorts
             ('corvette', (-1800, -300, 600)),
-            ('corvette', ( 1800, -300, 600)),
+            # ('corvette', ( 1800, -300, 600)),
             # High Cover
-            ('fighter',  (-1000, 800, 300)),
-            ('fighter',  ( 1000, 800, 300)),
-            ('fighter',  (-500, 1200, 600)),
-            ('fighter',  ( 500, 1200, 600)),
+            # ('fighter',  (-1000, 800, 300)),
+            # ('fighter',  ( 1000, 800, 300)),
+            # ('fighter',  (-500, 1200, 600)),
+            # ('fighter',  ( 500, 1200, 600)),
             # Close defense
             ('drone',    (-300, -400, 400)),
             ('drone',    ( 300, -400, 400)),

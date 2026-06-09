@@ -446,7 +446,6 @@ PATTERN_MAP = {
 # ──────────────────────────────────────────────
 
 class SuicideDrone(Enemy):
-    SPEED = 3500
 
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
@@ -476,7 +475,7 @@ class SuicideDrone(Enemy):
         self.turn_rate      = 1.5
         self.drag           = 0.2
 
-        self.hit_radius = 200
+        self.hit_radius = 100
         self.did_detonate = False
 
         # Mesh loaded from assets/drone.obj + drone.mtl
@@ -541,8 +540,8 @@ class SuicideDrone(Enemy):
             return
 
         # Proximity visual cue: pulse faster as it gets closer
-        if dist < 1500:
-            proximity_factor = 1.0 - (dist / 1500.0)
+        if dist < 1000:
+            proximity_factor = 1.0 - (dist / 1000.0)
             self.engine_pulse_rate = 15.0 + proximity_factor * 30.0
 
         desired_heading = (nx, ny, nz)
@@ -597,8 +596,8 @@ class Dogfighter(Enemy):
     def __init__(self, x, y, z):
         super().__init__(x, y, z)
 
-        self.hp = 5
-        self.max_hp = 5
+        self.hp = 10
+        self.max_hp = 10
         self.t = 0
         self.base_color = (50, 0, 255)
 
@@ -612,7 +611,7 @@ class Dogfighter(Enemy):
         self.hit_radius = 200
 
         self.mg_timer = 0.0
-        self.bolt_timer = random.uniform(1.0, 4.0)
+        self.bolt_timer = random.uniform(1.0, 2.0)
 
         self.mode = 'positioning'
         self.mode_timer = random.uniform(2.0, 4.0)
@@ -622,7 +621,7 @@ class Dogfighter(Enemy):
         self.pattern = random.choice(PATTERNS[1:])  # Skip 'direct'
         self.circle_sign = random.choice([1.0, -1.0])
         self.ideal_range = random.uniform(800, 1200)
-        self.circle_radius = random.uniform(1200, 1800)
+        self.circle_radius = random.uniform(2000, 2800)
         self.pattern_scale = 2.5  # Dogfighters need larger sweeps than drones
 
         # ── Newtonian physics ──
@@ -802,7 +801,7 @@ class Dogfighter(Enemy):
 
         if w_type == 'mg':
             proj_speed = 15000
-            spread = 0.13
+            spread = 0.03
             ax = aim_dir[0] + random.uniform(-spread, spread)
             ay = aim_dir[1] + random.uniform(-spread, spread)
             az = aim_dir[2] + random.uniform(-spread, spread)

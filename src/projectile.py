@@ -88,7 +88,7 @@ class MachineGunBolt(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(
             x, y, z, vx, vy, vz,
-            life=3.0, damage=4.25, color=(255, 200, 50), size_mult=0.7, homing=False
+            life=3.0, damage=10, color=(255, 200, 50), size_mult=0.7, homing=False
         )
 
 
@@ -142,5 +142,5 @@ class StealthShotgun(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(
             x, y, z, vx, vy, vz,
-            life=1.5, damage=8.0, color=(100, 100, 255), size_mult=1.2, homing=False
+            life=1.5, damage=16.0, color=(100, 100, 255), size_mult=1.2, homing=False
         )
