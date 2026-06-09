@@ -7,7 +7,8 @@ import pygame
 from src.math_engine import (
     ray_sphere_intersection,
     world_to_camera,
-    get_forward_from_quat
+    get_forward_from_quat,
+    calculate_lead_position
 )
 from src.constants import (
     MG_COOLDOWN, WEAPON_SPREAD, TRAIL_LIFE_DIVISOR,
@@ -604,14 +605,14 @@ class Dogfighter(Enemy):
         # Twin Blue Thrusters – repositioned to tail top
         self.engine_offsets = [(-32, -10, -45), (32, -10, -45)]
         self.engine_color = (60, 150, 255)
-        self.engine_size = 4.5
+        self.engine_size = 1.5
         self.engine_pulse_rate = 8.0
         self.trail_life = 0.6
         self.trail_drift = 60.0
         self.hit_radius = 200
 
         self.mg_timer = 0.0
-        self.bolt_timer = random.uniform(2.0, 5.0)
+        self.bolt_timer = random.uniform(1.0, 4.0)
 
         self.mode = 'positioning'
         self.mode_timer = random.uniform(2.0, 4.0)
@@ -649,7 +650,8 @@ class Dogfighter(Enemy):
     def _player_forward(self, orientation):
         return get_forward_from_quat(orientation)
 
-    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
+    def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None,
+               spatial=None):
         self.t += dt
         self.engine_time += dt
         self.mg_timer -= dt
@@ -660,17 +662,35 @@ class Dogfighter(Enemy):
         dist_to_player = self.dist_to_player(player_pos)
         self._last_dist = dist_to_player
 
-        # --- COLLISION AVOIDANCE (LATERAL PEEL-OFF) ---
+        # ⚡ 1. EVASIVE BARREL ROLL
+        # If the player's crosshair is aiming right at us, panic and dodge!
+        dx, dy, dz = self.x - px, self.y - py, self.z - pz
+        d_len = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
+        nx_e, ny_e, nz_e = dx / d_len, dy / d_len, dz / d_len
+        p_fwd = get_forward_from_quat(player_orientation)
+
+        # Dot product: -1.0 means player is looking dead at us
+        aim_dot = nx_e * p_fwd[0] + ny_e * p_fwd[1] + nz_e * p_fwd[2]
+
+        if aim_dot < -0.96 and getattr(self, '_roll_timer', 0) <= 0:
+            self._roll_timer = BARREL_ROLL_DURATION
+            self._roll_direction = random.choice([-1.0, 1.0])
+            self.lateral_thrust = 1.2  # Boost lateral thrusters temporarily to actually move out of the way
+
+        # Execute roll if active
+        if getattr(self, '_roll_timer', 0) > 0:
+            self._barrel_roll(dt, roll_speed=self._roll_direction * 2.5)
+            if self._roll_timer <= 0:
+                self.lateral_thrust = 0.35  # Reset to normal
+
+        # --- COLLISION AVOIDANCE & POSITIONING ---
         if dist_to_player < 800:
-            # Force a positioning break with a lateral peel-off
             self.mode = 'positioning'
             self.mode_timer = random.uniform(1.5, 3.0)
-            
-            # Target a point laterally offset to peel away
             target_x = self.x + self.right[0] * 1000 * self.circle_sign
             target_y = self.y + self.right[1] * 1000 * self.circle_sign
             target_z = self.z + self.right[2] * 1000 * self.circle_sign
-        
+
         elif self.mode_timer <= 0:
             if self.mode == 'positioning':
                 self.mode = 'attack_run'
@@ -679,10 +699,9 @@ class Dogfighter(Enemy):
                 self.mode = 'positioning'
                 self.mode_timer = random.uniform(3.0, 5.0)
                 self.phase = random.uniform(0, math.pi * 2)
-                # Pick a new pattern for the next orbit
                 self.pattern = random.choice(PATTERNS[1:])
 
-        # Determine target point based on mode (if not already peeling off)
+        # ⚡ 2. PREDICTIVE FLIGHT PATH
         if dist_to_player >= 800:
             if self.mode == 'positioning':
                 pfw = self._player_forward(player_orientation)
@@ -690,44 +709,40 @@ class Dogfighter(Enemy):
                 behind_y = py - pfw[1] * self.ideal_range
                 behind_z = pz - pfw[2] * self.ideal_range
 
-                # Use selected pattern with amplitude scaling and circle sign
                 offset = self.pattern(self.t, self.phase, self.SPEED)
                 target_x = behind_x + offset[0] * self.pattern_scale * self.circle_sign
                 target_y = behind_y + offset[1] * self.pattern_scale
                 target_z = behind_z + offset[2] * self.pattern_scale
             else:
-                # ATTACK RUN: Aim with a human-like lead
-                if player is not None:
+                # TRUE PREDICTIVE AIMING: Fly towards where the player WILL be
+                if player is not None and hasattr(player, 'vel'):
                     p_vx, p_vy, p_vz = player.vel
-                    target_x = px + p_vx * 0.2
-                    target_y = py + p_vy * 0.2
-                    target_z = pz + p_vz * 0.2
+                    time_to_impact = dist_to_player / 15000.0  # Machine gun speed
+                    target_x = px + (p_vx * time_to_impact)
+                    target_y = py + (p_vy * time_to_impact)
+                    target_z = pz + (p_vz * time_to_impact)
                 else:
                     target_x, target_y, target_z = px, py, pz
 
-        dx = target_x - self.x
-        dy = target_y - self.y
-        dz = target_z - self.z
-        dist = math.sqrt(dx * dx + dy * dy + dz * dz) or 1.0
-        desired_heading = (dx/dist, dy/dist, dz/dist)
+        tdx = target_x - self.x
+        tdy = target_y - self.y
+        tdz = target_z - self.z
+        tdist = math.sqrt(tdx * tdx + tdy * tdy + tdz * tdz) or 1.0
+        desired_heading = (tdx / tdist, tdy / tdist, tdz / tdist)
 
-        # Brake when closing on target point too fast
         if self._approaching_too_fast((target_x, target_y, target_z), brake_threshold=500.0):
-            spd = math.sqrt(self.vx**2 + self.vy**2 + self.vz**2) or 1.0
-            desired_heading = (-self.vx/spd, -self.vy/spd, -self.vz/spd)
+            spd = math.sqrt(self.vx ** 2 + self.vy ** 2 + self.vz ** 2) or 1.0
+            desired_heading = (-self.vx / spd, -self.vy / spd, -self.vz / spd)
 
-        # Compute collision avoidance force (avoid asteroids, enemies, and player except when attacking)
-        avoid_player = self.mode != 'attack_run'  # Don't avoid player while attacking
+        avoid_player = self.mode != 'attack_run'
         avoidance_force = self.compute_avoidance_force(spatial, player_pos, avoid_player=avoid_player, max_range=3000.0)
 
-        # During positioning orbit, add a persistent lateral force to curve the path
         if self.mode == 'positioning':
             lat_force = (
                 self.right[0] * self.circle_sign * self.thrust * 0.45,
                 self.right[1] * self.circle_sign * self.thrust * 0.45,
                 self.right[2] * self.circle_sign * self.thrust * 0.45,
             )
-            # Blend avoidance force with orbital force
             if avoidance_force is not None:
                 lat_force = (
                     lat_force[0] + avoidance_force[0] * 0.5,
@@ -739,30 +754,43 @@ class Dogfighter(Enemy):
 
         self._apply_newtonian(desired_heading, dt, lateral_force=lat_force)
 
-        # Re-check distance for firing logic
-        dist_to_player = self.dist_to_player(player_pos)
-        to_px, to_py, to_pz = px - self.x, py - self.y, pz - self.z
-
+        # ⚡ 3. PREDICTIVE WEAPON FIRING
         if self.mode == 'attack_run' and dist_to_player < self.FIRE_RANGE:
-            to_player_norm = (to_px / dist_to_player, to_py / dist_to_player, to_pz / dist_to_player)
-            dot = (self.forward[0] * to_player_norm[0] +
-                   self.forward[1] * to_player_norm[1] +
-                   self.forward[2] * to_player_norm[2])
+            # Aim weapons at future position, not current position
+            if player is not None and hasattr(player, 'vel'):
+                # Use your Numba function! Shooter = Enemy, Target = Player
+                aim_x, aim_y, aim_z = calculate_lead_position(
+                    player_pos=(self.x, self.y, self.z),
+                    player_vel=(self.vx, self.vy, self.vz),
+                    target_pos=player.pos,
+                    target_vel=player.vel,
+                    projectile_speed=15000.0  # MG Speed
+                )
+            else:
+                aim_x, aim_y, aim_z = px, py, pz
+                
+            aim_dx, aim_dy, aim_dz = aim_x - self.x, aim_y - self.y, aim_z - self.z
+            aim_dist = math.sqrt(aim_dx*aim_dx + aim_dy*aim_dy + aim_dz*aim_dz) or 1.0
+            aim_dir = (aim_dx/aim_dist, aim_dy/aim_dist, aim_dz/aim_dist)
 
+            dot = (self.forward[0] * aim_dir[0] +
+                   self.forward[1] * aim_dir[1] +
+                   self.forward[2] * aim_dir[2])
+
+            # If they are aiming perfectly at the intercept point, light you up
             if dot > 0.85:
                 if self.mg_timer <= 0:
                     self.mg_timer = MG_COOLDOWN
-                    self._fire_projectile(to_player_norm, global_projectiles, w_type='mg')
+                    self._fire_projectile(aim_dir, global_projectiles, w_type='mg')
 
                 if self.bolt_timer <= 0:
                     self.bolt_timer = random.uniform(5.0, 8.0)
-                    self._fire_projectile(to_player_norm, global_projectiles, w_type='bolt')
+                    self._fire_projectile(aim_dir, global_projectiles, w_type='bolt')
 
         self._spawn_engine_trail()
         self._update_engine_trail(dt)
         if self._flicker > 0:
             self._flicker -= dt * 8
-
     def _fire_projectile(self, aim_dir, global_projectiles, w_type='mg'):
         if global_projectiles is None: return
 

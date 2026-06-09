@@ -88,7 +88,7 @@ class MachineGunBolt(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(
             x, y, z, vx, vy, vz,
-            life=3.0, damage=0.25, color=(255, 200, 50), size_mult=0.7, homing=False
+            life=3.0, damage=4.25, color=(255, 200, 50), size_mult=0.7, homing=False
         )
 
 
@@ -96,7 +96,7 @@ class HomingBolt(EnemyProjectile):
     def __init__(self, x, y, z, vx, vy, vz):
         super().__init__(
             x, y, z, vx, vy, vz,
-            life=6.0, damage=15.0, color=(200, 50, 255), size_mult=2.5, homing=True
+            life=6.0, damage=50.0, color=(200, 50, 255), size_mult=2.5, homing=True
         )
 
     def update(self, dt, player_pos):

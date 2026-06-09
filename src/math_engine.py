@@ -279,15 +279,17 @@ def calculate_lead_position(player_pos, player_vel, target_pos, target_vel,
     discriminant = B**2 - 4 * A * C
 
     # No solution (target is too fast or moving away)
+    # Return a fixed-size tuple of floats so numba's nopython mode can
+    # consistently infer the return type (UniTuple(float64 x 3)).
     if discriminant < 0 or A == 0:
-        return target_pos  # Fallback: aim at current position
+        return (tx, ty, tz)  # Fallback: aim at current position
 
     # Solve for t (only positive root)
     t = (-B + math.sqrt(discriminant)) / (2 * A)
     if t < 0:
         t = (-B - math.sqrt(discriminant)) / (2 * A)
     if t < 0:
-        return target_pos  # No valid intercept time
+        return (tx, ty, tz)  # No valid intercept time
 
     # Calculate intercept position
     intercept_x = tx + vtx * t
