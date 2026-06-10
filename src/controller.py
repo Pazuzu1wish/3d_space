@@ -68,7 +68,9 @@ def lerp_color(a, b, t):
 # ──────────────────────────────────────────────
 class DS4Input:
     """
-    Abstracts all DS4 pygame events into clean per-frame state.
+    Abstracts all gamepad/controller pygame events into clean per-frame state.
+    Supports auto-detection of controllers via SDL2 GameController API,
+    falling back to raw joystick profiles for unrecognized gamepads.
 
     Usage (minimal):
         handler = DS4Input()
@@ -90,19 +92,74 @@ class DS4Input:
         l2     = handler.trigger_left()         # 0..1
         r2     = handler.trigger_right()        # 0..1
         hat    = handler.dpad()                 # (dx, dy) raw hat tuple
-
-    Optional callbacks (set before or after init):
-        handler.on_press   = lambda name: print(f"pressed {name}")
-        handler.on_release = lambda name: print(f"released {name}")
-        handler.on_hat     = lambda val:  print(f"dpad {val}")
     """
 
     DEADZONE_DEFAULT = 0.20
+
+    # Aliases to map raw button names or alternative layouts to standard PS naming
+    ALIASES = {
+        'Cross': 'X',
+        'A': 'X',
+        'B': 'Circle',
+        'Y': 'Triangle',
+        'LB': 'L1',
+        'RB': 'R1',
+        'LT': 'L2',
+        'RT': 'R2',
+        'Back': 'Share',
+        'Guide': 'PS',
+    }
+
+    # Standard SDL Controller to Game Button Mapping
+    SDL_BUTTON_MAP = {
+        pygame.CONTROLLER_BUTTON_A: 'X',
+        pygame.CONTROLLER_BUTTON_B: 'Circle',
+        pygame.CONTROLLER_BUTTON_Y: 'Triangle',
+        pygame.CONTROLLER_BUTTON_X: 'Square',
+        pygame.CONTROLLER_BUTTON_LEFTSHOULDER: 'L1',
+        pygame.CONTROLLER_BUTTON_RIGHTSHOULDER: 'R1',
+        pygame.CONTROLLER_BUTTON_BACK: 'Share',
+        pygame.CONTROLLER_BUTTON_START: 'Options',
+        pygame.CONTROLLER_BUTTON_GUIDE: 'PS',
+        pygame.CONTROLLER_BUTTON_LEFTSTICK: 'L3',
+        pygame.CONTROLLER_BUTTON_RIGHTSTICK: 'R3',
+        pygame.CONTROLLER_BUTTON_DPAD_UP: 'DPad Up',
+        pygame.CONTROLLER_BUTTON_DPAD_DOWN: 'DPad Down',
+        pygame.CONTROLLER_BUTTON_DPAD_LEFT: 'DPad Left',
+        pygame.CONTROLLER_BUTTON_DPAD_RIGHT: 'DPad Right',
+    }
+
+    # Predefined raw joystick mapping profiles (Fallback Mode)
+    PS_BUTTON_MAP = {
+        0: 'X', 1: 'Circle', 2: 'Triangle', 3: 'Square',
+        4: 'L1', 5: 'R1', 6: 'L2', 7: 'R2',
+        8: 'Share', 9: 'Options', 10: 'PS', 11: 'L3', 12: 'R3',
+        13: 'Touchpad'
+    }
+    PS_AXIS_MAP = {'LX': 0, 'LY': 1, 'RX': 3, 'RY': 4, 'L2': 2, 'R2': 5}
+
+    XBOX_BUTTON_MAP = {
+        0: 'X', 1: 'Circle', 2: 'Square', 3: 'Triangle',
+        4: 'L1', 5: 'R1', 6: 'Share', 7: 'Options', 8: 'PS',
+        9: 'L3', 10: 'R3'
+    }
+    XBOX_AXIS_MAP = {'LX': 0, 'LY': 1, 'RX': 3, 'RY': 4, 'L2': 2, 'R2': 5}
+
+    SWITCH_BUTTON_MAP = {
+        0: 'X', 1: 'Circle', 2: 'Square', 3: 'Triangle',
+        4: 'L1', 5: 'R1', 6: 'L2', 7: 'R2',
+        8: 'Share', 9: 'Options', 10: 'PS',
+        12: 'L3', 13: 'R3'
+    }
+    SWITCH_AXIS_MAP = {'LX': 0, 'LY': 1, 'RX': 2, 'RY': 3, 'L2': 4, 'R2': 5}
 
     def __init__(self, joystick_index: int = 0, deadzone: float = DEADZONE_DEFAULT):
         self.joystick_index = joystick_index
         self.deadzone       = deadzone
         self._joy: pygame.joystick.JoystickType | None = None
+        self._controller = None
+        self._is_sdl_controller = False
+        self._controller_module = None
 
         # raw axis values (–1..1)
         self._axes: dict[int, float] = {}
@@ -112,8 +169,12 @@ class DS4Input:
         self._just_pressed: set[str]  = set()
         self._just_released:set[str]  = set()
 
-        # hat state
+        # hat state (only used in raw fallback hat events)
         self._hat: tuple[int, int] = (0, 0)
+
+        # fallback mapping configuration
+        self._button_map = self.XBOX_BUTTON_MAP
+        self._axis_map = self.XBOX_AXIS_MAP
 
         # optional callbacks
         self.on_press:   callable | None = None
@@ -135,21 +196,123 @@ class DS4Input:
     def init(self) -> bool:
         """Connect to the joystick. Returns True if successful."""
         pygame.joystick.init()
+        try:
+            import pygame._sdl2.controller as controller
+            controller.init()
+            self._controller_module = controller
+        except Exception:
+            self._controller_module = None
+
         if pygame.joystick.get_count() > self.joystick_index:
-            self._joy = pygame.joystick.Joystick(self.joystick_index)
-            self._joy.init()
+            is_ctrl = False
+            if self._controller_module:
+                try:
+                    is_ctrl = self._controller_module.is_controller(self.joystick_index)
+                except Exception:
+                    is_ctrl = False
+
+            if is_ctrl:
+                try:
+                    self._controller = self._controller_module.Controller(self.joystick_index)
+                    self._controller.init()
+                    self._is_sdl_controller = True
+                    self._joy = self._controller.as_joystick()
+                    
+                    # Pre-populate axis values from controller (range -32768..32767)
+                    for axis_idx in range(6):
+                        raw_val = self._controller.get_axis(axis_idx)
+                        if axis_idx in (pygame.CONTROLLER_AXIS_TRIGGERLEFT, pygame.CONTROLLER_AXIS_TRIGGERRIGHT):
+                            self._axes[axis_idx] = raw_val / 32767.0
+                        else:
+                            self._axes[axis_idx] = raw_val / 32768.0
+                except Exception:
+                    self._is_sdl_controller = False
+                    self._controller = None
+                    self._joy = pygame.joystick.Joystick(self.joystick_index)
+                    self._joy.init()
+                    
+                    # Pre-populate raw axis values (range -1.0..1.0)
+                    for axis_idx in range(self._joy.get_numaxes()):
+                        self._axes[axis_idx] = self._joy.get_axis(axis_idx)
+            else:
+                self._is_sdl_controller = False
+                self._controller = None
+                self._joy = pygame.joystick.Joystick(self.joystick_index)
+                self._joy.init()
+                
+                # Pre-populate raw axis values (range -1.0..1.0)
+                for axis_idx in range(self._joy.get_numaxes()):
+                    self._axes[axis_idx] = self._joy.get_axis(axis_idx)
+
             self.connected   = True
-            self.name        = self._joy.get_name()
+            if self._is_sdl_controller and self._controller:
+                self.name = self._controller.name or self._joy.get_name()
+            else:
+                self.name = self._joy.get_name()
+
             self.num_buttons = self._joy.get_numbuttons()
             self.num_axes    = self._joy.get_numaxes()
             self.num_hats    = self._joy.get_numhats()
+
+            if not self._is_sdl_controller:
+                self._setup_raw_profile()
+
             # Check if rumble is supported
-            self.rumble_supported = self._joy.rumble(0.0, 0.0, 0)
+            self.rumble_supported = False
+            try:
+                if self._is_sdl_controller and self._controller:
+                    self.rumble_supported = self._controller.rumble(0.0, 0.0, 0)
+                else:
+                    self.rumble_supported = self._joy.rumble(0.0, 0.0, 0)
+            except Exception:
+                self.rumble_supported = False
+
             return True
+
         self.connected = False
         self.name      = "No controller detected"
         self.rumble_supported = False
+        self._is_sdl_controller = False
+        self._controller = None
+        self._joy = None
         return False
+
+    def _setup_raw_profile(self):
+        name_lower = self.name.lower()
+        if any(substring in name_lower for substring in ('playstation', 'dualshock', 'dualsense', 'ps4', 'ps5', 'sony')):
+            self._button_map = self.PS_BUTTON_MAP
+            self._axis_map = self.PS_AXIS_MAP
+        elif any(substring in name_lower for substring in ('xbox', 'microsoft', 'x-box')):
+            self._button_map = self.XBOX_BUTTON_MAP
+            self._axis_map = self.XBOX_AXIS_MAP
+        elif any(substring in name_lower for substring in ('switch', 'nintendo')):
+            self._button_map = self.SWITCH_BUTTON_MAP
+            self._axis_map = self.SWITCH_AXIS_MAP
+        else:
+            # Generic fallback: Xbox buttons, dynamic axes discovery
+            self._button_map = self.XBOX_BUTTON_MAP
+            self._axis_map = self._discover_axes(self.num_axes)
+
+    @staticmethod
+    def _discover_axes(num_axes: int) -> dict[str, int]:
+        if num_axes >= 6:
+            return {
+                'LX': 0, 'LY': 1,
+                'RX': 3, 'RY': 4,
+                'L2': 2, 'R2': 5
+            }
+        elif num_axes >= 4:
+            return {
+                'LX': 0, 'LY': 1,
+                'RX': 2, 'RY': 3,
+                'L2': -1, 'R2': -1
+            }
+        else:
+            return {
+                'LX': 0, 'LY': 1,
+                'RX': -1, 'RY': -1,
+                'L2': -1, 'R2': -1
+            }
 
     # ── event ingestion ─────────────────────────
 
@@ -157,63 +320,124 @@ class DS4Input:
         """
         Feed a pygame event to the handler.
         Returns True if the event was consumed (joystick-related).
-        Call this inside your existing event loop — no changes needed there.
         """
-        if event.type == pygame.JOYBUTTONDOWN:
-            name = self._btn_name(event.button)
+        # Re-initialize on hotplug events
+        if event.type in (
+            pygame.JOYDEVICEADDED, pygame.JOYDEVICEREMOVED,
+            pygame.CONTROLLERDEVICEADDED, pygame.CONTROLLERDEVICEREMOVED
+        ):
+            self.init()
+            return True
+
+        if self._is_sdl_controller:
+            if event.type == pygame.CONTROLLERBUTTONDOWN:
+                name = self.SDL_BUTTON_MAP.get(event.button, f"Btn {event.button}")
+                self._held.add(name)
+                self._just_pressed.add(name)
+                if self.on_press:
+                    self.on_press(name)
+                return True
+
+            if event.type == pygame.CONTROLLERBUTTONUP:
+                name = self.SDL_BUTTON_MAP.get(event.button, f"Btn {event.button}")
+                self._held.discard(name)
+                self._just_released.add(name)
+                if self.on_release:
+                    self.on_release(name)
+                return True
+
+            if event.type == pygame.CONTROLLERAXISMOTION:
+                # Normalize SDL Controller axis values from -32768..32767 to -1.0..1.0
+                if event.axis in (pygame.CONTROLLER_AXIS_TRIGGERLEFT, pygame.CONTROLLER_AXIS_TRIGGERRIGHT):
+                    val = event.value / 32767.0
+                else:
+                    val = event.value / 32768.0
+                self._axes[event.axis] = val
+                
+                # Synthesize digital button presses for triggers
+                if event.axis == pygame.CONTROLLER_AXIS_TRIGGERLEFT:
+                    self._handle_trigger_button('L2', val)
+                elif event.axis == pygame.CONTROLLER_AXIS_TRIGGERRIGHT:
+                    self._handle_trigger_button('R2', val)
+                return True
+
+        else:
+            if event.type == pygame.JOYBUTTONDOWN:
+                name = self._button_map.get(event.button, f"Btn {event.button}")
+                self._held.add(name)
+                self._just_pressed.add(name)
+                if self.on_press:
+                    self.on_press(name)
+                return True
+
+            if event.type == pygame.JOYBUTTONUP:
+                name = self._button_map.get(event.button, f"Btn {event.button}")
+                self._held.discard(name)
+                self._just_released.add(name)
+                if self.on_release:
+                    self.on_release(name)
+                return True
+
+            if event.type == pygame.JOYAXISMOTION:
+                self._axes[event.axis] = event.value
+                
+                # Synthesize digital button presses for triggers
+                l2_axis = self._axis_map.get('L2', -1)
+                r2_axis = self._axis_map.get('R2', -1)
+                if event.axis == l2_axis:
+                    self._handle_trigger_button('L2', event.value)
+                elif event.axis == r2_axis:
+                    self._handle_trigger_button('R2', event.value)
+                return True
+
+            if event.type == pygame.JOYHATMOTION:
+                old_hat = self._hat
+                self._hat = event.value
+                
+                # Synthesize button-like events for D-Pad directions
+                for dx, dy, name in [
+                    (0, 1, 'DPad Up'), (0, -1, 'DPad Down'),
+                    (-1, 0, 'DPad Left'), (1, 0, 'DPad Right')
+                ]:
+                    # Check vertical
+                    if dy != 0:
+                        if self._hat[1] == dy and old_hat[1] != dy:
+                            self._just_pressed.add(name)
+                        if self._hat[1] != dy and old_hat[1] == dy:
+                            self._just_released.add(name)
+                        if self._hat[1] == dy: self._held.add(name)
+                        else: self._held.discard(name)
+                    # Check horizontal
+                    if dx != 0:
+                        if self._hat[0] == dx and old_hat[0] != dx:
+                            self._just_pressed.add(name)
+                        if self._hat[0] != dx and old_hat[0] == dx:
+                            self._just_released.add(name)
+                        if self._hat[0] == dx: self._held.add(name)
+                        else: self._held.discard(name)
+
+                if self.on_hat:
+                    self.on_hat(event.value)
+                return True
+
+        return False
+
+    def _handle_trigger_button(self, name: str, value: float):
+        if self._is_sdl_controller:
+            is_pressed = value > 0.5
+        else:
+            is_pressed = value > 0.0
+            
+        if is_pressed and name not in self._held:
             self._held.add(name)
             self._just_pressed.add(name)
             if self.on_press:
                 self.on_press(name)
-            return True
-
-        if event.type == pygame.JOYBUTTONUP:
-            name = self._btn_name(event.button)
+        elif not is_pressed and name in self._held:
             self._held.discard(name)
             self._just_released.add(name)
             if self.on_release:
                 self.on_release(name)
-            return True
-
-        if event.type == pygame.JOYAXISMOTION:
-            self._axes[event.axis] = event.value
-            return True
-
-        if event.type == pygame.JOYHATMOTION:
-            old_hat = self._hat
-            self._hat = event.value
-            
-            # Synthesize button-like events for D-Pad directions
-            for dx, dy, name in [
-                (0, 1, 'DPad Up'), (0, -1, 'DPad Down'),
-                (-1, 0, 'DPad Left'), (1, 0, 'DPad Right')
-            ]:
-                # Check vertical
-                if dy != 0:
-                    if self._hat[1] == dy and old_hat[1] != dy:
-                        self._just_pressed.add(name)
-                    if self._hat[1] != dy and old_hat[1] == dy:
-                        self._just_released.add(name)
-                    if self._hat[1] == dy: self._held.add(name)
-                    else: self._held.discard(name)
-                # Check horizontal
-                if dx != 0:
-                    if self._hat[0] == dx and old_hat[0] != dx:
-                        self._just_pressed.add(name)
-                    if self._hat[0] != dx and old_hat[0] == dx:
-                        self._just_released.add(name)
-                    if self._hat[0] == dx: self._held.add(name)
-                    else: self._held.discard(name)
-
-            if self.on_hat:
-                self.on_hat(event.value)
-            return True
-
-        if event.type in (pygame.JOYDEVICEADDED, pygame.JOYDEVICEREMOVED):
-            self.init()   # auto-reconnect
-            return True
-
-        return False
 
     def update(self):
         """
@@ -225,17 +449,20 @@ class DS4Input:
 
     # ── button queries ───────────────────────────
 
+    def _resolve_button(self, button: str) -> str:
+        return self.ALIASES.get(button, button)
+
     def held(self, button: str) -> bool:
         """True every frame the button is down."""
-        return button in self._held
+        return self._resolve_button(button) in self._held
 
     def just_pressed(self, button: str) -> bool:
         """True only on the frame the button went down."""
-        return button in self._just_pressed
+        return self._resolve_button(button) in self._just_pressed
 
     def just_released(self, button: str) -> bool:
         """True only on the frame the button came up."""
-        return button in self._just_released
+        return self._resolve_button(button) in self._just_released
 
     def any_pressed(self) -> list[str]:
         """All buttons currently held."""
@@ -245,37 +472,64 @@ class DS4Input:
 
     def stick_left(self) -> tuple[float, float]:
         """Left stick (x, y) with deadzone applied, –1..1."""
-        return self._apply_deadzone(
-            self._axes.get(AX_LX, 0.0),
-            self._axes.get(AX_LY, 0.0),
-        )
+        if self._is_sdl_controller:
+            lx = self._axes.get(pygame.CONTROLLER_AXIS_LEFTX, 0.0)
+            ly = self._axes.get(pygame.CONTROLLER_AXIS_LEFTY, 0.0)
+        else:
+            lx = self._axes.get(self._axis_map.get('LX', 0), 0.0)
+            ly = self._axes.get(self._axis_map.get('LY', 1), 0.0)
+        return self._apply_deadzone(lx, ly)
 
     def stick_right(self) -> tuple[float, float]:
         """Right stick (x, y) with deadzone applied, –1..1."""
-        return self._apply_deadzone(
-            self._axes.get(AX_RX, 0.0),
-            self._axes.get(AX_RY, 0.0),
-        )
+        if self._is_sdl_controller:
+            rx = self._axes.get(pygame.CONTROLLER_AXIS_RIGHTX, 0.0)
+            ry = self._axes.get(pygame.CONTROLLER_AXIS_RIGHTY, 0.0)
+        else:
+            rx = self._axes.get(self._axis_map.get('RX', 3), 0.0)
+            ry = self._axes.get(self._axis_map.get('RY', 4), 0.0)
+        return self._apply_deadzone(rx, ry)
 
     # ── trigger queries ──────────────────────────
 
     def trigger_left(self) -> float:
         """L2 normalised to 0..1."""
-        return self._normalise_trigger(self._axes.get(AX_L2, -1.0))
+        if self._is_sdl_controller:
+            return self._axes.get(pygame.CONTROLLER_AXIS_TRIGGERLEFT, 0.0)
+        else:
+            raw = self._axes.get(self._axis_map.get('L2', 2), -1.0)
+            return self._normalise_trigger(raw)
 
     def trigger_right(self) -> float:
         """R2 normalised to 0..1."""
-        return self._normalise_trigger(self._axes.get(AX_R2, -1.0))
+        if self._is_sdl_controller:
+            return self._axes.get(pygame.CONTROLLER_AXIS_TRIGGERRIGHT, 0.0)
+        else:
+            raw = self._axes.get(self._axis_map.get('R2', 5), -1.0)
+            return self._normalise_trigger(raw)
 
     # ── hat / d-pad ──────────────────────────────
 
     def dpad(self) -> tuple[int, int]:
         """Raw hat value: (dx, dy) where each component is –1, 0, or 1."""
-        return self._hat
+        if self._is_sdl_controller:
+            dx = 0
+            dy = 0
+            if self.held('DPad Left'):
+                dx = -1
+            elif self.held('DPad Right'):
+                dx = 1
+            if self.held('DPad Down'):
+                dy = -1
+            elif self.held('DPad Up'):
+                dy = 1
+            return (dx, dy)
+        else:
+            return self._hat
 
     def dpad_direction(self) -> str:
         """Human-readable D-pad direction, or 'neutral'."""
-        return DPad.DIRS.get(self._hat, 'neutral')
+        return DPad.DIRS.get(self.dpad(), 'neutral')
 
     # ── raw axis access ──────────────────────────
 
@@ -287,19 +541,19 @@ class DS4Input:
 
     def rumble(self, low_frequency: float, high_frequency: float, duration: int = 100) -> bool:
         """
-        Trigger controller rumble. DS4 has two motors:
-        - low_frequency: left motor (0.0–1.0)
-        - high_frequency: right motor (0.0–1.0)
-        - duration: milliseconds (0 = infinite until stopped)
+        Trigger controller rumble.
         Returns True if successful, False if not supported.
         """
-        if not self.connected or not self._joy:
+        if not self.connected:
             return False
         try:
-            # Clamp values to 0.0–1.0 range
             low = max(0.0, min(1.0, low_frequency))
             high = max(0.0, min(1.0, high_frequency))
-            return self._joy.rumble(low, high, duration)
+            if self._is_sdl_controller and self._controller:
+                return self._controller.rumble(low, high, duration)
+            elif self._joy:
+                return self._joy.rumble(low, high, duration)
+            return False
         except (AttributeError, RuntimeError):
             return False
 
@@ -308,31 +562,19 @@ class DS4Input:
         return self.rumble(0.0, 0.0, 0)
 
     def pulse(self, intensity: float = 1.0, duration: int = 100) -> bool:
-        """
-        Simple pulse: both motors at same intensity.
-        intensity: 0.0–1.0
-        """
+        """Simple pulse: both motors at same intensity."""
         return self.rumble(intensity, intensity, duration)
 
     def punch(self, intensity: float = 1.0) -> bool:
-        """
-        Sharp punch feeling: high-frequency spike (short duration).
-        intensity: 0.0–1.0
-        """
+        """Sharp punch feeling: high-frequency spike."""
         return self.rumble(0.0, intensity, 50)
 
     def buzz(self, intensity: float = 0.7, duration: int = 200) -> bool:
-        """
-        Continuous buzz: low-frequency vibration.
-        intensity: 0.0–1.0
-        """
+        """Continuous buzz: low-frequency vibration."""
         return self.rumble(intensity, 0.0, duration)
 
     def wave(self, intensity: float = 1.0) -> bool:
-        """
-        Wave effect: both motors ramping up and down.
-        intensity: 0.0–1.0
-        """
+        """Wave effect: both motors ramping up and down."""
         return self.rumble(intensity * 0.5, intensity, 150)
 
     # ── internals ───────────────────────────────
@@ -347,10 +589,7 @@ class DS4Input:
         return (raw + 1.0) / 2.0
 
     def _apply_deadzone(self, x: float, y: float) -> tuple[float, float]:
-        """
-        Radial deadzone — feels much better than per-axis clamping.
-        Dead region is a circle; outside it the range rescales to 0..1.
-        """
+        """Radial deadzone."""
         magnitude = (x * x + y * y) ** 0.5
         if magnitude < self.deadzone:
             return 0.0, 0.0
