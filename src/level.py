@@ -6,6 +6,7 @@ from src.star import Star
 from src.nebula import NebulaSystem
 from src.asteroid import AsteroidField
 from src.director import WaveDirector
+from src.space_station import SpaceStation
 from src.encounters import ARCADE_ENCOUNTER_SCRIPT
 
 class BaseLevel:
@@ -23,6 +24,7 @@ class BaseLevel:
         self.asteroids = []
         self.waypoints = []
         self.director = None
+        self.station = []
 
     def initialize(self):
         """Called once when entering the state to populate initial space layout."""
@@ -62,6 +64,9 @@ class ArcadeLevel(BaseLevel):
         self.nebulae = NebulaSystem(count=6, area_radius=30000)
         self.director = WaveDirector(ARCADE_ENCOUNTER_SCRIPT)
 
+        # Spawn Space Station
+        self.station.append(SpaceStation(0, 0, 1000, 50))
+
         # Setup and register Asteroids directly into the engine's spatial partitions
         for enc in ARCADE_ENCOUNTER_SCRIPT:
             field = AsteroidField(enc['origin'], count=12, radius=25000)
@@ -73,7 +78,8 @@ class ArcadeLevel(BaseLevel):
         self.waypoints = [
             {'pos': (0, 0, 75000), 'label': 'Enemy Stronghold', 'active': True, 'color': (0, 255, 100, 200)},
             {'pos': (2000, -500, 25000), 'label': 'CARRIER STRIKE GROUP', 'active': True, 'color': (255, 200, 0, 200)},
-            {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)}
+            {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)},
+            {'pos': (0, 0, 1000), 'label': 'SPACE STATION', 'active': True, 'color': (0, 255, 0, 200)}
         ]
 
         # Font fallback setup

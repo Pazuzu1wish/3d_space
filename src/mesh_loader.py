@@ -96,6 +96,7 @@ _SHIP_OBJ_MAP = {
     'minelayer':  'assets/minelayer.obj',
     'player':     'assets/player.obj',
     'sniper':     'assets/sniper.obj',
+    'space_station': 'assets/station1.obj',
 }
 
 

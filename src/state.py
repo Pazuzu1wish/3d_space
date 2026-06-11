@@ -27,6 +27,7 @@ from src.hud_data import HUDData
 from src.aim_scope import AimScope
 from src.math_engine import world_to_camera_batch, project_to_screen_batch, get_forward_from_quat, quat_from_axis_angle, quat_mul
 from collections import Counter
+from src.space_station import SpaceStation
 from src.level import ArcadeLevel
 
 
@@ -263,6 +264,8 @@ class GameplayState(State):
         # Draw environment through active level instances
         Star.submit_batch_to_renderer(self.level.stars, self.renderer, self.player.pos)
         self.level.nebulae.submit_to_renderer(self.renderer)
+        for s in self.level.station[:]:
+            s.submit_to_renderer(self.renderer)
 
         sniper_beams_to_draw = []
         for obj in visible_entities:
@@ -464,6 +467,11 @@ class GameplayState(State):
             if a.z < player.pos[2] + ENEMY_CULL_DISTANCE:
                 self.spatial.unregister_entity(a)
                 self.level.asteroids.remove(a)
+
+        # Update Space Station on Active Level object
+        for s in self.level.station[:]:
+            s.update(dt)
+            
 
         # Laser Hits
         for l in self.laser_pool.get_active()[:]:
