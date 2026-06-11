@@ -78,6 +78,21 @@ class Enemy:
     def get_mesh(self):
         return self.verts, self.faces
 
+    def apply_scale(self, factor):
+        self.mesh_scale = factor
+        self.hit_radius *= factor
+        
+        # Scale engine placement, size, and trail spread
+        self.engine_offsets = [(ox * factor, oy * factor, oz * factor) for ox, oy, oz in self.engine_offsets]
+        self.engine_size *= factor
+        self.trail_drift *= factor
+
+        # If any legacy rendering code relies on the vertex dictionary directly:
+        if hasattr(self, 'verts'):
+            for k, v in self.verts.items():
+                self.verts[k] = (v[0] * factor, v[1] * factor, v[2] * factor)
+
+
     def _camera_z(self, player_pos, player_orientation):
         px, py, pz = player_pos
         _, _, cz = world_to_camera(
@@ -371,8 +386,16 @@ class Enemy:
     def submit_to_renderer(self, renderer):
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
+        
+        scale = getattr(self, 'mesh_scale', 1.0)
+        
+        # Multiply the orientation vectors by the scale factor
+        s_right = (self.right[0] * scale, self.right[1] * scale, self.right[2] * scale)
+        s_up    = (self.up[0] * scale, self.up[1] * scale, self.up[2] * scale)
+        s_fwd   = (self.forward[0] * scale, self.forward[1] * scale, self.forward[2] * scale)
+
         renderer.submit_baked_mesh(
-            (self.x, self.y, self.z), self.right, self.up, self.forward, self.baked_mesh
+            (self.x, self.y, self.z), s_right, s_up, s_fwd, self.baked_mesh
         )
 
 
@@ -490,6 +513,8 @@ class SuicideDrone(Enemy):
         ]
 
         self.spawn_immunity_timer = 20.0
+
+        self.apply_scale(2.5)
 
     def set_pattern(self, pattern_name):
         if pattern_name in PATTERN_MAP:
@@ -643,6 +668,8 @@ class Dogfighter(Enemy):
              'color': tuple(self.baked_mesh.f_col[i])}
             for i in range(len(self.baked_mesh.f_idx))
         ]
+
+        self.apply_scale(2.5)
 
 
 
@@ -882,6 +909,8 @@ class Sniper(Enemy):
             for i in range(len(self.baked_mesh.f_idx))
         ]
 
+        self.apply_scale(2.5)
+
     
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.timer -= dt
@@ -1057,6 +1086,8 @@ class Corvette(Enemy):
             for i in range(len(self.baked_mesh.f_idx))
         ]
 
+        self.apply_scale(2.5)
+
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
         self.t += dt
         self.engine_time += dt
@@ -1143,6 +1174,8 @@ class Mine(Enemy):
 
         self._last_player = None
         self._last_spatial = None
+
+        
 
     def detonate(self, player=None, spatial=None):
         if self.did_detonate:
@@ -1272,6 +1305,8 @@ class Minelayer(Enemy):
              'color': tuple(self.baked_mesh.f_col[i])}
             for i in range(len(self.baked_mesh.f_idx))
         ]
+
+        self.apply_scale(2.5)
 
     def _pick_flank_offset(self, p_fwd):
         dist = random.uniform(3500, 5000)
@@ -1462,6 +1497,8 @@ class StealthInterceptor(Enemy):
             for i in range(len(self.baked_mesh.f_idx))
         ]
 
+        self.apply_scale(2.5)
+
     def _pick_flank_offset(self, p_fwd):
         dist = random.uniform(2500, 3500)
         for _ in range(10):
@@ -1621,14 +1658,20 @@ class Carrier(Enemy):
             for i in range(len(self.baked_mesh.f_idx))
         ]
 
+        self.apply_scale(2.5)
+
     def is_hit(self, px, py, pz):
         dx, dy, dz = px - self.x, py - self.y, pz - self.z
         local_x = dx * self.right[0]   + dy * self.right[1]   + dz * self.right[2]
         local_y = dx * self.up[0]      + dy * self.up[1]      + dz * self.up[2]
         local_z = dx * self.forward[0] + dy * self.forward[1] + dz * self.forward[2]
-        hit_x = -400 <= local_x <= 400
-        hit_y = -120 <= local_y <= 180
-        hit_z = -500 <= local_z <= 800
+        
+        scale = getattr(self, 'mesh_scale', 1.0)
+        
+        hit_x = (-400 * scale) <= local_x <= (400 * scale)
+        hit_y = (-120 * scale) <= local_y <= (180 * scale)
+        hit_z = (-500 * scale) <= local_z <= (800 * scale)
+        
         return hit_x and hit_y and hit_z
 
     def update(self, dt, player_pos, player_orientation, global_projectiles=None, global_enemies=None, player=None, spatial=None):
