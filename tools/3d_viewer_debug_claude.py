@@ -43,15 +43,14 @@ import math
 import pygame
 from src.cockpit import custom_font
 import src.enemy as enemy
+import traceback
+from src.missile import PlayerMissile
+from src.player import Player
 
 
 # ── try to import project modules; fall back to stubs ────────────────────────
 try:
-    from src.math_engine import (
-        quat_identity, quat_rotate_vec, quat_conjugate,
-        rotate_yaw, rotate_pitch,
-        project_to_screen,
-    )
+    
     from src.enemy import Corvette
     _HAS_PROJECT = True
 except ImportError:
@@ -220,7 +219,7 @@ class _FallbackShip:
 
 class PlayerMeshWrapper:
     def __init__(self):
-        from src.player import Player
+        
         self.player = Player()
         self.verts = self.player.verts
         self.faces = self.player.faces
@@ -231,7 +230,7 @@ class PlayerMeshWrapper:
 
 class MissileMeshWrapper:
     def __init__(self):
-        from src.missile import PlayerMissile
+        
         self.missile = PlayerMissile(0, 0, 0, 0, 0, 0, 1.0, 10.0)
         self.verts = self.missile.verts
         self.faces = self.missile.faces
@@ -261,7 +260,7 @@ class DebugViewer:
         self.font_lg  = custom_font(16)
 
         # Available models registry
-        import src.enemy as enemy
+        
         self.models = [
             ("Corvette", lambda: enemy.Corvette(0, 0, 0)),
             ("StealthInterceptor", lambda: enemy.StealthInterceptor(0, 0, 0)),
@@ -347,7 +346,7 @@ class DebugViewer:
             print(f"[mesh loader] Loaded {name} successfully: {len(self.verts)} verts, {len(self.faces)} faces")
         except Exception as e:
             print(f"[mesh loader] Error loading {name}: {e}")
-            import traceback
+             
             traceback.print_exc()
 
     # ── rotation helpers using the local quat ─────────────────────────────────
