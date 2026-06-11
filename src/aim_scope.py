@@ -77,7 +77,7 @@ class AimScope:
         self._surf.fill((5, 5, 25, 200))
 
         # Sync camera to player with boosted FOV
-        self._camera.fov = self._main_camera.fov * self.current_magnification
+        self._camera.fov = self._main_camera.fov * self.current_magnification//2
         self._camera.update(player.pos, player.orientation)
         self._renderer.clear()
 
