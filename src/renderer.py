@@ -1,132 +1,138 @@
 import pygame
 import math
 import numpy as np
+import moderngl
+
+# Numba transforms won't be needed for 3D meshes anymore, but we keep it for reference
 from numba import njit
 
+VERTEX_SHADER_3D = """
+#version 330
+uniform mat4 view;
+uniform mat4 proj;
+uniform mat4 model;
 
-@njit(fastmath=True, cache=True)
-def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
-    """
-    Fast face processing: backface culling, lighting, and sorting.
-    Returns valid mask, shaded colors, and average Z for depth sorting.
-    """
-    N_faces = face_indices.shape[0]
-    valid = np.zeros(N_faces, dtype=np.bool_)
-    shaded_colors = np.zeros((N_faces, 3), dtype=np.int32)
-    avg_zs = np.zeros(N_faces, dtype=np.float64)
+in vec3 in_vert;
+in vec3 in_color;
 
-    for i in range(N_faces):
-        idx0 = face_indices[i, 0]
-        idx1 = face_indices[i, 1]
-        idx2 = face_indices[i, 2]
+out vec3 v_view_pos;
+out vec3 v_color;
 
-        # Early skip if any vertex is out of frustum
-        if projected[idx0, 0] <= -900000.0 or projected[idx1, 0] <= -900000.0 or projected[idx2, 0] <= -900000.0:
-            continue
+void main() {
+    vec4 view_pos = view * model * vec4(in_vert, 1.0);
+    v_view_pos = view_pos.xyz;
+    gl_Position = proj * view_pos;
+    v_color = in_color;
+}
+"""
 
-        v1x = cam_verts[idx0, 0]
-        v1y = cam_verts[idx0, 1]
-        v1z = cam_verts[idx0, 2]
-        v2x = cam_verts[idx1, 0]
-        v2y = cam_verts[idx1, 1]
-        v2z = cam_verts[idx1, 2]
-        v3x = cam_verts[idx2, 0]
-        v3y = cam_verts[idx2, 1]
-        v3z = cam_verts[idx2, 2]
+FRAGMENT_SHADER_3D = """
+#version 330
+in vec3 v_view_pos;
+in vec3 v_color;
+out vec4 f_color;
 
-        # Edge vectors
-        ux = v2x - v1x
-        uy = v2y - v1y
-        uz = v2z - v1z
-        vx = v3x - v1x
-        vy = v3y - v1y
-        vz = v3z - v1z
+void main() {
+    vec3 dx = dFdx(v_view_pos);
+    vec3 dy = dFdy(v_view_pos);
+    vec3 normal = normalize(cross(dx, dy));
+    
+    // Light is assumed to be at camera, pointing negative Z.
+    // normal.z will be negative for faces pointing towards the camera in right-handed view space.
+    // We take abs(normal.z) to avoid black faces due to inconsistent winding in OBJ files.
+    float shade = max(0.2, abs(normal.z));
 
-        # Cross product for normal (Z component determines facing)
-        fnz = ux * vy - uy * vx
-        if fnz >= 0:  # Backfacing
-            continue
+    f_color = vec4(v_color * shade, 1.0);
+}
+"""
 
-        # Normal vector
-        nx = uy * vz - uz * vy
-        ny = uz * vx - ux * vz
+VERTEX_SHADER_2D = """
+#version 330
+in vec2 in_vert;
+in vec2 in_texcoord;
+out vec2 v_texcoord;
+void main() {
+    gl_Position = vec4(in_vert, 0.0, 1.0);
+    v_texcoord = in_texcoord;
+}
+"""
 
-        # Normalize and compute shade
-        length = math.sqrt(nx * nx + ny * ny + fnz * fnz)
-        if length > 0.0001:
-            normalized_z = fnz / length
-        else:
-            normalized_z = 0.0
+FRAGMENT_SHADER_2D = """
+#version 330
+uniform sampler2D tex;
+in vec2 v_texcoord;
+out vec4 f_color;
+void main() {
+    f_color = texture(tex, v_texcoord);
+}
+"""
 
-        shade = 255.0 * max(0.2, -normalized_z)
-        if shade < 0:
-            shade = 0
-        elif shade > 255:
-            shade = 255
-
-        shade_int = int(shade)
-
-        # Apply shade to base color
-        base_r = face_colors[i, 0]
-        base_g = face_colors[i, 1]
-        base_b = face_colors[i, 2]
-
-        shaded_colors[i, 0] = int(base_r * (shade_int / 255.0))
-        shaded_colors[i, 1] = int(base_g * (shade_int / 255.0))
-        shaded_colors[i, 2] = int(base_b * (shade_int / 255.0))
-
-        valid[i] = True
-        avg_zs[i] = (v1z + v2z + v3z) / 3.0
-
-    return valid, shaded_colors, avg_zs
+def create_vao_for_mesh(ctx, prog, v_data, f_idx, f_col):
+    flat_verts = v_data[f_idx.flatten()].astype('f4')
+    flat_colors = np.repeat(f_col, 3, axis=0).astype('f4') / 255.0
+    
+    vbo_vert = ctx.buffer(flat_verts.tobytes())
+    vbo_col = ctx.buffer(flat_colors.tobytes())
+    
+    vao = ctx.vertex_array(prog, [
+        (vbo_vert, '3f', 'in_vert'),
+        (vbo_col, '3f', 'in_color')
+    ])
+    return vao, vbo_vert, vbo_col
 
 
 class RenderPipeline:
-    # Initial capacity for per-frame staging arrays (in vertices).
-    # Doubled automatically when a frame needs more space.
-    _STAGING_INITIAL = 8000
-
     def __init__(self, camera):
         self.camera = camera
-
-        # Layered primitives
+        self.ctx = moderngl.create_context()
+        self.ctx.enable(moderngl.DEPTH_TEST | moderngl.BLEND)
+        self.ctx.blend_func = moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
+        
+        self.prog_3d = self.ctx.program(
+            vertex_shader=VERTEX_SHADER_3D,
+            fragment_shader=FRAGMENT_SHADER_3D
+        )
+        self.prog_2d = self.ctx.program(
+            vertex_shader=VERTEX_SHADER_2D,
+            fragment_shader=FRAGMENT_SHADER_2D
+        )
+        
+        # 2D Screen Quad
+        quad_verts = np.array([
+            -1.0,  1.0, 0.0, 1.0,
+            -1.0, -1.0, 0.0, 0.0,
+             1.0, -1.0, 1.0, 0.0,
+            -1.0,  1.0, 0.0, 1.0,
+             1.0, -1.0, 1.0, 0.0,
+             1.0,  1.0, 1.0, 1.0,
+        ], dtype='f4')
+        self.quad_vbo = self.ctx.buffer(quad_verts.tobytes())
+        self.quad_vao = self.ctx.vertex_array(self.prog_2d, [
+            (self.quad_vbo, '2f 2f', 'in_vert', 'in_texcoord')
+        ])
+        
+        W, H = pygame.display.get_window_size()
+        self.offscreen = pygame.Surface((W, H), pygame.SRCALPHA)
+        
+        self.screen_tex = self.ctx.texture((W, H), 4)
+        self.screen_tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
+        
         self._layers = {
-            'background': [],  # Stars
-            'opaque': [],  # Ships, Asteroids
-            'alpha': [],  # Nebula, Particles, Lasers
-            'overlay': []  # HUD
+            'background': [],  
+            'opaque': [],      
+            'alpha': [],       
+            'overlay': []      
         }
-
-        # Cache for nebula/soft sprite rendering
+        
         self._puff_cache = self._create_puff_texture(128)
-
-        # Color tinted cache to avoid re-tinting every frame
-        self._tinted_puffs = {}  # (r, g, b, alpha) -> surface
-
-        # Scale cache for nebulae to avoid expensive transform.scale every frame
-        self._scaled_nebulae = {}  # (cache_key, size) -> surface
-
-        # Mesh cache: mesh_id -> (v_data_np, face_indices_np, face_colors_np)
-        # v_data_np is the pre-converted vertex array so submit_mesh never
-        # rebuilds it from a Python dict on cache-hit frames.
-        self._mesh_cache = {}       # {mesh_id: (v_data, f_idx, f_col)}
-        self._mesh_lru   = {}       # {mesh_id: frame_counter} for LRU eviction
-        self._mesh_frame = 0        # incremented each clear()
-
-        # Per-frame mesh submissions to be processed in a single batched numba call
-        self._mesh_submissions = []  # list of (face_indices, face_colors, cam_verts, projected, layer)
-
-        # Pre-allocated staging arrays for _flush_mesh_submissions.
-        # Grown lazily (amortised O(1)) — no allocation on normal frames.
-        cap = self._STAGING_INITIAL
-        self._stg_cam  = np.empty((cap, 3), dtype=np.float64)
-        self._stg_proj = np.empty((cap, 3), dtype=np.float64)
-        self._stg_fidx = np.empty((cap, 3), dtype=np.int32)
-        self._stg_fcol = np.empty((cap, 3), dtype=np.int32)
-        self._stg_cap  = cap
+        self._tinted_puffs = {}
+        self._scaled_nebulae = {}
+        
+        # ModernGL VAO Cache
+        self._mgl_cache = {}
+        self._mgl_submissions = [] 
 
     def _create_puff_texture(self, size):
-        """Create a soft, radial gradient puff texture for nebulae."""
         surf = pygame.Surface((size, size), pygame.SRCALPHA)
         center = size // 2
         for r in range(center, 0, -1):
@@ -137,372 +143,192 @@ class RenderPipeline:
     def clear(self):
         for layer in self._layers.values():
             layer.clear()
-        self._mesh_frame += 1
-        # Periodically clear sprite/nebula caches
+        self._mgl_submissions.clear()
+        self.offscreen.fill((0, 0, 0, 0)) 
+
         if len(self._tinted_puffs) > 100:
             self._tinted_puffs.clear()
         if len(self._scaled_nebulae) > 200:
             self._scaled_nebulae.clear()
-        # LRU eviction for mesh cache: keep 5000 entries max.
-        # Evict the half that were used least recently.
-        if len(self._mesh_cache) > 5000:
-            sorted_ids = sorted(self._mesh_lru, key=self._mesh_lru.__getitem__)
-            for mid in sorted_ids[:len(sorted_ids) // 2]:
-                del self._mesh_cache[mid]
-                del self._mesh_lru[mid]
 
-    def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None, static=False):
-        """
-        Submit a whole mesh for optimized rendering.
-        Uses Numba-optimized batch transformations with pre-cached numpy data.
-        Vertex arrays are converted from Python dicts only on the first call
-        for each unique mesh (mesh_id cache-hit path allocates nothing).
-        """
-        # Fast frustum culling
-        if radius is not None:
-            if not self.camera.sphere_in_frustum(pos[0], pos[1], pos[2], radius):
-                return
+    def get_view_matrix(self):
+        px, py, pz = self.camera.pos
+        r00, r01, r02 = self.camera._r00, self.camera._r01, self.camera._r02
+        r10, r11, r12 = self.camera._r10, self.camera._r11, self.camera._r12
+        r20, r21, r22 = self.camera._r20, self.camera._r21, self.camera._r22
+        
+        R = np.array([
+            [r00, r01, r02, 0],
+            [r10, r11, r12, 0],
+            [r20, r21, r22, 0],
+            [0,     0,   0, 1]
+        ], dtype='f4')
+        T = np.array([
+            [1, 0, 0, -px],
+            [0, 1, 0, -py],
+            [0, 0, 1, -pz],
+            [0, 0, 0, 1]
+        ], dtype='f4')
+        
+        return R @ T
 
-        # Determine whether verts is a dict or already a numpy/list array
-        is_dict = isinstance(verts, dict)
+    def get_proj_matrix(self):
+        n = self.camera.near_clip
+        f = 100000.0 
+        P = np.zeros((4, 4), dtype='f4')
+        P[0, 0] = 2.0 * self.camera.fov / self.camera.W
+        P[1, 1] = 2.0 * self.camera.fov / self.camera.H 
+        P[2, 2] = (f + n) / (f - n)
+        P[2, 3] = -2.0 * f * n / (f - n)
+        P[3, 2] = 1.0 
+        return P
 
-        # Build a stable mesh_id from the faces list identity + shape.
-        if faces:
-            first_f = faces[0]
-            first_v = tuple(first_f.get('v', ())) if isinstance(first_f, dict) else ()
-            first_c = tuple(first_f.get('color', ())) if isinstance(first_f, dict) else ()
-            mesh_id = (id(faces), len(faces), first_v, first_c)
-        else:
-            mesh_id = (id(faces), 0, (), ())
-
-        # ── Cache-miss: build v_data + face arrays once, store everything ──
-        if mesh_id not in self._mesh_cache:
-            if is_dict:
-                v_ids  = list(verts.keys())
-                v_data = np.array([verts[vid] for vid in v_ids], dtype=np.float64)
-                vid_map = {vid: i for i, vid in enumerate(v_ids)}
-            else:
-                v_data  = np.asarray(verts, dtype=np.float64)
-                vid_map = None
-
-            f_idx = []
-            f_col = []
-            for f in faces:
-                fv = f['v'] if isinstance(f, dict) else f
-                if len(fv) == 3:
-                    if vid_map is not None:
-                        f_idx.append([vid_map[fv[0]], vid_map[fv[1]], vid_map[fv[2]]])
-                    else:
-                        f_idx.append([fv[0], fv[1], fv[2]])
-                    f_col.append(f['color'] if isinstance(f, dict) else (200, 200, 200))
-
-            self._mesh_cache[mesh_id] = (
-                v_data.copy(),
-                np.array(f_idx, dtype=np.int32),
-                np.array(f_col, dtype=np.int32),
-            )
-
-        # ── Cache-hit: zero allocation ──
-        self._mesh_lru[mesh_id] = self._mesh_frame
-        v_data, face_indices, face_colors = self._mesh_cache[mesh_id]
-
-        # Local → World (vectorised)
-        basis       = np.array([right, up, forward], dtype=np.float64)
-        pos_arr     = np.array(pos,                  dtype=np.float64)
-        world_verts = v_data @ basis + pos_arr
-
-        # World → Camera (Numba batch)
-        cam_verts = self.camera.world_to_camera_batch(world_verts)
-
-        # Project (Numba batch)
-        projected = self.camera.project_batch(cam_verts)
-
-        # Enqueue for batched numba processing later in render()
-        self._mesh_submissions.append((face_indices, face_colors, cam_verts, projected, layer))
-
-    def submit_polygon(self, world_verts, color, layer='opaque'):
-        """Submit a single polygon."""
-        if len(world_verts) < 3:
+    def submit_baked_mesh(self, pos, right, up, forward, baked_mesh, layer='opaque', scale=1.0):
+        if not self.camera.sphere_in_frustum(pos[0], pos[1], pos[2], baked_mesh.radius * scale):
             return
 
+        mesh_id = id(baked_mesh)
+        if mesh_id not in self._mgl_cache:
+            vao, vbo_v, vbo_c = create_vao_for_mesh(
+                self.ctx, self.prog_3d, baked_mesh.v_data, baked_mesh.f_idx, baked_mesh.f_col
+            )
+            self._mgl_cache[mesh_id] = (vao, vbo_v, vbo_c)
+        else:
+            vao, _, _ = self._mgl_cache[mesh_id]
+
+        model = np.eye(4, dtype='f4')
+        model[0:3, 0] = np.array(right, dtype='f4') * scale
+        model[0:3, 1] = np.array(up, dtype='f4') * scale
+        model[0:3, 2] = np.array(forward, dtype='f4') * scale
+        model[0:3, 3] = pos
+        
+        self._mgl_submissions.append((vao, model))
+
+    def submit_polygon(self, world_verts, color, layer='opaque'):
+        if len(world_verts) < 3: return
         v_data = np.array(world_verts, dtype=np.float64)
         cam_verts = self.camera.world_to_camera_batch(v_data)
-
-        # Backface culling
         v1, v2, v3 = cam_verts[0], cam_verts[1], cam_verts[2]
         ux, uy, uz = v2[0] - v1[0], v2[1] - v1[1], v2[2] - v1[2]
         vx2, vy2, vz2 = v3[0] - v1[0], v3[1] - v1[1], v3[2] - v1[2]
         fnz = ux * vy2 - uy * vx2
-
-        if fnz >= 0:
-            return
-
+        if fnz >= 0: return
         projected = self.camera.project_batch(cam_verts)
-
         pts = []
         avg_z = 0.0
         for i in range(len(cam_verts)):
-            if projected[i, 0] <= -900000.0:
-                return
+            if projected[i, 0] <= -900000.0: return
             pts.append((projected[i, 0], projected[i, 1]))
             avg_z += cam_verts[i, 2]
-
         avg_z /= len(cam_verts)
+        length = math.sqrt(fnz**2 + (ux*vz2 - uz*vx2)**2 + (uy*vz2 - uz*vy2)**2)
+        nz = fnz / length if length > 0.0001 else 0
+        shade = max(0, min(255, int(255 * max(0.2, -nz))))
+        c = (int(color[0]*shade/255), int(color[1]*shade/255), int(color[2]*shade/255))
+        self._layers[layer].append((avg_z, 'poly', pts, c))
 
-        length = math.sqrt(fnz ** 2 + (ux * vz2 - uz * vx2) ** 2 + (uy * vz2 - uz * vy2) ** 2)
-        normalized_z = fnz / length if length > 0.0001 else 0
-        shade = max(0, min(255, int(255 * max(0.2, -normalized_z))))
-        r = int(color[0] * (shade / 255))
-        g = int(color[1] * (shade / 255))
-        b = int(color[2] * (shade / 255))
-
-        self._layers[layer].append((
-            avg_z, 'poly', pts, (r, g, b)
-        ))
+    def submit_mesh(self, pos, right, up, forward, verts, faces, layer='opaque', radius=None, static=False):
+        pass
 
     def submit_sprite(self, x, y, z, color, size, is_glow=False, layer='alpha', cam_pos=None):
-        """Submit a 2D circle sprite."""
         if cam_pos:
             cx, cy, cz = cam_pos
         else:
             cx, cy, cz = self.camera.world_to_camera(x, y, z)
-
         proj = self.camera.project(cx, cy, cz)
         if proj:
             sx, sy, scale = proj
             scaled_size = max(1, int(scale * size))
-            self._layers[layer].append((
-                cz, 'sprite', (sx, sy), scaled_size, color, is_glow
-            ))
+            self._layers[layer].append((cz, 'sprite', (sx, sy), scaled_size, color, is_glow))
 
     def submit_nebula(self, x, y, z, color, size, alpha=40, layer='alpha'):
-        """Submit a soft, semi-transparent nebula puff with proximity fading."""
         cx, cy, cz = self.camera.world_to_camera(x, y, z)
-
-        if cz < 10 or cz > 50000:
-            return
-
-        # 1. PROXIMITY FADING (OPTIMIZED)
-        # Fade out smoothly as we get close so they don't fill the entire screen.
-        # Starts fading at 3000 units away, completely invisible by 800 units.
-        fade_start = 3000.0
-        fade_end = 800.0
+        if cz < 10 or cz > 50000: return
+        fade_start, fade_end = 3000.0, 800.0
         if cz < fade_start:
             fade_ratio = max(0.0, (cz - fade_end) / (fade_start - fade_end))
             alpha = int(alpha * fade_ratio)
-
-        # Skip rendering entirely if it's invisible
-        if alpha <= 0:
-            return
-
+        if alpha <= 0: return
         proj = self.camera.project(cx, cy, cz)
         if proj:
             sx, sy, scale = proj
             scaled_size = max(1, int(scale * size))
-            self._layers[layer].append((
-                cz, 'nebula', (sx, sy), scaled_size, color, alpha
-            ))
+            self._layers[layer].append((cz, 'nebula', (sx, sy), scaled_size, color, alpha))
 
     def submit_line(self, p1, p2, color, thickness=1, layer='alpha'):
-        """Submit a 3D line."""
         c1x, c1y, c1z = self.camera.world_to_camera(p1[0], p1[1], p1[2])
         c2x, c2y, c2z = self.camera.world_to_camera(p2[0], p2[1], p2[2])
         proj1 = self.camera.project(c1x, c1y, c1z)
         proj2 = self.camera.project(c2x, c2y, c2z)
-
         if proj1 and proj2:
             s1x, s1y, _ = proj1
             s2x, s2y, _ = proj2
-            self._layers[layer].append((
-                (c1z + c2z) / 2.0, 'line', (s1x, s1y), (s2x, s2y), color, thickness
-            ))
-
-    def submit_baked_mesh(self, pos, right, up, forward, baked_mesh, layer='opaque', scale=1.0):
-        """
-        Hyper-fast submission of pre-compiled numpy meshes.
-        Zero allocation path. Bypasses the LRU dictionary cache entirely.
-        """
-        # Fast frustum culling using precomputed radius
-        if not self.camera.sphere_in_frustum(pos[0], pos[1], pos[2], baked_mesh.radius * scale):
-            return
-
-        # Local → World (vectorised)
-        basis = np.array([right, up, forward], dtype=np.float64)
-        pos_arr = np.array(pos, dtype=np.float64)
-
-        # Apply scaling and rotation simultaneously
-        world_verts = (baked_mesh.v_data * scale) @ basis + pos_arr
-
-        # World → Camera (Numba batch)
-        cam_verts = self.camera.world_to_camera_batch(world_verts)
-
-        # Project (Numba batch)
-        projected = self.camera.project_batch(cam_verts)
-
-        # Enqueue for batched Numba processing
-        self._mesh_submissions.append(
-            (baked_mesh.f_idx, baked_mesh.f_col, cam_verts, projected, layer)
-        )
+            self._layers[layer].append(((c1z + c2z)/2.0, 'line', (s1x, s1y), (s2x, s2y), color, thickness))
 
     def render(self, surface):
-        """Sort and render all submitted primitives by layer."""
-        self._flush_mesh_submissions()
+        self.ctx.clear(0.0, 0.0, 0.0)
+        
+        view = self.get_view_matrix()
+        proj = self.get_proj_matrix()
+        
+        self.prog_3d['view'].write(view.T.tobytes())
+        self.prog_3d['proj'].write(proj.T.tobytes())
+        
+        self.ctx.enable(moderngl.DEPTH_TEST)
+        for vao, model in self._mgl_submissions:
+            self.prog_3d['model'].write(model.T.tobytes())
+            vao.render()
+            
+        self.ctx.disable(moderngl.DEPTH_TEST)
+
         draw_poly = pygame.draw.polygon
         draw_circle = pygame.draw.circle
         draw_line = pygame.draw.line
-
-        # 1. Background (Stars, etc.)
+        
         self._layers['background'].sort(key=lambda p: p[0], reverse=True)
         for p in self._layers['background']:
-            draw_circle(surface, p[4], p[2], p[3])
-
-        # 2 & 3. 3D Scene (Merge Opaque and Alpha for correct Painter's Algorithm depth)
+            draw_circle(self.offscreen, p[4], p[2], p[3])
+            
         scene_primitives = self._layers['opaque'] + self._layers['alpha']
         scene_primitives.sort(key=lambda p: p[0], reverse=True)
-
+        
         for p in scene_primitives:
             t = p[1]
-            if t == 'poly':
-                draw_poly(surface, p[3], p[2])
-            elif t == 'sprite':
-                draw_circle(surface, p[4], p[2], p[3])
+            if t == 'poly': draw_poly(self.offscreen, p[3], p[2])
+            elif t == 'sprite': draw_circle(self.offscreen, p[4], p[2], p[3])
+            elif t == 'line': draw_line(self.offscreen, p[4], p[2], p[3], p[5])
             elif t == 'nebula':
                 s = p[3] * 2
-
-                if s < 2:
-                    continue
+                if s < 2: continue
                 s = min(s, 600)
-
-                # Adaptive binning
-                if s < 128:
-                    step = 4
-                elif s < 256:
-                    step = 16
-                elif s < 512:
-                    step = 32
-                else:
-                    step = 128
+                step = 4 if s < 128 else (16 if s < 256 else (32 if s < 512 else 128))
                 s = (s // step) * step
-
-                color_key = p[4]  # RGB tuple
-                alpha_val = p[5]  # int 0-255
-
-                # ⚡ KEY CHANGE: Include alpha in the cache key
-                cache_key = (color_key[0], color_key[1], color_key[2], s, alpha_val)
-
+                c, a = p[4], p[5]
+                cache_key = (c[0], c[1], c[2], s, a)
                 if cache_key not in self._scaled_nebulae:
-                    # Get or create tinted base puff
-                    if color_key not in self._tinted_puffs:
+                    if c not in self._tinted_puffs:
                         tinted = self._puff_cache.copy()
                         tint_surf = pygame.Surface(self._puff_cache.get_size(), pygame.SRCALPHA)
-                        tint_surf.fill((color_key[0], color_key[1], color_key[2], 255))
+                        tint_surf.fill((c[0], c[1], c[2], 255))
                         tinted.blit(tint_surf, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-                        self._tinted_puffs[color_key] = tinted
-
-                    # Scale the tinted puff
+                        self._tinted_puffs[c] = tinted
                     try:
-                        scaled = pygame.transform.scale(self._tinted_puffs[color_key], (s, s))
-                    except pygame.error:
-                        continue
-
-                    # ⚡ Pre-multiply alpha into the surface (no set_alpha() needed!)
-                    scaled.fill((255, 255, 255, alpha_val), special_flags=pygame.BLEND_RGBA_MULT)
+                        scaled = pygame.transform.scale(self._tinted_puffs[c], (s, s))
+                    except: continue
+                    scaled.fill((255, 255, 255, a), special_flags=pygame.BLEND_RGBA_MULT)
                     self._scaled_nebulae[cache_key] = scaled
-
                 puff = self._scaled_nebulae[cache_key]
+                px, py = p[2][0] - s // 2, p[2][1] - s // 2
+                self.offscreen.blit(puff, (px, py))
 
-                # Screen culling
-                px = p[2][0] - s // 2
-                py = p[2][1] - s // 2
-                W, H = surface.get_size()
-                if px > W or px + s < 0 or py > H or py + s < 0:
-                    continue
-
-                # ⚡ Direct blit — alpha is already baked in
-                surface.blit(puff, (px, py))
-            elif t == 'line':
-                draw_line(surface, p[4], p[2], p[3], p[5])
-
-        # (If you have an Overlay section for UI, it would go here at the very end)
-
-    def _ensure_staging(self, n_verts, n_faces):
-        """Grow pre-allocated staging buffers if the current frame needs more space.
-        Doubles capacity to amortise the cost (O(1) average)."""
-        if n_verts > self._stg_cap:
-            new_cap = max(n_verts, self._stg_cap * 2)
-            self._stg_cam  = np.empty((new_cap, 3), dtype=np.float64)
-            self._stg_proj = np.empty((new_cap, 3), dtype=np.float64)
-            self._stg_cap  = new_cap
-        if n_faces > self._stg_fidx.shape[0]:
-            new_cap = max(n_faces, self._stg_fidx.shape[0] * 2)
-            self._stg_fidx = np.empty((new_cap, 3), dtype=np.int32)
-            self._stg_fcol = np.empty((new_cap, 3), dtype=np.int32)
-
-    def _flush_mesh_submissions(self):
-        """Batch all mesh submissions into a single numba call.
-        Uses pre-allocated staging arrays written with slice-assignment to avoid
-        np.vstack allocations on every frame.
-        """
-        if not self._mesh_submissions:
-            return
-
-        # First pass: count total verts and faces
-        total_verts = 0
-        total_faces = 0
-        for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
-            total_verts += cam_verts.shape[0]
-            total_faces += f_idx.shape[0]
-
-        if total_faces == 0:
-            self._mesh_submissions.clear()
-            return
-
-        # Grow staging buffers if needed (amortised, rarely triggers)
-        self._ensure_staging(total_verts, total_faces)
-
-        # Second pass: fill staging arrays in-place (no allocation)
-        layer_list  = []
-        vert_offset = 0
-        face_offset = 0
-        for (f_idx, f_col, cam_verts, projected, layer) in self._mesh_submissions:
-            nv = cam_verts.shape[0]
-            nf = f_idx.shape[0]
-
-            self._stg_cam [vert_offset:vert_offset + nv] = cam_verts
-            self._stg_proj[vert_offset:vert_offset + nv] = projected
-
-            if nf > 0:
-                self._stg_fidx[face_offset:face_offset + nf] = f_idx + vert_offset
-                self._stg_fcol[face_offset:face_offset + nf] = f_col
-                layer_list.extend([layer] * nf)
-
-            vert_offset += nv
-            face_offset += nf
-
-        # Use views into the staging arrays — zero extra allocation
-        big_cam      = self._stg_cam [:total_verts]
-        big_proj     = self._stg_proj[:total_verts]
-        big_face_idx = self._stg_fidx[:total_faces]
-        big_face_col = self._stg_fcol[:total_faces]
-
-        # Single Numba call for all faces
-        valid_mask, shaded_colors, avg_zs = process_faces_batch_numba(
-            big_cam, big_proj, big_face_idx, big_face_col
-        )
-
-        # Dispatch visible faces into layer buffers
-        layer_lists = self._layers
-        for i in range(total_faces):
-            if not valid_mask[i]:
-                continue
-            idx0 = big_face_idx[i, 0]
-            idx1 = big_face_idx[i, 1]
-            idx2 = big_face_idx[i, 2]
-            pts = [
-                (big_proj[idx0, 0], big_proj[idx0, 1]),
-                (big_proj[idx1, 0], big_proj[idx1, 1]),
-                (big_proj[idx2, 0], big_proj[idx2, 1]),
-            ]
-            layer_lists[layer_list[i]].append((avg_zs[i], 'poly', pts, tuple(shaded_colors[i])))
-
-        self._mesh_submissions.clear()
+    def present(self, ui_surface):
+        self.offscreen.blit(ui_surface, (0, 0))
+        
+        raw_bytes = pygame.image.tobytes(self.offscreen, "RGBA", True)
+        self.screen_tex.write(raw_bytes)
+        
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        self.ctx.enable(moderngl.BLEND)
+        self.screen_tex.use(0)
+        self.prog_2d['tex'].value = 0
+        self.quad_vao.render(moderngl.TRIANGLES)

@@ -7,7 +7,7 @@ import math
 import numpy as np
 from src.save_data import RunResult, SaveData
 from src.camera import Camera
-from src.renderer import RenderPipeline, process_faces_batch_numba
+from src.renderer import RenderPipeline
 from src.cockpit import draw_cockpit_hud
 from src.star import Star
 from src.player import Player
@@ -188,7 +188,6 @@ class GameplayState(State):
 
         world_to_camera_batch(dummy_verts, 0.0, 0.0, 0.0, dummy_rcoef)
         project_to_screen_batch(dummy_cam, 400.0, 640.0, 360.0, 0.0, 0.0, 0.1)
-        process_faces_batch_numba(dummy_cam, dummy_proj, dummy_fidx, dummy_fcol)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -252,7 +251,6 @@ class GameplayState(State):
             self.player.shake_queued = 0.0
 
     def draw(self, screen):
-        screen.fill((5, 5, 15))
 
         dt = self.context.clock.get_time() / 1000.0
         shake_offset = self.camera.update_shake(dt)
@@ -352,7 +350,7 @@ class GameplayState(State):
                         pygame.draw.circle(screen, (255, 50, 50), (jx, jy), glare)
 
     def draw_photo_mode(self, screen, cam_pos, q_cam):
-        screen.fill((5, 5, 15))
+        # Background is now cleared by ModernGL
 
         orig_pos = self.camera.pos
         orig_orient = self.camera.orientation

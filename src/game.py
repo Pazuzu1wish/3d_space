@@ -9,6 +9,32 @@ from src.asteroid import init_asteroid_bank
 from src.mesh_loader import preload_all_meshes
 from src.state import (StateManager, TitleState, GameplayState, PauseState,
                           GameOverState)
+import moderngl
+import numpy as np
+
+class UIPresenter:
+    def __init__(self, W, H):
+        self.ctx = moderngl.create_context()
+        self.prog = self.ctx.program(
+            vertex_shader="#version 330\nin vec2 in_vert; in vec2 in_texcoord; out vec2 v_texcoord; void main() { gl_Position = vec4(in_vert, 0.0, 1.0); v_texcoord = in_texcoord; }",
+            fragment_shader="#version 330\nuniform sampler2D tex; in vec2 v_texcoord; out vec4 f_color; void main() { f_color = texture(tex, v_texcoord); }"
+        )
+        quad_verts = np.array([-1, 1, 0, 1,  -1, -1, 0, 0,  1, -1, 1, 0,  -1, 1, 0, 1,  1, -1, 1, 0,  1, 1, 1, 1], dtype='f4')
+        self.vbo = self.ctx.buffer(quad_verts.tobytes())
+        self.vao = self.ctx.vertex_array(self.prog, [(self.vbo, '2f 2f', 'in_vert', 'in_texcoord')])
+        self.tex = self.ctx.texture((W, H), 4)
+        self.tex.filter = (moderngl.NEAREST, moderngl.NEAREST)
+
+    def present(self, surface):
+        self.ctx.clear(0, 0, 0, 1)
+        raw_bytes = pygame.image.tobytes(surface, "RGBA", True)
+        self.tex.write(raw_bytes)
+        self.ctx.disable(moderngl.DEPTH_TEST)
+        self.ctx.enable(moderngl.BLEND)
+        self.ctx.blend_func = moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA
+        self.tex.use(0)
+        self.prog['tex'].value = 0
+        self.vao.render(moderngl.TRIANGLES)
 
 # ──────────────────────────────────────────────
 # Game Context / App Base
@@ -23,8 +49,10 @@ class Game:
         self.init_sounds()
         self.select_random_bgm()
         self.W, self.H = SCREEN_WIDTH, SCREEN_HEIGHT
-        flags = pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0
-        self.screen = pygame.display.set_mode((self.W, self.H), flags)
+        flags = pygame.OPENGL | pygame.DOUBLEBUF | (pygame.FULLSCREEN | pygame.SCALED if FULLSCREEN else 0)
+        self.opengl_screen = pygame.display.set_mode((self.W, self.H), flags)
+        self.screen = pygame.Surface((self.W, self.H), pygame.SRCALPHA)
+        self.ui_presenter = UIPresenter(self.W, self.H)
         pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
         self.clock = pygame.time.Clock()
         self.handler = DS4Input()
@@ -91,7 +119,19 @@ class Game:
 
             # State draw
             if self.state_manager.current:
+                self.screen.fill((0, 0, 0, 0)) # Clear UI surface with transparency
                 self.state_manager.current.draw(self.screen)
+                
+            # If there's an active renderer, tell it to present the screen surface to ModernGL
+            current_state = self.state_manager.current
+            renderer = getattr(current_state, 'renderer', None)
+            if not renderer and hasattr(current_state, 'title_cinematic'):
+                renderer = getattr(current_state.title_cinematic, 'renderer', None)
+                
+            if renderer:
+                renderer.present(self.screen)
+            else:
+                self.ui_presenter.present(self.screen)
 
             # Device input updates must execute on a polling basis at the end of the frame
             self.handler.update()

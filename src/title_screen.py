@@ -354,7 +354,6 @@ class TitleCinematic:
     # DRAW
     # ─────────────────────────────────────────────────────────────
     def draw(self, screen):
-        screen.fill((4, 4, 14))
 
         cam_pos = (0.0, self.cam_y, self.cam_z)
 
