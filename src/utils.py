@@ -47,11 +47,18 @@ def _forward_spawn_pos(player_pos, orientation,
 
 
 def spawn_drone(player_pos, orientation):
-    return SuicideDrone(*_forward_spawn_pos(player_pos, orientation))
+    e = SuicideDrone(*_forward_spawn_pos(player_pos, orientation))
+    # Warp-in flash for spawned enemies (fade timer in seconds)
+    e.warp_flash_timer = 0.8
+    e.warp_flash_total = 0.8
+    return e
 
 
 def spawn_dogfighter(player_pos, orientation):
-    return Dogfighter(*_forward_spawn_pos(player_pos, orientation))
+    e = Dogfighter(*_forward_spawn_pos(player_pos, orientation))
+    e.warp_flash_timer = 0.9
+    e.warp_flash_total = 0.9
+    return e
 
 
 def spawn_sniper(player_pos, orientation):
@@ -59,18 +66,22 @@ def spawn_sniper(player_pos, orientation):
     Snipers hang back further than normal enemies so their railgun
     has room to telegraph.  Spawns at 1.4–1.7× the normal distance.
     """
-    return Sniper(*_forward_spawn_pos(
+    e = Sniper(*_forward_spawn_pos(
         player_pos, orientation,
         dist_min=int(SPAWN_DIST_MIN * 1.4),
         dist_max=int(SPAWN_DIST_MAX * 1.7),
         height_range=SPAWN_HEIGHT_RANGE * 0.6,   # less vertical scatter
     ))
+    e.warp_flash_timer = 1.0
+    e.warp_flash_total = 1.0
+    return e
 
 
 def spawn_corvette(player_pos, orientation):
     """
     Corvettes spawn at standard range but with a tighter yaw cone
     so they appear roughly dead-ahead — hard to miss.
+    Corvettes intentionally do NOT get the warp flash.
     """
     return Corvette(*_forward_spawn_pos(
         player_pos, orientation,
@@ -89,7 +100,10 @@ def spawn_minelayer(player_pos, orientation):
         yaw_spread=math.pi * 0.45,              # nearly 90° either side
         height_range=SPAWN_HEIGHT_RANGE * 0.5,
     )
-    return Minelayer(*pos)
+    e = Minelayer(*pos)
+    e.warp_flash_timer = 0.7
+    e.warp_flash_total = 0.7
+    return e
 
 
 def spawn_stealth_interceptor(player_pos, orientation):
@@ -103,13 +117,17 @@ def spawn_stealth_interceptor(player_pos, orientation):
         dist_max=int(SPAWN_DIST_MAX * 0.9),
         yaw_spread=math.pi * 0.4,
     )
-    return StealthInterceptor(*pos)
+    e = StealthInterceptor(*pos)
+    e.warp_flash_timer = 0.6
+    e.warp_flash_total = 0.6
+    return e
 
 
 def spawn_carrier(player_pos, orientation):
     """
     Carriers are boss-scale — spawn far ahead and slightly above so
     they dominate the horizon.
+    Carriers do not get the warp flash.
     """
     return Carrier(*_forward_spawn_pos(
         player_pos, orientation,

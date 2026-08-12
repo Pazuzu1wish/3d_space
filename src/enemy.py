@@ -387,6 +387,19 @@ class Enemy:
         self._submit_engine_trail(renderer)
         self._submit_engine_glow(renderer)
         
+        # Warp-in flash (soft puff) if present — fades over warp_flash_timer
+        if getattr(self, 'warp_flash_timer', 0) > 0:
+            total = getattr(self, 'warp_flash_total', self.warp_flash_timer)
+            if total > 0:
+                ratio = max(0.0, min(1.0, self.warp_flash_timer / total))
+            else:
+                ratio = 0.0
+            # Size derived from hit radius for reasonable world scale
+            size = max(150.0, getattr(self, 'hit_radius', 100.0) * 3.0)
+            alpha = int(255 * ratio)
+            # Bright white core with high alpha; submit as nebula so it soft-fades and scales with distance
+            renderer.submit_nebula(self.x, self.y, self.z, (255, 255, 255), size, alpha=alpha, layer='alpha')
+
         scale = getattr(self, 'mesh_scale', 1.0)
         
         # Multiply the orientation vectors by the scale factor

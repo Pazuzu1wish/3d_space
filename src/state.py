@@ -411,6 +411,10 @@ class GameplayState(State):
             if e.spawn_immunity_timer > 0:
                 e.spawn_immunity_timer -= dt
 
+            # Decrement any active warp-in flash timers (spawned at forward spawn points)
+            if hasattr(e, 'warp_flash_timer') and e.warp_flash_timer > 0:
+                e.warp_flash_timer = max(0.0, e.warp_flash_timer - dt)
+
             if e.hp <= 0:
                 self.context.sound.play_sfx("explosion")
                 self.level.director.kills.append(type(e).__name__)
