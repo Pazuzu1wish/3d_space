@@ -662,7 +662,7 @@ class GameOverState(State):
         mod_y += 28
 
         draw_line_lr(
-            f"  Accuracy  {r.accuracy() * 100:.1f}%  ({r.shots_hit}/{r.shots_fired})",
+            f"  Accuracy  {r.accuracy() * 100:.1f}%",
             f"×{r.accuracy_modifier():.2f}",
             self._font_small, (200, 200, 200), (100, 220, 255), mod_y,
         )
