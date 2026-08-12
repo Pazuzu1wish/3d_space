@@ -485,8 +485,8 @@ class TitleCinematic:
         cx = self.W // 2
         cy = self.H // 2 - 60   # title sits above center
 
-        # ── REDSHIFT SERPENS ──────────────────────────────────
-        title_raw = self.title_font.render("REDSHIFT  SERPENS", True, (220, 40, 40))
+        # ── Title ──────────────────────────────────
+        title_raw = self.title_font.render("PYTHON SPACE", True, (220, 40, 40))
         w = int(title_raw.get_width() * self.title_scale)
         h = int(title_raw.get_height() * self.title_scale)
         title_scaled = pygame.transform.scale(title_raw, (w, h))
@@ -496,14 +496,14 @@ class TitleCinematic:
         # Scanline glow layer — second blit offset + dimmed for depth
         if self.title_scale < 1.05:   # only once settled
             glow_surf = pygame.Surface((w, h), pygame.SRCALPHA)
-            glow_raw = self.title_font.render("REDSHIFT  SERPENS", True, (255, 0, 0))
+            glow_raw = self.title_font.render("PYTHON  SPACE", True, (255, 0, 0))
             glow_scaled = pygame.transform.scale(glow_raw, (w, h))
             glow_scaled.set_alpha(int(self.title_alpha * 0.25))
             screen.blit(glow_scaled, (cx - w // 2 + 2, cy - h // 2 + 2))
 
         # ── DIVIDED SNAKES ────────────────────────────────────
         if self.sub_alpha > 4:
-            sub_raw = self.sub_font.render("D I V I D E D   S N A K E S", True, (180, 180, 200))
+            sub_raw = self.sub_font.render("S N A K E S  I N  S P A C E", True, (180, 180, 200))
             sub_raw.set_alpha(int(self.sub_alpha))
             sub_y = cy + h // 2 + 14
             screen.blit(sub_raw, (cx - sub_raw.get_width() // 2, sub_y))
