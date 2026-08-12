@@ -1,207 +1,217 @@
-🚀 3D Cockpit Space Dogfighter
+# 🚀 3D Cockpit Dogfighter — *Python Space: Snakes in Space*
 
-A high-performance, retro-futurist 3D space combat dogfighter built from scratch
-in Python using Pygame, NumPy, and Numba. Inspired by classic space flight
-simulators (Descent, Wing Commander, Star Fox, Terminal Velocity, Wing
-Commander), this game features custom software 3D rendering, quaternion flight
-physics, a full cockpit HUD, magnified aim scope, dynamic tactical voice AI, and
-an endless procedural wave director.
+A from-scratch 3D space-combat sandbox built in pure Python with **pygame-ce** and **NumPy/Numba**. Fly a fighter from a first-person cockpit, dogfight waves of procedurally-flown enemy ships, manage heat/shields/missiles, and chase a high score that persists between sessions.
 
-🌟 Key Features
+Inspired by the *Elite Dangerous* combat loop — tight, juicy, controller-first — implemented as an "indie Elite" with zero external game engine.
 
-🎨 Custom Software 3D Graphics Pipeline
+> **North star (from the design bible):** An indie Elite Dangerous. Start with a tight combat sandbox. Build outward. Never refactor twice.
 
-  - Batch Vertex & Face Processing: Powered by Numba JIT compilation and NumPy
-    matrix math for near-GPU-speed software rendering.
-  - OBJ Mesh Loader & Cache: Pre-baked OBJ/MTL 3D mesh parser for complex
-    capital ships, stations, and fighters.
-  - Volumetric Effects: Semi-transparent multi-puff nebula clouds, procedural
-    starfields, and particle explosion bursts.
-  - Procedural Asteroid Fields: Jittered icosahedron meshes that dynamically
-    fragment and split into physical debris upon destruction.
+---
 
-🕹️ Flight Physics & Mechanics
+## ✨ Features
 
-  - 6-DOF Quaternion Flight Model: Body-local pitch, yaw, and roll calculations
-    free of gimbal lock.
-  - Flight Drift Mode (Inertial Decoupling): Toggle engine thrust off to rotate
-    and fire in any direction while maintaining orbital momentum.
-  - Evasive Dodging: High-impulse thruster dodge maneuver with dynamic cooldown
-    and visual feedback.
-  - Customizable Engine Trails: Fixed-capacity ring-buffer particle trails
-    with 8 selectable neon palette themes (Hyper Cyan, Solar Orange, Void
-    Purple, etc.).
+**Flight Model**
+- Full 6-degrees-of-freedom Newtonian flight on unit quaternions (pitch / yaw / roll).
+- Throttle, retro-thrust, drag, terminal velocity, and a **drift mode** toggle (kill throttle, keep momentum).
+- Analog **dodge** maneuver on a cooldown, with screen flash + rumble.
 
-🖥️ Immersive Cockpit & Tactical HUD
+**Combat**
+- Dual wingtip **lasers** with a heat/overheat system — spread and SFX worsen as heat climbs.
+- **Homing missiles** with a 2-second lock-on aided by an aim-FOV check (10 max ammo).
+- **Targeting computer**: lock nearest visible enemy (`T`), cycle targets in FOV (`Y` / D-Pad Up). Stealthed enemies are skipped.
+- Shield + hull damage model with regenerating shields (delay-based) and `take_damage` screen shake / rumble.
 
-  - Holosphere 3D Radar: Pseudo-3D isometric sensor sphere with elevation stems,
-    depth cueing, directional headings, and player velocity vectors.
-  - Flight Instruments: Flight pitch ladder, heading compass tape, coordinates
-    readout, and prograde/retrograde velocity markers.
-  - Targeting & Lead PIP: Target locking system with distance/hull stats,
-    missile lock-on reticle, and calculated lead intercept point (PIP).
-  - Magnified Aim Scope (Picture-in-Picture): Real-time dual-pass zoomed scope
-    window for precision long-range sniping.
+**Enemies** — 7 classes in `src/enemy.py`, each with its own AI state machine, mesh, Newtonian physics profile, and engine trail:
+| Enemy | HP | Behaviour |
+|---|---|---|
+| **SuicideDrone** | 1 | Weave/spiral/corkscrew approach, proximity detonation with radial falloff |
+| **Dogfighter** | 10 | Circle-strafe positioning ↔ predictive attack runs; evasive barrel-rolls when you aim at it |
+| **Sniper** | 1 | Long-range charging beam; raycast LOS-blocked by asteroids/enemies; flees when you close in |
+| **StealthInterceptor** | 2 | Stealths while flanking, uncloaks for a 7-shot shotgun pass, then re-cloaks |
+| **Minelayer** | 12 | Stealths, drops proximity **Mines**, defends with a heavy MG when cornered |
+| **Mine** | 1 | Stationary blinking AoE explosive — triggers on player/asteroid/enemy proximity |
+| **Corvette** | 30 | Heavy gunship; turret fire and SuicideDrone spawning |
+| **Carrier** | 100 | Capital ship — sniper beam + homing bolts + point-defence MG + drone/fighter spawning |
 
-👾 Enemy AI & Wave Progression
+**Game Flow** (implemented as a state stack in `src/state.py`)
+- **Title state** — a scripted cinematic intro (`TitleCinematic`): dogfighter fly-by, drone swarm formation, explosion shockwave, animated title drop, then menu.
+- **Gameplay state** — endless Arcade mode driven by a `WaveDirector`.
+- **Pause state** — orbit-camera photo mode, trail-colour picker, tactical stats sidebar.
+- **GameOver state** — animated score breakdown (kills × accuracy/survival/damage modifiers), top-10 high scores.
 
-  - 8 Enemy Classes:
-      - Suicide Drone: Swarmers that rush and detonate on proximity.
-      - Dogfighter: Agile fighters performing evasive barrel rolls and
-        predictive lead-angle shooting.
-      - Sniper: Long-range railgun platforms that telegraph beam charges.
-      - Minelayer: Stealthy cross-pattern ships dropping proximity explosive
-        mines.
-      - Stealth Interceptor: Cloaked flankers firing close-range shotgun bursts.
-      - Corvette & Carrier: Heavy capital ships with multi-turret batteries and
-        fighter-launching capabilities.
-  - Endless Wave Director: Procedurally scales wave threat budgets, unlocks
-    harder enemy rosters, and spawns encounters near the player.
-  - Spatial Broadphase Partitioning: Vectorized NumPy/Numba broadphase for
-    collision detection and frustum culling.
+**Wave Director** (`src/director.py`)
+- Endless, procedural waves that always spawn around the *player's current position* — no flying back to a fixed spawn point.
+- Threat-budget composition; cheaper enemies dominate early, expensive types (`Carrier` only unlocks at wave 12) scale in as the run goes on.
+- Shrinking intermission rest period (floored at 1.5s so it never vanishes).
 
-🔊 Dynamic Audio & Voice AI (ShipAI)
+**Presentation**
+- Custom software 3D pipeline: `math_engine.py` (quaternions, batched world→camera→projection via **Numba**), `renderer.py` (face batching, painter's-sort, frustum cull), `camera.py` (screen shake).
+- Baked OBJ/MTL meshes (`mesh_loader.py`) for all ships, pre-converted to NumPy arrays.
+- Neon **cockpit HUD** (`cockpit.py` + `hud_data.py`): throttle ladder, prograde indicator, shield/HP/heat bars, ammo, target lock timer, damage overlay, FPS toggle.
+- **L2 aim scope** — magnified zoom window with crosshair for precision shots.
+- Volumetric engine trails via vectorised `object_pool.TrailPool` (zero per-frame allocation); 8 swappable neon trail colours.
+- Starfields, nebula system, asteroid fields (with splitting), and a space station model.
 
-  - Tactical Voice Announcements: Priority-queued voice clip warnings for low
-    shields, hull breach, incoming homing missiles, weapon overheating, and
-    capital ship encounters.
-  - Synthetic Multi-Layer Engine Hum: Dynamic 4-channel audio blending reacting
-    to engine throttle and rotational control inputs.
-  - Audio Optimization: Low-overhead voice channel limiting and zero-resampling
-    WAV header verification.
+**Input** (`src/controller.py` — `DS4Input`)
+- DualShock 4 / DualSense first-class, with auto-fallback profiles for Xbox, Switch Pro, and generic gamepads via the SDL2 GameController API.
+- Radial deadzones, normalised triggers, synthesised D-Pad button events, hotplug support, and rumble helpers (`pulse`, `punch`, `buzz`, `wave`).
+- Full keyboard fallback (WASD pitch/roll, arrows yaw/throttle, Space fire, X missile, T/Y targeting, F drift, etc.).
 
-🎮 Controller & Gamepad Support
+**Persistence** (`src/save_data.py`)
+- `save.json` stores the top 10 runs (kills list, survival time, accuracy, damage taken, final score).
+- `RunResult` scores with kill-points table × accuracy modifier × survival modifier × damage modifier.
 
-  - Native Gamepad Integration: Autodetect for DS4, DualSense, Xbox, and Switch
-    controllers via SDL2 GameController API.
-  - Full Haptic Support: Context-aware rumble feedback for firing lasers,
-    missile launches, and taking damage.
-  - Built-in Controller Debugger: Interactive input analyzer and visual layout
-    mapper (src/controller.py).
+---
 
-📐 Controls
+## 🎮 Controls
 
-Gamepad Controls (DualShock 4 / DualSense / Xbox)
+### PlayStation controller (primary)
+| Action | Input |
+|---|---|
+| Pitch / Roll | Left stick |
+| Yaw | Right stick X |
+| Throttle up / down | `R1` / `L1` |
+| Fire lasers | `R2` |
+| Fire missile | `Square` |
+| Aim scope (zoom) | `L2` (analog) |
+| Drift mode toggle | `R3` |
+| Dodge (with stick direction) | `Circle` + left stick |
+| Target nearest / cycle | `Triangle` / D-Pad Up |
+| Pause | `Options` |
+| Toggle HUD overlays | D-Pad Left / Right / Down |
 
-| Input                      | Action                                       |
-| :------------------------- | :------------------------------------------- |
-| **Left Stick**             | Pitch & Roll                                 |
-| **Right Stick**            | Yaw                                          |
-| **R1 / L1**                | Increase / Decrease Throttle                 |
-| **R2 (Right Trigger)**     | Fire Main Blasters                           |
-| **L2 (Left Trigger)**      | Hold for Magnified Aim Scope (Variable Zoom) |
-| **Square (X on Xbox)**     | Launch Missile (Homing if locked)            |
-| **Circle (B on Xbox)**     | Evasive Dodge / Thruster Boost               |
-| **R3 (Right Stick Click)** | Toggle Drift Mode (Inertial Decoupling)      |
-| **DPad Up**                | Target Nearest / Cycle Targets               |
-| **DPad Left**              | Toggle Waypoints HUD                         |
-| **DPad Right**             | Toggle Prograde Marker                       |
-| **DPad Down**              | Toggle Coordinates Readout                   |
-| **Options / Start**        | Pause Game / Access Photo Orbit Camera       |
+### Keyboard
+| Action | Keys |
+|---|---|
+| Pitch / Roll | `W` `S` `A` `D` |
+| Yaw | `←` `→` |
+| Throttle | `↑` `↓` |
+| Fire lasers | `Space` |
+| Fire missile | `X` |
+| Aim scope | `LShift` |
+| Drift mode | `F` |
+| Target nearest / cycle | `T` / `Y` |
+| Pause | `P` |
+| Toggle prograde / coords / fps | `H` `C` `O` |
+| Quit | `Esc` |
 
-Keyboard & Mouse Controls
+---
 
-| Key                          | Action                                     |
-| :--------------------------- | :----------------------------------------- |
-| **W / S**                    | Pitch Up / Pitch Down                      |
-| **A / D**                    | Roll Left / Roll Right                     |
-| **Left Arrow / Right Arrow** | Yaw Left / Yaw Right                       |
-| **Up Arrow / Down Arrow**    | Incremental Throttle Up / Down             |
-| **Spacebar**                 | Fire Main Blasters                         |
-| **Left Shift**               | Activate Magnified Aim Scope               |
-| **X**                        | Launch Missile                             |
-| **F**                        | Toggle Drift Mode                          |
-| **T / Y**                    | Target Closest Enemy / Cycle Targets       |
-| **H**                        | Toggle Prograde / Retrograde Vector Marker |
-| **C**                        | Toggle Coordinates Display                 |
-| **O**                        | Toggle FPS Counter                         |
-| **P or ESC**                 | Pause Game                                 |
+## 🏗️ Project Structure
 
-🛠️ Installation & Setup
+```
+3d_space/
+├── main.py                  # entry point — boots Game().main()
+├── save.json                # persisted high scores (gitignored in spirit)
+├── requirements.txt         # pygame-ce, numpy, numba
+├── src/
+│   ├── game.py              # Game context: pygame init, sound, main loop, StateManager
+│   ├── state.py             # State stack — Title / Gameplay / Pause / GameOver
+│   ├── constants.py         # all tunable balance & UI constants in one place
+│   ├── player.py            # Player ship: flight, shields, heat, targeting, trails
+│   ├── enemy.py            # 7 enemy classes + movement patterns + Mine
+│   ├── weapon_system.py     # fire_lasers / fire_missile
+│   ├── laser.py / missile.py / projectile.py
+│   ├── director.py          # WaveDirector — endless procedural waves
+│   ├── level.py             # BaseLevel / ArcadeLevel (environment + score/combo)
+│   ├── ship_ai.py           # voice-line call-out state machine (triggered off director)
+│   ├── encounters.py        # encounter helpers
+│   ├── physics.py / math_engine.py     # Newtonian integration + Numba vectorised maths
+│   ├── camera.py / renderer.py / cockpit*.py / hud_data.py / aim_scope.py
+│   ├── star.py / nebula.py / asteroid.py / space_station.py
+│   ├── object_pool.py / spatial_partition.py  # zero-alloc pools + broadphase
+│   ├── mesh_loader.py       # baked OBJ/MTL → NumPy arrays
+│   ├── sound_handler.py     # SFX bank + dynamic engine hum
+│   ├── title_screen.py      # TitleCinematic intro
+│   ├── save_data.py         # RunResult + SaveData (JSON persistence)
+│   ├── controller.py        # DS4Input multi-gamepad abstraction + debugger UI
+│   └── utils.py             # damages overlays, spawn helpers
+├── assets/
+│   ├── *.obj / *.mtl        # ship & station meshes (player, drone, dogfighter, sniper,
+│   │                        #   interceptor, minelayer, corvette, carrier, station1)
+│   ├── sounds/              # SFX, BGM, voice call-outs
+│   └── fonts/interdictionexpand.ttf
+├── tools/                   # offline dev tools (NOT used at runtime)
+│   ├── 3d_viewer.py / 2d_viewer.py / 3d_viewer_debug_claude.py
+│   ├── mesh_editor.py / mesh_exporter.py
+│   └── generate_sfx.py / generate_voice_lines.py
+├── tests/                   # benchmarks + sanity tests (star opt, sound, controller)
+├── scratch/                 # throwaway debug scripts
+├── extra_docs/             # design bible, optimization & collision-system write-ups
+└── .agents/rules/graphify.md  # graphify knowledge-graph workflow
+```
 
-Prerequisites
+### Architecture in one paragraph
+The main loop is a conductor, not a performer — it dispatches `dt` and events to the active `GameState` on a stack (`StateManager`). States own their update/draw/input cycle; systems (physics, weapons, audio, AI) don't import each other and communicate through the `Game` context. `SaveData` is the single source of truth for anything that persists.
 
-  - Python 3.10+ (Python 3.11 or 3.12 recommended)
+---
 
-1. Clone the Repository
+## ▶️ Getting Started
 
-git clone https://github.com/your-username/3d-cockpit-dogfighter.git
-cd 3d-cockpit-dogfighter
+### Requirements
+- Python 3.10+
+- A **DualShock 4 / DualSense** is the recommended input device. Xbox / Switch Pro / generic gamepads auto-fallback. Keyboard works too.
 
-2. Create a Virtual Environment (Optional but Recommended)
+### Install
+```bash
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -r requirements.txt    # pygame-ce, numpy, numba
+```
 
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+### Run
+```bash
+python main.py
+```
+The window opens fullscreen at `1280×760` (`FULLSCREEN = True` in `constants.py`) with the title cinematic; press any key to skip to the menu, then select **ARCADE** to play.
 
-3. Install Dependencies
+---
 
-pip install pygame numpy numba
+## 🔧 Tuning
 
-4. Run the Game
+All gameplay numbers live in `src/constants.py` — flight rates, weapon damage/heat/cooldowns, spawn distances, dodge impulse, sniper charge time, screen-shake decay, colour palette, and window mode. The wave roster / cost weights live in `src/director.py:_WAVE_ROSTER`.
 
-python game.py
+Run a netcode/balance tweak, then rerun — there's no build step.
 
-🕹️ Controller Input Debugger
+---
 
-The repository includes an interactive controller visualizer tool to test axis
-mapping, deadzones, trigger response, and button inputs:
+## 🧪 Testing & Benchmarks
 
-python src/controller.py --mode all --deadzone 0.20
+```bash
+python tests/test_optimizations.py     # unit checks for hot paths
+python tests/benchmark_star_optimization.py
+python tests/benchmark_realistic.py
+python tests/test_sound.py            # audio init + SFX sanity
+python tools/3d_viewer.py              # standalone mesh viewer
+python tools/generate_sfx.py           # regenerate SFX assets
+python src/controller.py              # standalone DS4 debugger GUI
+```
+Scripts in `scratch/` (`diagnose_controller.py`, `verify_numba.py`, `test_trail.py`, ...) are throwaway diagnostics — safe to delete.
 
-📂 Project Architecture
+---
 
-.
-├── game.py                  # Game application entry point & state loop
-├── save.json                # Persistent high scores & run stats
-├── assets/                  # 3D .obj/.mtl models, fonts, audio & voice clips
-└── src/
-    ├── aim_scope.py         # Secondary render-pass magnified aim scope
-    ├── asteroid.py          # Procedural icosahedron asteroids & splitting mechanics
-    ├── camera.py            # 3D Camera, rotation matrices, frustum culling & shake
-    ├── cinematic_motion.py  # Scripted motion steps for title sequences & swarms
-    ├── cockpit.py           # HUD drawing (Compass, Pitch Ladder, Radar, Target Brackets, PIP)
-    ├── cockpit_geometry.py  # Low-poly retro cockpit frame drawing
-    ├── constants.py         # Game balance, UI colors, and speed constants
-    ├── controller.py        # Controller abstraction layer & input visualizer
-    ├── director.py          # Wave Director for endless procedural wave encounters
-    ├── enemy.py             # Enemy AI ship behaviors (Drone, Dogfighter, Sniper, Carrier, etc.)
-    ├── hud_data.py          # Dataclass container for HUD overlay state
-    ├── laser.py             # Blaster projectile implementation
-    ├── level.py             # Arcade mode level, score multipliers, and objectives
-    ├── math_engine.py       # Numba-accelerated quaternion & projection math
-    ├── mesh_loader.py       # OBJ/MTL loader and BakedMesh caching engine
-    ├── missile.py           # Unguided and Homing Missile mechanics
-    ├── nebula.py            # Volumetric nebula particle cloud system
-    ├── object_pool.py       # Fast NumPy memory pools for particles, lasers, & trails
-    ├── particle.py          # Visual particle effect entities
-    ├── physics.py           # Newtonian flight & player throttle integration
-    ├── player.py            # Player state, controls, heat, shields, & engine trail
-    ├── projectile.py        # Enemy weapon bolts, beams, and mines
-    ├── renderer.py          # Core 3D Software Render Pipeline (Numba face-shading)
-    ├── save_data.py         # Run results & JSON persistence
-    ├── ship_ai.py           # Voice AI event priority monitor & tactical warnings
-    ├── sound_handler.py     # SFX manager, WAV header validator, dynamic engine hum
-    ├── space_station.py     # Station entity model
-    ├── spatial_partition.py # Broadphase spatial query engine
-    ├── star.py              # Procedural starfield with batch processing
-    ├── state.py             # State Manager (Title, Gameplay, Pause, GameOver)
-    ├── title_screen.py      # Cinematic title sequence
-    ├── utils.py             # Enemy spawners & UI overlay helpers
-    └── weapon_system.py     # Weapon firing logic (lasers & missiles)
+## 📚 Further Reading
 
-⚡ Performance & Optimization Notes
+Deeper design write-ups and post-mortems live in `extra_docs/`:
+- `GDD_Ideal_not_current.md` — the design bible (philosophy, target architecture, future modes)
+- `QUICK_REFERENCE.md` — star-batching optimization notes
+- `STAR_OPTIMIZATION_SUMMARY.md`, `OPTIMIZATION_RENDERING_FACES.md`, `OPTIMIZATION_SUMMARY.md`
+- `COLLISION_SYSTEM_UPDATE.md`, `COLLISION_AVOIDANCE_SYSTEM.md`, `COLLISION_FIX_SUMMARY.md`
+- `SPAWN_IMMUNITY_SYSTEM.md`, `INTEGRATION_EXAMPLE.md`
 
-  - Numba JIT Warmup: On the first launch, Numba compiles its vector kernels. A
-    lightweight warmup pass runs during game initialization to eliminate
-    hitching on the first frame of gameplay.
-  - Zero-Resampling Audio: SoundHandler validates WAV file sample rates
-    (44.1kHz 16-bit stereo) at boot to ensure the CPU doesn't waste cycles
-    resampling audio streams during action-heavy moments.
-  - Contiguous Ring Buffers: Particle trails and broadphase spatial lookups use
-    pre-allocated NumPy arrays to avoid runtime Python memory allocations and
-    garbage collection stutter.
+A graphify knowledge graph is generated at `graphify-out/` — use `graphify query "<question>"` for codebase/architecture nav instead of grepping.
 
-📜 License
+---
 
-Distributed under the MIT License. See LICENSE for more information.
+## 📝 License
 
+MIT — Copyright © 2026 Anthony A. Andrews. See [`LICENSE`](LICENSE).
+
+---
+
+## 🛣️ Roadmap (stubs from the design bible)
+
+- Galaxy map + station trading states (currently stubbed in `GDD_Ideal_not_current.md`)
+- Persistent commander, credits, reputation, ship loadout (Phase 2 fields already stubbed in `SaveData`)
+- Friendly/neutral ship alignments (`enemy.py` is `# TODO: rename to ship`)
+- GPU-accelerated star batching
