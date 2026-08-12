@@ -6,7 +6,120 @@ Efficient collision detection and entity culling using dense NumPy arrays and Nu
 import math
 from typing import List, Tuple, Optional
 import numpy as np
-from numba import njit
+from src.numba_compat import njit
+
+
+class BoundingBox:
+    """Axis-aligned bounds kept for older spatial tests and tooling."""
+
+    def __init__(self, min_x, min_y, min_z, max_x, max_y, max_z):
+        self.min_x = min_x
+        self.min_y = min_y
+        self.min_z = min_z
+        self.max_x = max_x
+        self.max_y = max_y
+        self.max_z = max_z
+
+    def contains_point(self, x, y, z):
+        return (
+            self.min_x <= x <= self.max_x
+            and self.min_y <= y <= self.max_y
+            and self.min_z <= z <= self.max_z
+        )
+
+    def intersects_box(self, other):
+        return not (
+            self.max_x < other.min_x or self.min_x > other.max_x
+            or self.max_y < other.min_y or self.min_y > other.max_y
+            or self.max_z < other.min_z or self.min_z > other.max_z
+        )
+
+    def subdivide(self):
+        mid_x = (self.min_x + self.max_x) * 0.5
+        mid_y = (self.min_y + self.max_y) * 0.5
+        mid_z = (self.min_z + self.max_z) * 0.5
+        boxes = []
+        for x0, x1 in ((self.min_x, mid_x), (mid_x, self.max_x)):
+            for y0, y1 in ((self.min_y, mid_y), (mid_y, self.max_y)):
+                for z0, z1 in ((self.min_z, mid_z), (mid_z, self.max_z)):
+                    boxes.append(BoundingBox(x0, y0, z0, x1, y1, z1))
+        return boxes
+
+
+class OctreeNode:
+    """Small compatibility octree facade backed by a flat list."""
+
+    def __init__(self, bounds: BoundingBox, max_depth: int = 4):
+        self.bounds = bounds
+        self.max_depth = max_depth
+        self._entities = []
+
+    def insert(self, entity, pos):
+        if self.bounds.contains_point(pos[0], pos[1], pos[2]):
+            self._entities.append((entity, pos))
+            return True
+        return False
+
+    def remove(self, entity):
+        for i, (stored, _pos) in enumerate(self._entities):
+            if stored is entity:
+                self._entities.pop(i)
+                return True
+        return False
+
+    def query_radius(self, pos, radius):
+        px, py, pz = pos
+        return [
+            entity for entity, epos in self._entities
+            if abs(epos[0] - px) <= radius
+            and abs(epos[1] - py) <= radius
+            and abs(epos[2] - pz) <= radius
+        ]
+
+    def clear(self):
+        self._entities.clear()
+
+    def get_entity_count(self):
+        return len(self._entities)
+
+
+class SpatialHash:
+    """Legacy spatial-hash API backed by direct distance checks."""
+
+    def __init__(self, cell_size: float = 15000.0):
+        self.cell_size = cell_size
+        self._positions = {}
+        self._entities = {}
+
+    def insert(self, entity, pos):
+        eid = id(entity)
+        self._entities[eid] = entity
+        self._positions[eid] = pos
+
+    def remove(self, entity):
+        eid = id(entity)
+        existed = eid in self._entities
+        self._entities.pop(eid, None)
+        self._positions.pop(eid, None)
+        return existed
+
+    def query_radius(self, pos, radius):
+        px, py, pz = pos
+        return [
+            self._entities[eid]
+            for eid, epos in self._positions.items()
+            if abs(epos[0] - px) <= radius
+            and abs(epos[1] - py) <= radius
+            and abs(epos[2] - pz) <= radius
+        ]
+
+    def clear(self):
+        self._entities.clear()
+        self._positions.clear()
+
+    def get_entity_count(self):
+        return len(self._entities)
+
 
 @njit(cache=True, fastmath=True)
 def _query_nearby_numba(target_pos, positions, active, sq_radius):
@@ -41,7 +154,8 @@ class SpatialPartition:
     Replaces the dict-based spatial hash grid with parallel NumPy arrays and Numba filtering.
     """
 
-    def __init__(self, cell_size: float = 15000.0, max_entities: int = 8192):
+    def __init__(self, world_size: float = 100000.0, cell_size: float = 15000.0, max_entities: int = 8192):
+        self.world_size = world_size
         # cell_size is kept for API compatibility, though we don't use grid cells anymore
         self.cell_size = cell_size
         self.max_entities = max_entities
@@ -58,7 +172,7 @@ class SpatialPartition:
         # Free list to provide O(1) slot allocation
         self.free_indices = list(range(max_entities - 1, -1, -1))
 
-    def register_entity(self, entity: object, pos: Tuple[float, float, float]) -> None:
+    def register_entity(self, entity: object, pos: Tuple[float, float, float], radius: float = 0.0) -> None:
         """Register a new entity."""
         eid = id(entity)
         if eid in self.entity_to_idx:
@@ -148,5 +262,10 @@ class SpatialPartition:
     def get_stats(self) -> dict:
         return {
             'entity_count': len(self.entity_to_idx),
-            'active_cells': 1  # Returned as 1 for API compatibility (Unified array)
+            'active_cells': 1,  # Returned as 1 for API compatibility (Unified array)
+            'hash_cells': 1,
+            'hash_count': len(self.entity_to_idx),
         }
+
+    def get_entity_count(self) -> int:
+        return len(self.entity_to_idx)

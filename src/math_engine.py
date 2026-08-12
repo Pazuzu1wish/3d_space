@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from numba import njit
+from src.numba_compat import njit
 
 # ──────────────────────────────────────────────
 #  QUATERNION MATH ENGINE
@@ -403,4 +403,3 @@ def ray_sphere_intersection(ro, rd, sc, sr):
         return t2
         
     return -1.0
-

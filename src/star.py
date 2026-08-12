@@ -1,6 +1,6 @@
 import random
 import numpy as np
-from numba import njit
+from src.numba_compat import njit
 
 # ─────────────────────────────────────────────
 #  OPTIMIZED STAR BATCH PROCESSING
@@ -178,7 +178,6 @@ class Star:
                 layer='background',
                 cam_pos=(cam_positions[i, 0], cam_positions[i, 1], cz),
             )
-
 
 
 

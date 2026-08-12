@@ -5,7 +5,7 @@ from src.math_engine import (
     world_to_camera_batch, 
     project_to_screen_batch
 )
-from numba import njit
+from src.numba_compat import njit
 import random
 from src.constants import SCREEN_SHAKE_MAX, SCREEN_SHAKE_DECAY
 

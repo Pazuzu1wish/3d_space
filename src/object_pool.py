@@ -3,7 +3,7 @@ Object Pooling System
 Efficiently manages reusable game objects to avoid frequent allocation/deallocation.
 """
 
-from typing import List, Callable, Optional, TypeVar, Generic, Set
+from typing import List, Callable, Optional, TypeVar, Generic
 import random
 import numpy as np
 
@@ -34,7 +34,7 @@ class ObjectPool(Generic[T]):
         self._reset_func = reset_func or self._default_reset
         self._max_size = max_size
         self._available: List[T] = []
-        self._in_use: Set[T] = set()  # set for O(1) release
+        self._in_use: dict[int, T] = {}  # id map supports unhashable pooled objects
         
         # Pre-allocate initial objects
         for _ in range(initial_size):
@@ -58,13 +58,13 @@ class ObjectPool(Generic[T]):
         else:
             return None
         
-        self._in_use.add(obj)
+        self._in_use[id(obj)] = obj
         return obj
     
     def release(self, obj: T) -> None:
         """Return an object to the pool for reuse. O(1) with set membership."""
-        if obj in self._in_use:
-            self._in_use.discard(obj)
+        if id(obj) in self._in_use:
+            self._in_use.pop(id(obj), None)
             self._reset_func(obj)
             
             if self._max_size is None or len(self._available) < self._max_size:
@@ -72,7 +72,7 @@ class ObjectPool(Generic[T]):
     
     def release_all(self) -> None:
         """Return all in-use objects to the pool."""
-        for obj in list(self._in_use):
+        for obj in list(self._in_use.values()):
             self.release(obj)
     
     def get_active_count(self) -> int:
@@ -220,10 +220,10 @@ class ParticlePool:
     def spawn(self, x: float, y: float, z: float, 
               velocity_range: tuple = (-300, 300),
               life: float = 1.0,
-              colors: Optional[list] = None) -> None:
+              colors: Optional[list] = None) -> Optional[dict]:
         """Spawn a particle at the given position."""
         if not self.free_indices:
-            return
+            return None
             
         idx = self.free_indices.pop()
         self.active_indices.add(idx)
@@ -238,6 +238,14 @@ class ParticlePool:
         self.max_life[idx] = life
         self.color[idx] = random.choice(colors) if colors else random.choice(_PARTICLE_COLORS)
         self.active[idx] = True
+        return {
+            'x': self.pos[idx, 0],
+            'y': self.pos[idx, 1],
+            'z': self.pos[idx, 2],
+            'life': self.life[idx] / self.max_life[idx],
+            'color': self.color[idx],
+            'active': True,
+        }
     
     def update(self, dt: float) -> None:
         """Update all active particles using NumPy vectorization and recycle dead ones."""

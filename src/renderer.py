@@ -1,7 +1,7 @@
 import pygame
 import math
 import numpy as np
-from numba import njit
+from src.numba_compat import njit
 
 
 @njit(fastmath=True, cache=True)
