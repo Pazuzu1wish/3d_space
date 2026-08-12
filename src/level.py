@@ -6,8 +6,6 @@ from src.star import Star
 from src.nebula import NebulaSystem
 from src.asteroid import AsteroidField
 from src.director import WaveDirector
-from src.space_station import SpaceStation
-from src.encounters import ARCADE_ENCOUNTER_SCRIPT
 
 class BaseLevel:
     """
@@ -46,9 +44,13 @@ class BaseLevel:
 class ArcadeLevel(BaseLevel):
     """
     The classic Endless Arcade Mode.
-    
-    Spawns wave-based threats, maintains a persistent score, and tracks a dynamic 
-    combo multiplier that decays over time if there's no combat activity.
+
+    There is no fixed mission script — enemy waves are generated forever by
+    the WaveDirector, always spawning near wherever the player currently is
+    (never at some fixed point the player has to fly back to). Waves start
+    easy and get steadily harder the longer the run goes on. The level also
+    maintains a persistent score and a dynamic combo multiplier that decays
+    over time if there's no combat activity.
     """
     def __init__(self, context, gameplay_state):
         super().__init__(context, gameplay_state)
@@ -62,25 +64,25 @@ class ArcadeLevel(BaseLevel):
         player_pos = self.gameplay_state.player.pos
         self.stars = [Star(player_pos) for _ in range(150)]
         self.nebulae = NebulaSystem(count=6, area_radius=30000)
-        self.director = WaveDirector(ARCADE_ENCOUNTER_SCRIPT)
+
+        # Endless wave mode: no fixed encounter script — the director
+        # generates waves procedurally and spawns each one near the
+        # player's current position, wherever the last wave ended.
+        self.director = WaveDirector()
 
         # Spawn Space Station
         # self.station.append(SpaceStation(0, 0, 1000, 50))
 
-        # Setup and register Asteroids directly into the engine's spatial partitions
-        for enc in ARCADE_ENCOUNTER_SCRIPT:
-            field = AsteroidField(enc['origin'], count=12, radius=25000)
-            for a in field.asteroids:
-                self.asteroids.append(a)
-                self.gameplay_state.spatial.register_entity(a, (a.x, a.y, a.z))
+        # A single asteroid field around the starting position for
+        # atmosphere — waves handle all of the actual combat spawning.
+        field = AsteroidField(player_pos, count=12, radius=25000)
+        for a in field.asteroids:
+            self.asteroids.append(a)
+            self.gameplay_state.spatial.register_entity(a, (a.x, a.y, a.z))
 
-        # Core navigation points
-        self.waypoints = [
-            {'pos': (0, 0, 75000), 'label': 'Enemy Stronghold', 'active': True, 'color': (0, 255, 100, 200)},
-            {'pos': (2000, -500, 25000), 'label': 'CARRIER STRIKE GROUP', 'active': True, 'color': (255, 200, 0, 200)},
-            {'pos': (0, 0, 0), 'label': 'ORIGIN', 'active': True, 'color': (0, 200, 255, 200)},
-            {'pos': (0, 0, 1000), 'label': 'SPACE STATION', 'active': True, 'color': (0, 255, 0, 200)}
-        ]
+        # No fixed objectives in endless mode — the waves come to the
+        # player, so there's nowhere distant to point a waypoint at.
+        self.waypoints = []
 
         # Font fallback setup
         try:
@@ -110,15 +112,31 @@ class ArcadeLevel(BaseLevel):
         self.multiplier = min(5.0, self.multiplier + 0.25)
 
     def draw_hud_overlay(self, screen):
-        # Layered UI: Draw Score & Multiplier on top-right space
+        # Layered UI: Draw Wave / Score & Multiplier on top-right space
+        director = self.director
+
+        wave_txt = f"WAVE {director.wave_number}"
         score_txt = f"SCORE: {self.score:,}"
         mult_txt = f"COMBO: {self.multiplier:.2f}X"
 
         col_mult = (0, 255, 128) if self.multiplier > 1.0 else (140, 140, 160)
-        
+
+        surf_wave = self._font.render(wave_txt, True, (0, 220, 255))
         surf_score = self._font.render(score_txt, True, (255, 220, 0))
         surf_mult = self._font.render(mult_txt, True, col_mult)
 
         r_edge = self.gameplay_state.W - 40
-        screen.blit(surf_score, (r_edge - surf_score.get_width(), 40))
-        screen.blit(surf_mult, (r_edge - surf_mult.get_width(), 40 + surf_score.get_height() + 6))
+        y = 40
+        screen.blit(surf_wave, (r_edge - surf_wave.get_width(), y))
+        y += surf_wave.get_height() + 6
+        screen.blit(surf_score, (r_edge - surf_score.get_width(), y))
+        y += surf_score.get_height() + 6
+        screen.blit(surf_mult, (r_edge - surf_mult.get_width(), y))
+
+        # Countdown to the next wave while the arena is quiet
+        if not director.wave_active:
+            y += surf_mult.get_height() + 6
+            countdown = max(0.0, director.intermission_timer)
+            next_txt = f"NEXT WAVE: {countdown:0.1f}s"
+            surf_next = self._font.render(next_txt, True, (200, 200, 60))
+            screen.blit(surf_next, (r_edge - surf_next.get_width(), y))

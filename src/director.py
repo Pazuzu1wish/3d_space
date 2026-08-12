@@ -1,77 +1,67 @@
-import math
 import random
 
-from src.enemy import SuicideDrone, Dogfighter, Sniper, Corvette, Minelayer, StealthInterceptor, Carrier
 from src.utils import (
     spawn_drone, spawn_dogfighter, spawn_sniper,
-    spawn_corvette, spawn_minelayer, spawn_stealth_interceptor,
-)
-from src.constants import (
-    SPAWNS_PER_SECOND, MAX_SUICIDE_DRONES, MAX_DOGFIGHTERS,
+    spawn_corvette, spawn_minelayer, spawn_stealth_interceptor, spawn_carrier,
 )
 
-# ── Per-type population caps ───────────────────────────────────────────────
-MAX_SNIPERS     = 0
-MAX_CORVETTES   = 0
-MAX_MINELAYERS  = 0
-MAX_STEALTH     = 0
-# Carriers are scripted-only — no filler cap needed
-
-# ── Filler spawn table ────────────────────────────────────────────────────
-# (enemy_class, spawn_fn, cap_attr, weight)
-# Weight controls relative probability when multiple types are eligible.
-# Higher = more likely.  Exotic types get lower weight so they feel special.
-_FILLER_TABLE = [
-    (SuicideDrone,       spawn_drone,                 'MAX_SUICIDE_DRONES', 3),
-    (Dogfighter,         spawn_dogfighter,             'MAX_DOGFIGHTERS',    3),
-    (Sniper,             spawn_sniper,                 'MAX_SNIPERS',        1),
-    (Corvette,           spawn_corvette,               'MAX_CORVETTES',      1),
-    (Minelayer,          spawn_minelayer,              'MAX_MINELAYERS',     1),
-    (StealthInterceptor, spawn_stealth_interceptor,    'MAX_STEALTH',        2),
+# ── Wave roster ─────────────────────────────────────────────────────────────
+# (etype key, spawn_fn, cost, unlock_wave, weight)
+#   cost         — how much of a wave's difficulty budget one spawn consumes
+#   unlock_wave  — first wave number this type is allowed to appear in
+#   weight       — relative pick chance among types currently affordable
+#
+# Cheap, weak types dominate early waves; expensive, dangerous types only
+# become available (and only then compete for a spawn slot) as the wave
+# count climbs, which is what makes the run start easy and steadily escalate.
+_WAVE_ROSTER = [
+    ('drone',     spawn_drone,               1,  1, 5),
+    ('fighter',   spawn_dogfighter,          2,  2, 4),
+    ('sniper',    spawn_sniper,              2,  3, 2),
+    ('stealth',   spawn_stealth_interceptor, 2,  4, 3),
+    ('minelayer', spawn_minelayer,           3,  6, 2),
+    ('corvette',  spawn_corvette,            5,  8, 1),
+    ('carrier',   spawn_carrier,             10, 12, 1),
 ]
-
-_CAPS = {
-    SuicideDrone:       MAX_SUICIDE_DRONES,
-    Dogfighter:         MAX_DOGFIGHTERS,
-    Sniper:             MAX_SNIPERS,
-    Corvette:           MAX_CORVETTES,
-    Minelayer:          MAX_MINELAYERS,
-    StealthInterceptor: MAX_STEALTH,
-}
-
-# ── Encounter etype → class map (for _spawn_encounter) ───────────────────
-
-_ETYPE_MAP = {
-    'drone':    SuicideDrone,
-    'fighter':  Dogfighter,
-    'sniper':   Sniper,
-    'corvette': Corvette,
-    'minelayer':Minelayer,
-    'stealth':  StealthInterceptor,
-    'carrier':  Carrier,
-}
 
 
 class WaveDirector:
     """
-    Owns the enemy-spawn timeline for a session.
+    Owns the endless Arcade Mode wave timeline.
 
-    Scripted encounters are placed at absolute world positions; when the
-    player flies within trigger_dist the encounter fires.  Between scripted
-    beats the director produces procedural 'filler' at a gradually
-    tightening rate.  While an encounter whose 'filler' flag is False is
-    still alive, filler is suppressed so the set-piece has room to breathe.
+    There is no fixed script and no distant objective to fly to — every
+    wave is generated procedurally and spawned around wherever the player
+    happens to be the moment the previous wave is cleared, so the action
+    always comes to the player instead of the player having to go find it.
+
+    Each wave is tuned to be a little harder than the last: bigger spawn
+    budgets, tougher enemy types unlocking as the run goes on, and a
+    shrinking rest period between waves (floored so it never disappears).
     """
 
-    def __init__(self, script):
-        self.script  = script
-        self.pending = list(script)   # encounters not yet triggered
-        self.active  = []             # list of in-flight scripted groups
+    INTERMISSION_START = 4.0   # breather before wave 1 spawns
+    INTERMISSION_FLOOR = 1.5   # rest period never drops below this
+
+    def __init__(self, script=None):
+        # `script` is accepted (and ignored) for backwards compatibility —
+        # endless mode has no fixed encounter list to run through.
+        self.wave_number = 0
+        self.active_enemies = []      # enemies belonging to the current wave
+        self.wave_active = False
+        self.intermission_timer = self.INTERMISSION_START
+
+        # `pending` / `filler_suppressed` are kept so ShipAI's existing
+        # voice-line state machine keeps working unmodified:
+        #   - `pending` shrinks the instant a new wave spawns, which is
+        #     what triggers the "wave incoming" call-out.
+        #   - `filler_suppressed` is True while the current wave's enemies
+        #     are still alive, and flips back to False the moment the wave
+        #     is cleared, which triggers the "wave cleared" call-out.
+        self.pending = [1]
         self.filler_suppressed = False
 
-        self.spawn_timer = 0.0
-        self.elapsed     = 0.0
-        self.kills       = []   # list of type name strings, appended in game.py
+        self.elapsed = 0.0
+        self.kills = []   # list of type name strings, appended in state.py
 
     # ──────────────────────────────────────────────────────────────
     # PUBLIC
@@ -80,90 +70,76 @@ class WaveDirector:
     def update(self, dt, player_pos, player_orientation, enemies):
         self.elapsed += dt
 
-        # ── CHECK SCRIPTED TRIGGERS ───────────────────────────────
-        for enc in self.pending[:]:
-            ox, oy, oz = enc['origin']
-            px, py, pz = player_pos
-            dist = math.sqrt((ox - px) ** 2 + (oy - py) ** 2 + (oz - pz) ** 2)
-
-            if dist < enc['trigger_dist']:
-                spawned = self._spawn_encounter(enc, player_pos, enemies)
-                self.pending.remove(enc)
-
-                if not enc.get('filler', True):
-                    self.active.append({'enemies': spawned, 'filler_ok': False})
-                    self.filler_suppressed = True
-
-        # ── EXPIRE COMPLETED SCRIPTED ENCOUNTERS ──────────────────
-        if self.active:
-            still_alive = []
-            for group in self.active:
-                surviving = [e for e in group['enemies'] if e in enemies]
-                if surviving:
-                    group['enemies'] = surviving
-                    still_alive.append(group)
-            self.active = still_alive
-            self.filler_suppressed = any(not g['filler_ok'] for g in self.active)
-
-        # ── PROCEDURAL FILLER ─────────────────────────────────────
-        if not self.filler_suppressed:
-            self.spawn_timer += dt
-            if self.spawn_timer >= self._filler_interval():
-                self.spawn_timer = 0.0
-                self._spawn_filler(player_pos, player_orientation, enemies)
+        if self.wave_active:
+            # Track only the enemies that are still alive from this wave
+            self.active_enemies = [e for e in self.active_enemies if e in enemies]
+            if not self.active_enemies:
+                self._end_wave()
+        else:
+            self.intermission_timer -= dt
+            if self.intermission_timer <= 0:
+                self._start_wave(player_pos, player_orientation, enemies)
 
     # ──────────────────────────────────────────────────────────────
     # PRIVATE
     # ──────────────────────────────────────────────────────────────
 
-    def _filler_interval(self):
-        """Gradually tighten spawn rate over time (6 s → 2 s floor)."""
-        return max(2.0, 6.0 - self.elapsed * 0.02)
+    def _end_wave(self):
+        self.wave_active = False
+        self.filler_suppressed = False
+        self.intermission_timer = self._intermission_for(self.wave_number)
+        self.pending = [1]   # queue the next wave back up for the incoming call-out
 
-    def _spawn_encounter(self, enc, player_pos, enemies):
-        """Instantiate all enemies in a scripted encounter."""
-        ox, oy, oz = enc['origin']
+    def _start_wave(self, player_pos, player_orientation, enemies):
+        self.wave_number += 1
+        composition = self._build_wave(self.wave_number)
+
         spawned = []
-
-        for etype, (rx, ry, rz) in enc['enemies']:
-            cls = _ETYPE_MAP.get(etype)
-            if cls is None:
-                print(f"[WaveDirector] Unknown etype '{etype}' — skipped")
-                continue
-
-            e = cls(ox + rx, oy + ry, oz + rz)
-
-            # Give scripted drones a sensible movement pattern
-            if cls is SuicideDrone:
-                lateral = math.sqrt(rx * rx + ry * ry)
-                if lateral > 300:
-                    e.set_pattern('weave')
-                elif rz > 0:
-                    e.set_pattern('direct')
-                else:
-                    e.set_pattern('wobble')
-
+        for _etype, spawn_fn in composition:
+            # Every spawn_fn positions its enemy relative to the CURRENT
+            # player position/orientation — this is what makes the new
+            # wave arrive near wherever the player is right now, rather
+            # than at some fixed point on the map.
+            e = spawn_fn(player_pos, player_orientation)
             enemies.append(e)
             spawned.append(e)
 
-        return spawned
+        self.active_enemies = spawned
+        self.wave_active = True
+        self.filler_suppressed = True
+        self.pending = []   # the queued wave just triggered
 
-    def _spawn_filler(self, player_pos, player_orientation, enemies):
-        """Weighted random filler spawn, respecting per-type caps."""
-        # Count current enemies by type
-        counts = {}
-        for e in enemies:
-            counts[type(e)] = counts.get(type(e), 0) + 1
+    def _intermission_for(self, wave_number):
+        """Rest period between waves — shrinks with wave count, floored."""
+        return max(self.INTERMISSION_FLOOR, self.INTERMISSION_START - wave_number * 0.15)
 
-        # Build eligible pool
-        pool = []
-        for cls, fn, _cap_name, weight in _FILLER_TABLE:
-            cap = _CAPS.get(cls, 0)
-            if counts.get(cls, 0) < cap:
-                pool.extend([(cls, fn)] * weight)
+    def _wave_budget(self, wave_number):
+        """Total 'threat' this wave is allowed to spend on enemies. Grows every wave."""
+        return 2.0 + wave_number * 1.3
 
-        if not pool:
-            return   # all caps reached
+    def _max_wave_size(self, wave_number):
+        """Hard cap on simultaneous spawns so late waves stay smooth to run."""
+        return min(4 + wave_number // 2, 18)
 
-        _, spawn_fn = random.choice(pool)
-        enemies.append(spawn_fn(player_pos, player_orientation))
+    def _build_wave(self, wave_number):
+        """Randomly compose a wave from the roster, spending the wave's budget."""
+        budget = self._wave_budget(wave_number)
+        max_size = self._max_wave_size(wave_number)
+        eligible = [row for row in _WAVE_ROSTER if row[3] <= wave_number]
+
+        composition = []
+        while budget > 0 and len(composition) < max_size:
+            pool = [row for row in eligible if row[2] <= budget]
+            if not pool:
+                break
+            etype, spawn_fn, cost, _unlock, _weight = random.choices(
+                pool, weights=[row[4] for row in pool], k=1
+            )[0]
+            composition.append((etype, spawn_fn))
+            budget -= cost
+
+        if not composition:
+            # Safety net — always spawn at least one enemy.
+            composition.append(('drone', spawn_drone))
+
+        return composition
