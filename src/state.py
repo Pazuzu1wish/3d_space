@@ -668,14 +668,6 @@ class GameOverState(State):
         )
         mod_y += 28
 
-        dmg_pct = min(100, int(r.damage_taken / max(1, r.max_hp) * 100))
-        draw_line_lr(
-            f"  Damage taken  {dmg_pct}%",
-            f"×{r.damage_modifier():.2f}",
-            self._font_small, (200, 200, 200), (100, 220, 255), mod_y,
-        )
-        mod_y += 28
-
         draw_line("─" * 48, self._font_small, (40, 80, 100), mod_y + 8)
 
         draw_line_lr(
@@ -703,7 +695,7 @@ class GameOverState(State):
         self._font_small = pygame.font.Font(path, 18)
 
     def _total_lines(self):
-        return 6 + len(self.result.kills) + 8
+        return 6 + len(self.result.kills) + 7
 
     def _draw_scanlines(self, screen):
         W, H = self.context.W, self.context.H

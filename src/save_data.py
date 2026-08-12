@@ -59,14 +59,9 @@ class RunResult:
         minutes = self.survival_time / 60.0
         return min(2.0, 1.0 + minutes * 0.1)
 
-    def damage_modifier(self):
-        """2.0x for no damage taken, 1.0x for full hp lost."""
-        pct_taken = min(1.0, self.damage_taken / max(1.0, self.max_hp))
-        return 1.0 + (1.0 - pct_taken)
-
     def final_score(self):
         base = self.base_kill_score()
-        return int(base * self.accuracy_modifier() * self.time_modifier() * self.damage_modifier())
+        return int(base * self.accuracy_modifier() * self.time_modifier())
 
     def to_dict(self):
         return {
