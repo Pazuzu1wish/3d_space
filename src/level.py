@@ -65,7 +65,7 @@ class ArcadeLevel(BaseLevel):
         self.director = WaveDirector(ARCADE_ENCOUNTER_SCRIPT)
 
         # Spawn Space Station
-        self.station.append(SpaceStation(0, 0, 1000, 50))
+        # self.station.append(SpaceStation(0, 0, 1000, 50))
 
         # Setup and register Asteroids directly into the engine's spatial partitions
         for enc in ARCADE_ENCOUNTER_SCRIPT:

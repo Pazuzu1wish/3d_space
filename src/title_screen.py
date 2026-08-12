@@ -501,7 +501,7 @@ class TitleCinematic:
             glow_scaled.set_alpha(int(self.title_alpha * 0.25))
             screen.blit(glow_scaled, (cx - w // 2 + 2, cy - h // 2 + 2))
 
-        # ── DIVIDED SNAKES ────────────────────────────────────
+        # ── SUB TITLE ────────────────────────────────────
         if self.sub_alpha > 4:
             sub_raw = self.sub_font.render("S N A K E S  I N  S P A C E", True, (180, 180, 200))
             sub_raw.set_alpha(int(self.sub_alpha))
