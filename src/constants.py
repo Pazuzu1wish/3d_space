@@ -15,12 +15,12 @@ PLAYER_MAX_HP     = 100
 
 HIT_FLASH_DURATION = 0.25          # seconds screen flashes red on hit
 
-MAX_THRUST = 500
-MAX_RETRO_THRUST = 250
-DRAG = 0.00
-MAX_SPEED = 2500.0
+MAX_THRUST = 2000
+MAX_RETRO_THRUST = 1450
+DRAG = 0.0001
+MAX_SPEED = 5000.0
 DODGE_COOLDOWN = 1.20
-DODGE_IMPULSE = 2000
+DODGE_IMPULSE = 5000
 DODGE_THRESHOLD = 0.20
 
 # ──────────────────────────────────────────────
@@ -30,11 +30,11 @@ DODGE_THRESHOLD = 0.20
 ENEMY_HIT_RADIUS_SQ = 6400          # squared radius for laser-enemy collision (80^2)
 ENEMY_CULL_DISTANCE = -30000         # enemies behind this are culled
 HOMING_TURN_RATE = 1.4              # homing projectile turn rate per second
-PARTICLES_ON_HIT = 12                # particles spawned when enemy hit
-PARTICLES_ON_DESTROY = 20           # particles spawned when enemy destroyed
+PARTICLES_ON_HIT = 17                # particles spawned when enemy hit
+PARTICLES_ON_DESTROY = 30           # particles spawned when enemy destroyed
 PARTICLES_ON_PLAYER_HIT = 8        # particles spawned when player hit
 COLLISION_DAMAGE = 20               # damage taken from enemy collision
-BARREL_ROLL_DURATION = 2.5          # seconds for a full barrel roll
+BARREL_ROLL_DURATION = 1.5          # seconds for a full barrel roll
 
 # ──────────────────────────────────────────────
 # CONTROLLER CONSTANTS
@@ -66,8 +66,8 @@ SCREEN_SHAKE_MAX = 45.0             # maximum pixels of displacement
 PLAYER_LASER_HEAT_PER_SHOT = 0.06    # heat added per dual-shot (0.0 to 1.0 scale)
 PLAYER_LASER_COOL_RATE = 0.25       # heat dissipated per second
 PLAYER_LASER_FIRE_SHAKE = 3.8    # screen shake intensity when firing
-PLAYER_LASER_BASE_SPREAD = 0.004    # spread at zero heat
-PLAYER_LASER_MAX_SPREAD = 0.12     # additional spread at max heat
+PLAYER_LASER_BASE_SPREAD = 0.04    # spread at zero heat
+PLAYER_LASER_MAX_SPREAD = 0.22     # additional spread at max heat
 PLAYER_LASER_COLOR = (255, 111, 5) # bright orange
 SNIPER_ACCURACY = 0.8              # 80% chance for a perfect hit check
 
@@ -77,8 +77,8 @@ SNIPER_ACCURACY = 0.8              # 80% chance for a perfect hit check
 
 PLAYER_MISSILE_MAX_AMMO = 10
 PLAYER_MISSILE_LOCK_TIME = 2.0      # seconds to lock
-PLAYER_MISSILE_LOCK_FOV = 0.98      # dot product threshold for crosshair lock
-PLAYER_MISSILE_SPEED = 10000.0
+PLAYER_MISSILE_LOCK_FOV = 0.78      # dot product threshold for crosshair lock
+PLAYER_MISSILE_SPEED = 14000.0
 PLAYER_MISSILE_DAMAGE = 50.0
 PLAYER_MISSILE_TURN_RATE = 2.5      # homing turn rate per second
 PLAYER_MISSILE_LIFE = 8.0           # seconds before expiring
@@ -97,9 +97,9 @@ HUD_WAYPOINT = (0, 200, 255, 180) # Objectives
 # SUICIDE DRONE MECHANICS
 # ──────────────────────────────────────────────
 
-DRONE_DETONATION_RANGE = 450.0
-DRONE_EXPLOSION_RADIUS = 900.0
-DRONE_MAX_DAMAGE = 40.0
+DRONE_DETONATION_RANGE = 4750.0
+DRONE_EXPLOSION_RADIUS = 1500.0
+DRONE_MAX_DAMAGE = 70.0
 
 # ──────────────────────────────────────────────
 # ASTEROID MECHANICS
@@ -109,7 +109,7 @@ ASTEROID_MIN_HP = 5
 ASTEROID_MAX_HP = 20
 ASTEROID_DAMAGE = 35.0
 ASTEROID_MIN_SCALE = 80.0
-ASTEROID_MAX_SCALE = 1000.0
+ASTEROID_MAX_SCALE = 5000.0
 ASTEROID_SPAWN_RADIUS = 8500.0
 ASTEROID_ROTATION_SPEED_MAX = 1.5
 ASTEROID_DRIFT_SPEED_MAX = 20.0

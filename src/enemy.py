@@ -296,7 +296,7 @@ class Enemy:
         dx, dy, dz = self.x - px, self.y - py, self.z - pz
         return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
 
-    import math
+
 
     def compute_avoidance_force(self, spatial, player_pos, avoid_player=True, max_range=2000.0):
         """
@@ -505,7 +505,7 @@ class SuicideDrone(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 2600.0
+        self.max_speed      = 5600.0
         self.thrust         = 9000.0
         self.lateral_thrust = 0.5
         self.turn_rate      = 1.5
@@ -663,7 +663,7 @@ class Dogfighter(Enemy):
         self.pattern_scale = 2.5  # Dogfighters need larger sweeps than drones
 
         # ── Newtonian physics ──
-        self.max_speed      = 2500.0
+        self.max_speed      = 5000.0
         self.thrust         = 5000.0
         self.lateral_thrust = 0.35
         self.turn_rate      = 2.0
@@ -905,7 +905,7 @@ class Sniper(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 1100.0
+        self.max_speed      = 4100.0
         self.thrust         = 3000.0
         self.lateral_thrust = 0.2
         self.turn_rate      = 2.0
@@ -1082,7 +1082,7 @@ class Corvette(Enemy):
         self.t = random.uniform(0, 100)
 
         # ── Newtonian physics ──
-        self.max_speed      = 600.0
+        self.max_speed      = 3500.0
         self.thrust         = 2000.0
         self.lateral_thrust = 0.2
         self.turn_rate      = 1.2
@@ -1234,7 +1234,7 @@ class Mine(Enemy):
             self.spawn_immunity_timer -= dt
 
         if self.spawn_immunity_timer <= 0:
-            TRIGGER_RADIUS = 2000.0
+            TRIGGER_RADIUS = 2500.0
 
             # Check player proximity
             if self.dist_to_player(player_pos) < TRIGGER_RADIUS:
@@ -1302,7 +1302,7 @@ class Minelayer(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 1500.0
+        self.max_speed      = 4500.0
         self.thrust         = 4000.0
         self.lateral_thrust = 0.3
         self.turn_rate      = 2.5
@@ -1493,7 +1493,7 @@ class StealthInterceptor(Enemy):
         self.hit_radius = 200.0
 
         # ── Newtonian physics ──
-        self.max_speed      = 2800.0
+        self.max_speed      = 5300.0
         self.thrust         = 12000.0
         self.lateral_thrust = 0.15
         self.turn_rate      = 5.0
@@ -1654,7 +1654,7 @@ class Carrier(Enemy):
         self._flicker = 0
 
         # ── Newtonian physics ──
-        self.max_speed      = 250.0
+        self.max_speed      = 3500.0
         self.thrust         = 800.0
         self.lateral_thrust = 0.1
         self.turn_rate      = 0.6
