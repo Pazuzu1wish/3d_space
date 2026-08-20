@@ -32,6 +32,11 @@ from src.mesh_loader import get_ship_mesh
 # ──────────────────────────────────────────────
 
 class Enemy:
+    # Multiplier applied to hit_radius while shielded, so hit detection
+    # matches the visible shield bubble (see _submit_shield_visual)
+    # instead of just the ship's hull. Reverts the instant the shield pops.
+    SHIELD_HIT_RADIUS_MULT = 2.6
+
     def __init__(self, x, y, z):
         self.x, self.y, self.z = float(x), float(y), float(z)
         self.hp = 1
@@ -296,10 +301,19 @@ class Enemy:
         return dx * dx + dy * dy + dz * dz
 
     # --- ADD THIS: Default spherical hit detection ---
+    def _effective_hit_radius(self):
+        """Hit radius used for collision — inflated to match the shield
+        bubble while the shield is up, back to the hull radius once it pops.
+        """
+        if self.shielded and self.shield > 0:
+            return self.hit_radius * self.SHIELD_HIT_RADIUS_MULT
+        return self.hit_radius
+
     def is_hit(self, px, py, pz):
         """Check if a projectile at (px, py, pz) hits this enemy using spherical collision."""
         dx, dy, dz = self.x - px, self.y - py, self.z - pz
-        return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
+        r = self._effective_hit_radius()
+        return (dx * dx + dy * dy + dz * dz) < (r ** 2)
 
     def set_shielded(self, shield_hp=None):
         self.shielded = True
@@ -470,7 +484,7 @@ class Enemy:
             return
 
         pulse = (math.sin(now * 0.018) + 1.0) * 0.5
-        size = radius * (2.6 + pulse * 0.12 + hit_flash * 0.55 + break_flash * 1.0)
+        size = radius * (self.SHIELD_HIT_RADIUS_MULT + pulse * 0.12 + hit_flash * 0.55 + break_flash * 1.0)
         color = (
             int(40 + 70 * (1.0 - shield_ratio)),
             int(185 + 45 * hit_flash),
@@ -1755,6 +1769,10 @@ class Carrier(Enemy):
         local_z = dx * self.forward[0] + dy * self.forward[1] + dz * self.forward[2]
         
         scale = getattr(self, 'mesh_scale', 1.0)
+        # Inflate the hitbox to match the shield bubble while it's up,
+        # same as the spherical default in Enemy.is_hit.
+        if self.shielded and self.shield > 0:
+            scale *= self.SHIELD_HIT_RADIUS_MULT
         
         hit_x = (-400 * scale) <= local_x <= (400 * scale)
         hit_y = (-120 * scale) <= local_y <= (180 * scale)
