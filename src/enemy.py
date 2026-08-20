@@ -50,6 +50,11 @@ class Enemy:
 
         # ... existing code ...
         self.base_color = (255, 255, 255)
+        self.shielded = False
+        self.shield = 0.0
+        self.max_shield = 0.0
+        self.shield_hit_flash_until = 0
+        self.shield_break_flash_until = 0
         # engine_trail kept as empty list for legacy compatibility;
         # the live TrailPool is created after subclass sets engine_offsets
         self.engine_trail = []  # legacy — do not use directly
@@ -296,6 +301,43 @@ class Enemy:
         dx, dy, dz = self.x - px, self.y - py, self.z - pz
         return (dx * dx + dy * dy + dz * dz) < (self.hit_radius ** 2)
 
+    def set_shielded(self, shield_hp=None):
+        self.shielded = True
+        if shield_hp is None:
+            shield_hp = max(2.0, min(50.0, self.max_hp * 0.35 + self.hit_radius * 0.025))
+        self.max_shield = float(shield_hp)
+        self.shield = self.max_shield
+        return self
+
+    def _apply_damage(self, damage=1, shield_damage_mult=1.0, hull_damage_mult=1.0):
+        damage = float(damage)
+        if damage <= 0:
+            return 0.0
+
+        if self.shielded and self.shield > 0:
+            shield_damage = damage * shield_damage_mult
+            absorbed = min(self.shield, shield_damage)
+            self.shield -= absorbed
+            now = pygame.time.get_ticks()
+            self.shield_hit_flash_until = now + 160
+
+            leftover = max(0.0, damage - (absorbed / max(0.001, shield_damage_mult)))
+            if self.shield <= 0:
+                self.shield = 0.0
+                self.shielded = False
+                self.shield_break_flash_until = now + 420
+
+            if leftover <= 0:
+                return 0.0
+            damage = leftover
+
+        hull_damage = damage * hull_damage_mult
+        self.hp -= hull_damage
+        return hull_damage
+
+    def on_hit(self, damage=1):
+        return self._apply_damage(damage)
+
 
 
     def compute_avoidance_force(self, spatial, player_pos, avoid_player=True, max_range=2000.0):
@@ -400,6 +442,8 @@ class Enemy:
             # Bright white core with high alpha; submit as nebula so it soft-fades and scales with distance
             renderer.submit_nebula(self.x, self.y, self.z, (255, 255, 255), size, alpha=alpha, layer='alpha')
 
+        self._submit_shield_visual(renderer)
+
         scale = getattr(self, 'mesh_scale', 1.0)
         
         # Multiply the orientation vectors by the scale factor
@@ -410,6 +454,29 @@ class Enemy:
         renderer.submit_baked_mesh(
             (self.x, self.y, self.z), s_right, s_up, s_fwd, self.baked_mesh
         )
+
+    def _submit_shield_visual(self, renderer):
+        now = pygame.time.get_ticks()
+        hit_flash = max(0.0, (self.shield_hit_flash_until - now) / 160.0)
+        break_flash = max(0.0, (self.shield_break_flash_until - now) / 420.0)
+
+        if not self.shielded and break_flash <= 0:
+            return
+
+        shield_ratio = (self.shield / self.max_shield) if self.max_shield > 0 else 0.0
+        radius = getattr(self, 'hit_radius', 80.0)
+        alpha = int(min(220, (28 if self.shielded else 0) + hit_flash * 170 + break_flash * 210))
+        if alpha <= 0:
+            return
+
+        pulse = (math.sin(now * 0.018) + 1.0) * 0.5
+        size = radius * (2.6 + pulse * 0.12 + hit_flash * 0.55 + break_flash * 1.0)
+        color = (
+            int(40 + 70 * (1.0 - shield_ratio)),
+            int(185 + 45 * hit_flash),
+            255,
+        ) if self.shielded else (255, 245, 150)
+        renderer.submit_nebula(self.x, self.y, self.z, color, size, alpha=alpha, layer='alpha')
 
 
 # ──────────────────────────────────────────────
@@ -615,8 +682,9 @@ class SuicideDrone(Enemy):
         self.hp = 0
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1
         if self._pattern_cache is _pattern_direct:
             self._pattern_cache = random.choice(PATTERNS[1:])
 
@@ -867,10 +935,11 @@ class Dogfighter(Enemy):
             global_projectiles.append(bolt)
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
-        self.mode = 'attack_run'
-        self.mode_timer = 3.0
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1
+            self.mode = 'attack_run'
+            self.mode_timer = 3.0
 
 
 # ===========================================================
@@ -1044,8 +1113,9 @@ class Sniper(Enemy):
         self._update_engine_trail(dt)
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1
 
 
 # =============================================================
@@ -1153,8 +1223,9 @@ class Corvette(Enemy):
         if self._flicker > 0: self._flicker -= dt * 8
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1
 
 
 # =============================================================
@@ -1256,11 +1327,13 @@ class Mine(Enemy):
 
     def on_hit(self, damage=1):
         # Explode instantly if struck by a laser or projectile
-        if self.spawn_immunity_timer <= 0:
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0 and self.spawn_immunity_timer <= 0:
             self.detonate(self._last_player, self._last_spatial)
 
     def submit_to_renderer(self, renderer):
         # Discard the mesh rendering completely and render the blinking sprite
+        self._submit_shield_visual(renderer)
         flash = (pygame.time.get_ticks() // 200) % 2 == 0
         draw_color = (255, 255, 255) if flash else self.base_color
         renderer.submit_sprite(self.x, self.y, self.z, draw_color, self.size_mult * 2)
@@ -1456,8 +1529,9 @@ class Minelayer(Enemy):
         if self._flicker > 0: self._flicker -= dt * 8
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1
         if self.state == 'traveling' and random.random() < 0.3:
             self.flank_offset = None
 
@@ -1615,8 +1689,9 @@ class StealthInterceptor(Enemy):
         if self._flicker > 0: self._flicker -= dt * 8
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1
 
 
 
@@ -1801,7 +1876,6 @@ class Carrier(Enemy):
         if self._flicker > 0: self._flicker -= dt * 8
 
     def on_hit(self, damage=1):
-        self.hp -= damage
-        self._flicker = 1
-
-
+        hull_damage = self._apply_damage(damage)
+        if hull_damage > 0:
+            self._flicker = 1

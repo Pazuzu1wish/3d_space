@@ -95,12 +95,13 @@ class WaveDirector:
         composition = self._build_wave(self.wave_number)
 
         spawned = []
-        for _etype, spawn_fn in composition:
+        for etype, spawn_fn in composition:
             # Every spawn_fn positions its enemy relative to the CURRENT
             # player position/orientation — this is what makes the new
             # wave arrive near wherever the player is right now, rather
             # than at some fixed point on the map.
             e = spawn_fn(player_pos, player_orientation)
+            self._maybe_add_shield(e, etype, self.wave_number)
             enemies.append(e)
             spawned.append(e)
 
@@ -143,3 +144,42 @@ class WaveDirector:
             composition.append(('drone', spawn_drone))
 
         return composition
+
+    def _maybe_add_shield(self, enemy, etype, wave_number):
+        chance = self._shield_chance(wave_number, etype)
+        if random.random() >= chance:
+            return
+
+        strength = self._shield_strength(enemy, wave_number, etype)
+        enemy.set_shielded(strength)
+
+    def _shield_chance(self, wave_number, etype):
+        if wave_number < 4:
+            return 0.0
+
+        base = min(0.55, (wave_number - 3) * 0.045)
+        type_bonus = {
+            'drone': -0.12,
+            'fighter': 0.00,
+            'sniper': 0.05,
+            'stealth': 0.08,
+            'minelayer': 0.10,
+            'corvette': 0.18,
+            'carrier': 0.30,
+        }.get(etype, 0.0)
+
+        return max(0.0, min(0.85, base + type_bonus))
+
+    def _shield_strength(self, enemy, wave_number, etype):
+        base = max(2.0, enemy.max_hp * 0.35 + enemy.hit_radius * 0.025)
+        wave_scale = 1.0 + min(1.5, (wave_number - 4) * 0.08)
+        type_scale = {
+            'drone': 0.75,
+            'fighter': 1.0,
+            'sniper': 0.8,
+            'stealth': 0.9,
+            'minelayer': 1.1,
+            'corvette': 1.35,
+            'carrier': 1.8,
+        }.get(etype, 1.0)
+        return min(125.0, base * wave_scale * type_scale)
