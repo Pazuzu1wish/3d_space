@@ -2,7 +2,7 @@ import math
 import random
 import pygame
 from src.math_engine import basis_from_forward
-from src.constants import PLAYER_MISSILE_TURN_RATE
+from src.constants import PLAYER_MISSILE_TURN_RATE, SHIELD_HIT_PARTICLE_COLORS
 
 class PlayerMissile:
     def __init__(self, x, y, z, vx, vy, vz, life, damage, color=(200, 200, 200), size_mult=3.5, homing=False):
@@ -132,11 +132,13 @@ class PlayerMissile:
                 rad = getattr(obj, 'hit_radius', 80)
                 # Slightly larger collision buffer for missiles
                 if dist_sq < (rad + 50)**2:
+                    shielded_hit = getattr(obj, 'shielded', False) and getattr(obj, 'shield', 0) > 0
                     if hasattr(obj, 'on_hit'):
                         obj.on_hit(self.damage)
                     self.life = 0
+                    hit_colors = SHIELD_HIT_PARTICLE_COLORS if shielded_hit else None
                     for _ in range(35):
-                        particle_pool.spawn(self.x, self.y, self.z)
+                        particle_pool.spawn(self.x, self.y, self.z, colors=hit_colors)
                     return True
         return False
 

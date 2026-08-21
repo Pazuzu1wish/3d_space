@@ -18,7 +18,7 @@ from src.constants import (
     ENEMY_CULL_DISTANCE, PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
     COLLISION_DAMAGE, CAMERA_CLIP_NEAR, SNIPER_CHARGE_TIME,
     SNIPER_CHARGE_JITTER, SNIPER_CHARGE_CORE_THRESHOLD, SNIPER_GLARE_MULTIPLIER,
-    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE)
+    ASTEROID_PARTICLES_ON_DESTROY, ASTEROID_DAMAGE, SHIELD_HIT_PARTICLE_COLORS)
 from src.utils import draw_damage_overlay
 from src.object_pool import ParticlePool, LaserPool
 from src.ship_ai import ShipAI
@@ -482,12 +482,14 @@ class GameplayState(State):
             nearby_objects = self.spatial.query_nearby((l.x, l.y, l.z), 800.0)
             for obj in nearby_objects:
                 if hasattr(obj, 'is_hit') and obj.is_hit(l.x, l.y, l.z):
+                    shielded_hit = getattr(obj, 'shielded', False) and getattr(obj, 'shield', 0) > 0
                     if hasattr(obj, 'on_hit'):
                         obj.on_hit(1)
                         self.player.shots_hit += 1
                     l.life = 0
+                    hit_colors = SHIELD_HIT_PARTICLE_COLORS if shielded_hit else None
                     for _ in range(PARTICLES_ON_HIT):
-                        self.particle_pool.spawn(l.x, l.y, l.z)
+                        self.particle_pool.spawn(l.x, l.y, l.z, colors=hit_colors)
                     break
 
         # Enemy vs Asteroid collisions

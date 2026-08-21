@@ -36,6 +36,15 @@ PARTICLES_ON_PLAYER_HIT = 8        # particles spawned when player hit
 COLLISION_DAMAGE = 20               # damage taken from enemy collision
 BARREL_ROLL_DURATION = 1.5          # seconds for a full barrel roll
 
+# Particle palette used instead of the normal hit-spark colors when a shot
+# lands on an enemy that still has its shield up.
+SHIELD_HIT_PARTICLE_COLORS = [
+    (60, 170, 255),    # bright blue
+    (110, 190, 255),   # light blue
+    (150, 150, 165),   # steel grey
+    (200, 205, 215),   # pale grey
+]
+
 # ──────────────────────────────────────────────
 # CONTROLLER CONSTANTS
 # ──────────────────────────────────────────────
@@ -137,4 +146,3 @@ PLAYER_LASER_SPEED = 16000.0        # Projectile speed for lead calculation
 FULLSCREEN = True
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 760
-
