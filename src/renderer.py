@@ -3,6 +3,130 @@ import math
 import numpy as np
 from src.numba_compat import njit
 
+@njit(fastmath=True, cache=True)
+def clip_mesh_near_plane(cam_verts, face_indices, face_colors, near_z=10.0):
+    """
+    Clips triangles against a near Z-plane.
+    Returns new camera vertices, face indices, and colors.
+    """
+    num_faces = face_indices.shape[0]
+    num_verts = cam_verts.shape[0]
+
+    # Pre-allocate worst-case scenario buffers to avoid dynamic allocation in Numba
+    max_new_verts = num_verts + num_faces * 2
+    max_new_faces = num_faces * 2
+
+    out_verts = np.zeros((max_new_verts, 3), dtype=np.float64)
+    out_verts[:num_verts] = cam_verts
+
+    out_faces = np.zeros((max_new_faces, 3), dtype=np.int32)
+    out_colors = np.zeros((max_new_faces, 3), dtype=np.int32)
+
+    vert_count = num_verts
+    face_count = 0
+
+    for i in range(num_faces):
+        i0, i1, i2 = face_indices[i, 0], face_indices[i, 1], face_indices[i, 2]
+        v0, v1, v2 = cam_verts[i0], cam_verts[i1], cam_verts[i2]
+
+        # Calculate distances to the near plane (Assuming +Z is forward into screen)
+        d0, d1, d2 = v0[2] - near_z, v1[2] - near_z, v2[2] - near_z
+
+        inside_count = (d0 >= 0) + (d1 >= 0) + (d2 >= 0)
+
+        if inside_count == 3:
+            # Fully visible, keep original face
+            out_faces[face_count, 0] = i0
+            out_faces[face_count, 1] = i1
+            out_faces[face_count, 2] = i2
+            out_colors[face_count] = face_colors[i]
+            face_count += 1
+
+        elif inside_count == 0:
+            # Fully behind camera, discard
+            continue
+
+        elif inside_count == 1:
+            # 1 vertex inside, 2 outside -> Becomes 1 new smaller triangle
+            if d0 >= 0:
+                i_in, v_in, d_in = i0, v0, d0
+                v_out1, d_out1, v_out2, d_out2 = v1, d1, v2, d2
+            elif d1 >= 0:
+                i_in, v_in, d_in = i1, v1, d1
+                v_out1, d_out1, v_out2, d_out2 = v2, d2, v0, d0
+            else:
+                i_in, v_in, d_in = i2, v2, d2
+                v_out1, d_out1, v_out2, d_out2 = v0, d0, v1, d1
+
+            # Interpolate edge 1
+            t1 = d_in / (d_in - d_out1)
+            out_verts[vert_count, 0] = v_in[0] + t1 * (v_out1[0] - v_in[0])
+            out_verts[vert_count, 1] = v_in[1] + t1 * (v_out1[1] - v_in[1])
+            out_verts[vert_count, 2] = near_z
+            idx_new1 = vert_count
+            vert_count += 1
+
+            # Interpolate edge 2
+            t2 = d_in / (d_in - d_out2)
+            out_verts[vert_count, 0] = v_in[0] + t2 * (v_out2[0] - v_in[0])
+            out_verts[vert_count, 1] = v_in[1] + t2 * (v_out2[1] - v_in[1])
+            out_verts[vert_count, 2] = near_z
+            idx_new2 = vert_count
+            vert_count += 1
+
+            out_faces[face_count, 0] = i_in
+            out_faces[face_count, 1] = idx_new1
+            out_faces[face_count, 2] = idx_new2
+            out_colors[face_count] = face_colors[i]
+            face_count += 1
+
+        elif inside_count == 2:
+            # 2 vertices inside, 1 outside -> Becomes a quad (2 triangles)
+            if d0 < 0:
+                v_out, d_out = v0, d0
+                i_in1, v_in1, d_in1 = i1, v1, d1
+                i_in2, v_in2, d_in2 = i2, v2, d2
+            elif d1 < 0:
+                v_out, d_out = v1, d1
+                i_in1, v_in1, d_in1 = i2, v2, d2
+                i_in2, v_in2, d_in2 = i0, v0, d0
+            else:
+                v_out, d_out = v2, d2
+                i_in1, v_in1, d_in1 = i0, v0, d0
+                i_in2, v_in2, d_in2 = i1, v1, d1
+
+            # Interpolate edge 1
+            t1 = d_in1 / (d_in1 - d_out)
+            out_verts[vert_count, 0] = v_in1[0] + t1 * (v_out[0] - v_in1[0])
+            out_verts[vert_count, 1] = v_in1[1] + t1 * (v_out[1] - v_in1[1])
+            out_verts[vert_count, 2] = near_z
+            idx_new1 = vert_count
+            vert_count += 1
+
+            # Interpolate edge 2
+            t2 = d_in2 / (d_in2 - d_out)
+            out_verts[vert_count, 0] = v_in2[0] + t2 * (v_out[0] - v_in2[0])
+            out_verts[vert_count, 1] = v_in2[1] + t2 * (v_out[1] - v_in2[1])
+            out_verts[vert_count, 2] = near_z
+            idx_new2 = vert_count
+            vert_count += 1
+
+            # Triangle 1
+            out_faces[face_count, 0] = i_in1
+            out_faces[face_count, 1] = i_in2
+            out_faces[face_count, 2] = idx_new1
+            out_colors[face_count] = face_colors[i]
+            face_count += 1
+
+            # Triangle 2 (maintains winding order)
+            out_faces[face_count, 0] = i_in2
+            out_faces[face_count, 1] = idx_new2
+            out_faces[face_count, 2] = idx_new1
+            out_colors[face_count] = face_colors[i]
+            face_count += 1
+
+    # Return zero-allocation sliced views
+    return out_verts[:vert_count], out_faces[:face_count], out_colors[:face_count]
 
 @njit(fastmath=True, cache=True)
 def process_faces_batch_numba(cam_verts, projected, face_indices, face_colors):
@@ -213,6 +337,11 @@ class RenderPipeline:
 
         # World → Camera (Numba batch)
         cam_verts = self.camera.world_to_camera_batch(world_verts)
+
+        # Clip mesh against the near plane (adjust near_z to match your frustum)
+        cam_verts, face_indices, face_colors = clip_mesh_near_plane(
+            cam_verts, face_indices, face_colors, near_z=10.0
+        )
 
         # Project (Numba batch)
         projected = self.camera.project_batch(cam_verts)
