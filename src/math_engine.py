@@ -249,7 +249,6 @@ def project_to_screen_batch(cam_verts, fov, cx, cy, ox, oy, near_clip):
 @njit(fastmath=True, cache=True)
 def calculate_lead_position(player_pos, player_vel, target_pos, target_vel,
                             projectile_speed):
-
     # Convert inputs to vectors (assuming they're tuples/lists)
     px, py, pz = player_pos
     vpx, vpy, vpz = player_vel
@@ -266,30 +265,51 @@ def calculate_lead_position(player_pos, player_vel, target_pos, target_vel,
 
     # Dot products and magnitudes squared
     relative_pos_dot_relative_vel = rx * rvx + ry * rvy + rz * rvz
-    relative_vel_mag_sq = rvx**2 + rvy**2 + rvz**2
-    relative_pos_mag_sq = rx**2 + ry**2 + rz**2
+    relative_vel_mag_sq = rvx ** 2 + rvy ** 2 + rvz ** 2
+    relative_pos_mag_sq = rx ** 2 + ry ** 2 + rz ** 2
     projectile_speed_sq = projectile_speed ** 2
 
     # Coefficients for quadratic equation: A*t^2 + B*t + C = 0
     A = relative_vel_mag_sq - projectile_speed_sq
-    B = 2 * relative_pos_dot_relative_vel
+    B = 2.0 * relative_pos_dot_relative_vel
     C = relative_pos_mag_sq
 
-    # Discriminant
-    discriminant = B**2 - 4 * A * C
+    # 1. DIV-BY-ZERO FIX:
+    # If A is near zero, projectile speed is nearly identical to relative velocity.
+    # The quadratic equation collapses into a linear equation: B*t + C = 0
+    if abs(A) < 1e-6:
+        # Also protect against B being zero (parallel speeds)
+        if abs(B) < 1e-6:
+            return (tx, ty, tz)
 
-    # No solution (target is too fast or moving away)
-    # Return a fixed-size tuple of floats so numba's nopython mode can
-    # consistently infer the return type (UniTuple(float64 x 3)).
-    if discriminant < 0 or A == 0:
-        return (tx, ty, tz)  # Fallback: aim at current position
+        t = -C / B
+        if t < 0:
+            return (tx, ty, tz)
 
-    # Solve for t (only positive root)
-    t = (-B + math.sqrt(discriminant)) / (2 * A)
-    if t < 0:
-        t = (-B - math.sqrt(discriminant)) / (2 * A)
-    if t < 0:
-        return (tx, ty, tz)  # No valid intercept time
+    else:
+        # 2. STANDARD QUADRATIC PATH
+        discriminant = B ** 2 - 4.0 * A * C
+
+        # No solution (target is too fast or moving away)
+        if discriminant < 0:
+            return (tx, ty, tz)  # Fallback: aim at current position
+
+        sqrt_d = math.sqrt(discriminant)
+
+        t1 = (-B + sqrt_d) / (2.0 * A)
+        t2 = (-B - sqrt_d) / (2.0 * A)
+
+        # 3. ROOT FIX: Always prefer the *earliest* possible positive intercept
+        t = -1.0
+        if t1 > 0 and t2 > 0:
+            t = min(t1, t2)
+        elif t1 > 0:
+            t = t1
+        elif t2 > 0:
+            t = t2
+
+        if t < 0:
+            return (tx, ty, tz)  # Intercept is in the past
 
     # Calculate intercept position
     intercept_x = tx + vtx * t
