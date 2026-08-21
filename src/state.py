@@ -13,6 +13,7 @@ from src.star import Star
 from src.player import Player
 from src.laser import Laser
 from src.spatial_partition import SpatialPartition
+from src.upgrades import roll_upgrades
 from src.constants import (
     HIT_FLASH_DURATION, PLAYER_COLLISION_RADIUS,
     ENEMY_CULL_DISTANCE, PARTICLES_ON_HIT, PARTICLES_ON_DESTROY, PARTICLES_ON_PLAYER_HIT,
@@ -220,6 +221,14 @@ class GameplayState(State):
         self.player.update(dt, self.context.handler, keys, self.laser_pool, self.particle_pool, 
                            self.enemy_projectiles, self.player_missiles, self.context.sound)
         self.update_entities(dt, self.player, self.enemies, self.enemy_projectiles)
+
+        # ── LEVEL UP CHECK ── pushes an overlay state, same pattern as the
+        # pause menu — GameplayState.update() simply won't be called again
+        # until it's popped, so this freezes the run for free.
+        if self.level.pending_level_ups > 0:
+            self.level.pending_level_ups -= 1
+            manager.push(LevelUpState(self.context))
+            return
         
         # ── EXPIRED TRIGGER LOGIC DIRECTED DOWN TO LEVEL SYSTEM ──
         self.level.on_update(dt)
@@ -484,7 +493,7 @@ class GameplayState(State):
                 if hasattr(obj, 'is_hit') and obj.is_hit(l.x, l.y, l.z):
                     shielded_hit = getattr(obj, 'shielded', False) and getattr(obj, 'shield', 0) > 0
                     if hasattr(obj, 'on_hit'):
-                        obj.on_hit(1)
+                        obj.on_hit(self.player.laser_damage)
                         self.player.shots_hit += 1
                     l.life = 0
                     hit_colors = SHIELD_HIT_PARTICLE_COLORS if shielded_hit else None
@@ -703,7 +712,7 @@ class GameOverState(State):
         W, H = self.context.W, self.context.H
         overlay = pygame.Surface((W, H), pygame.SRCALPHA)
         for y in range(0, H, 4):
-            pygame.draw.line(overlay, (0, 0, 0, 40), (0, y), (W, y))
+            pygame.draw.line(overlay, (0, 0, 0, 100), (0, y), (W, y))
         screen.blit(overlay, (0, 0))
 
     def _draw_high_scores(self, screen, scores):
@@ -1019,3 +1028,155 @@ class PauseState(State):
             manager.change(TitleState(self.context))
         elif action == "EXIT":
             self.context.running = False
+
+
+class LevelUpState(State):
+    """
+    Overlay pushed when the player crosses an XP threshold in GameplayState.
+    Same freeze-the-run-underneath trick as PauseState (only the top of the
+    state stack gets updated), but shows 3 random upgrade picks instead of
+    a settings menu. Picking one applies it directly to the live Player
+    instance and pops back into gameplay.
+    """
+    def __init__(self, context):
+        super().__init__(context)
+        self.title_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 34)
+        self.name_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 20)
+        self.desc_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 14)
+        self.hint_font = pygame.font.Font("assets/fonts/interdictionexpand.ttf", 11)
+
+        self.choices = roll_upgrades(3)
+        self.selected_item = 0
+
+    @property
+    def gameplay_state(self):
+        if len(self.context.state_manager.stack) > 1:
+            state = self.context.state_manager.stack[-2]
+            if hasattr(state, 'player'):
+                return state
+        return None
+
+    def _card_rects(self):
+        card_w, card_h = 300, 340
+        gap = 40
+        total_w = card_w * len(self.choices) + gap * (len(self.choices) - 1)
+        start_x = (self.context.W - total_w) // 2
+        y = (self.context.H - card_h) // 2
+        rects = []
+        for i in range(len(self.choices)):
+            x = start_x + i * (card_w + gap)
+            rects.append(pygame.Rect(x, y, card_w, card_h))
+        return rects
+
+    def handle_event(self, event):
+        gp = self.gameplay_state
+        if not gp:
+            return
+        manager = self.context.state_manager
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            for i, rect in enumerate(self._card_rects()):
+                if rect.collidepoint(event.pos):
+                    if self.selected_item == i:
+                        self.trigger_action(manager)
+                    else:
+                        self.selected_item = i
+                        self.context.sound.play_sfx("laser")
+                    break
+
+        elif event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_LEFT, pygame.K_a):
+                self.selected_item = (self.selected_item - 1) % len(self.choices)
+                self.context.sound.play_sfx("laser")
+            elif event.key in (pygame.K_RIGHT, pygame.K_d):
+                self.selected_item = (self.selected_item + 1) % len(self.choices)
+                self.context.sound.play_sfx("laser")
+            elif event.key in (pygame.K_RETURN, pygame.K_SPACE):
+                self.trigger_action(manager)
+
+        self.context.handler.process_event(event)
+
+    def update(self, dt, manager):
+        gp = self.gameplay_state
+        if not gp:
+            return
+
+        if self.context.handler.just_pressed('DPad Left'):
+            self.selected_item = (self.selected_item - 1) % len(self.choices)
+            self.context.sound.play_sfx("laser")
+        elif self.context.handler.just_pressed('DPad Right'):
+            self.selected_item = (self.selected_item + 1) % len(self.choices)
+            self.context.sound.play_sfx("laser")
+
+        if self.context.handler.just_pressed('X'):
+            self.trigger_action(manager)
+
+    def draw(self, screen):
+        gp = self.gameplay_state
+        if not gp:
+            screen.fill((10, 10, 20))
+            return
+
+        overlay = pygame.Surface((self.context.W, self.context.H), pygame.SRCALPHA)
+        overlay.fill((5, 5, 12, 225))
+
+        title = self.title_font.render("LEVEL UP", True, (255, 255, 255))
+        overlay.blit(title, (self.context.W // 2 - title.get_width() // 2, 90))
+
+        subtitle = self.hint_font.render(
+            f"NOW LEVEL {gp.level.player_level}  —  CHOOSE ONE UPGRADE", True, (0, 200, 255)
+        )
+        overlay.blit(subtitle, (self.context.W // 2 - subtitle.get_width() // 2, 140))
+
+        for i, (upg, rect) in enumerate(zip(self.choices, self._card_rects())):
+            is_sel = (self.selected_item == i)
+            accent = upg["color"]
+
+            bg_col = (*accent, 35) if is_sel else (25, 25, 35, 200)
+            pygame.draw.rect(overlay, bg_col, rect, border_radius=8)
+            border_col = (*accent, 255) if is_sel else (60, 60, 75, 255)
+            pygame.draw.rect(overlay, border_col, rect, 2 if is_sel else 1, border_radius=8)
+
+            pygame.draw.circle(overlay, accent, (rect.centerx, rect.top + 60), 22)
+
+            name_surf = self.name_font.render(upg["name"], True, (255, 255, 255))
+            overlay.blit(name_surf, (rect.centerx - name_surf.get_width() // 2, rect.top + 110))
+
+            # Word-wrap the description to fit the card width
+            words = upg["description"].split(" ")
+            lines, line = [], ""
+            for w in words:
+                trial = (line + " " + w).strip()
+                if self.desc_font.size(trial)[0] > rect.width - 40:
+                    lines.append(line)
+                    line = w
+                else:
+                    line = trial
+            if line:
+                lines.append(line)
+
+            ly = rect.top + 160
+            for line in lines:
+                line_surf = self.desc_font.render(line, True, (190, 190, 200))
+                overlay.blit(line_surf, (rect.centerx - line_surf.get_width() // 2, ly))
+                ly += line_surf.get_height() + 4
+
+            if is_sel:
+                pick_surf = self.hint_font.render("[ SELECTED ]", True, accent)
+                overlay.blit(pick_surf, (rect.centerx - pick_surf.get_width() // 2, rect.bottom - 34))
+
+        hint = self.hint_font.render(
+            "[A/D or ARROWS] Choose   •   [SPACE/ENTER] Confirm", True, (200, 220, 255)
+        )
+        overlay.blit(hint, (self.context.W // 2 - hint.get_width() // 2, self.context.H - 60))
+
+        screen.blit(overlay, (0, 0))
+
+    def trigger_action(self, manager):
+        gp = self.gameplay_state
+        if not gp:
+            return
+        chosen = self.choices[self.selected_item]
+        chosen["apply"](gp.player)
+        self.context.sound.play_sfx("explosion")
+        manager.pop()

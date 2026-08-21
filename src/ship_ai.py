@@ -143,7 +143,7 @@ class ShipAI:
             return
 
         # ── 1. SHIELD STATE MACHINE ──
-        shield_pct = player.shield / 100.0  # SHIELD_MAX is 100
+        shield_pct = player.shield / player.shield_max
         
         if shield_pct == 0 and self.last_shield_pct > 0:
             self.announce("damage/shields_down")

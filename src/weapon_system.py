@@ -21,13 +21,11 @@ import random
 from src.math_engine import get_basis_from_quat
 from src.constants import (
     PLAYER_LASER_SPEED,
-    PLAYER_LASER_HEAT_PER_SHOT,
     PLAYER_LASER_FIRE_SHAKE,
     PLAYER_LASER_BASE_SPREAD,
     PLAYER_LASER_MAX_SPREAD,
     PLAYER_MISSILE_SPEED,
     PLAYER_MISSILE_LIFE,
-    PLAYER_MISSILE_DAMAGE,
 )
 from src.missile import HomingMissile, PlayerMissile
 
@@ -87,8 +85,8 @@ def fire_lasers(player, fire_pressed, handler, laser_pool, sound):
         )
         player.shots_fired += 1
 
-    player.weapons_cooldown = 0.15
-    player.laser_heat = min(1.0, player.laser_heat + PLAYER_LASER_HEAT_PER_SHOT)
+    player.weapons_cooldown = player.laser_fire_cooldown
+    player.laser_heat = min(1.0, player.laser_heat + player.laser_heat_per_shot)
     if player.laser_heat >= 1.0:
         player.overheated = True
 
@@ -124,13 +122,13 @@ def fire_missile(player, missile_fire_pressed, handler, player_missiles, sound):
     if player.missile_locked and player.active_target:
         m = HomingMissile(
             wx, wy, wz, vx, vy, vz,
-            PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE,
+            PLAYER_MISSILE_LIFE, player.missile_damage,
             player.active_target,
         )
     else:
         m = PlayerMissile(
             wx, wy, wz, vx, vy, vz,
-            PLAYER_MISSILE_LIFE, PLAYER_MISSILE_DAMAGE,
+            PLAYER_MISSILE_LIFE, player.missile_damage,
             homing=False,
         )
 

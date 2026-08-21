@@ -13,7 +13,7 @@ from src.constants import (
     TARGETING_FOV, PLAYER_LASER_SPEED,
     PLAYER_LASER_HEAT_PER_SHOT, PLAYER_LASER_COOL_RATE, PLAYER_LASER_FIRE_SHAKE,
     PLAYER_LASER_BASE_SPREAD, PLAYER_LASER_MAX_SPREAD, PLAYER_MISSILE_LOCK_TIME,
-    PLAYER_MISSILE_LOCK_FOV
+    PLAYER_MISSILE_LOCK_FOV, PLAYER_MISSILE_DAMAGE
 )
 
 SHIELD_MAX       = 100
@@ -38,9 +38,12 @@ class Player:
         # Dodge system
         self.dodge_cooldown = 0.0
         self.dodge_flash = 0.0
+        self.dodge_cooldown_max = DODGE_COOLDOWN   # upgradeable copy of the base cooldown
 
         # Shield system
-        self.shield = SHIELD_MAX
+        self.shield_max = SHIELD_MAX               # upgradeable copy of the base cap
+        self.shield_recharge_rate = SHIELD_RECHARGE # upgradeable copy of the base regen rate
+        self.shield = self.shield_max
         self.shield_regen_timer = 0.0
         self.shield_flash = 0.0
         self.shake_queued = 0.0
@@ -50,8 +53,17 @@ class Player:
         self.laser_heat = 0.0
         self.overheated = False
 
+        # Weapon stats (roguelite upgrades modify these instead of the
+        # module constants, so each run starts fresh from the same base
+        # values but can grow independently as levels are gained)
+        self.laser_damage = 1.0
+        self.laser_fire_cooldown = 0.15
+        self.laser_heat_per_shot = PLAYER_LASER_HEAT_PER_SHOT
+        self.missile_damage = PLAYER_MISSILE_DAMAGE
+
         # Missile System
-        self.missile_ammo = PLAYER_MISSILE_MAX_AMMO
+        self.missile_ammo_max = PLAYER_MISSILE_MAX_AMMO  # upgradeable copy of the base capacity
+        self.missile_ammo = self.missile_ammo_max
         self.missile_lock_timer = 0.0
         self.missile_locked = False
         self.drift_mode = False
@@ -139,11 +151,11 @@ class Player:
     @property
     def shield_charge(self):
         """0.0 = depleted, 1.0 = full."""
-        return self.shield / SHIELD_MAX
+        return self.shield / self.shield_max
 
     @property
     def shield_recharging(self):
-        return self.shield_regen_timer <= 0 and self.shield < SHIELD_MAX
+        return self.shield_regen_timer <= 0 and self.shield < self.shield_max
 
     @property
     def current_speed(self):
@@ -196,8 +208,8 @@ class Player:
 
         # ── SHIELD RECHARGE ───────────────────────
         self.shield_regen_timer = max(0.0, self.shield_regen_timer - dt)
-        if self.shield_regen_timer <= 0 and self.shield < SHIELD_MAX:
-            self.shield = min(SHIELD_MAX, self.shield + SHIELD_RECHARGE * dt)
+        if self.shield_regen_timer <= 0 and self.shield < self.shield_max:
+            self.shield = min(self.shield_max, self.shield + self.shield_recharge_rate * dt)
 
         if handler.held('Circle') and self.dodge_cooldown <= 0:
             dlx, dly = handler.stick_left()
@@ -207,7 +219,7 @@ class Player:
                 self.vel[0] += (right[0] * dlx - up[0] * dly) * DODGE_IMPULSE
                 self.vel[1] += (right[1] * dlx - up[1] * dly) * DODGE_IMPULSE
                 self.vel[2] += (right[2] * dlx - up[2] * dly) * DODGE_IMPULSE
-                self.dodge_cooldown = DODGE_COOLDOWN
+                self.dodge_cooldown = self.dodge_cooldown_max
                 self.dodge_flash = DODGE_FLASH_DURATION
 
         # ── ROTATION ──────────────────────────────
@@ -401,7 +413,7 @@ class Player:
     @property
     def dodge_charge(self):
         """0.0 = just fired, 1.0 = fully ready."""
-        return 1.0 - (self.dodge_cooldown / DODGE_COOLDOWN)
+        return 1.0 - (self.dodge_cooldown / self.dodge_cooldown_max)
 
     @property
     def dodge_ready(self):

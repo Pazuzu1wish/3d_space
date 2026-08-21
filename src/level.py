@@ -59,6 +59,17 @@ class ArcadeLevel(BaseLevel):
         self.combo_decay_rate = 0.15  # multiplier loss per second
         self._font = None
 
+        # ── Roguelite in-run leveling ──
+        self.player_level = 1
+        self.xp = 0
+        self.xp_to_next = self._xp_for_next_level()
+        self.pending_level_ups = 0   # queued upgrade picks (a big kill can grant 2+ at once)
+
+    def _xp_for_next_level(self):
+        # Exponential curve: 100, 125, 156, 195, ... — quick early upgrades,
+        # gently taper off as the run goes on.
+        return int(100 * (1.25 ** (self.player_level - 1)))
+
     def initialize(self):
         # Setup environment and starfields relative to player
         player_pos = self.gameplay_state.player.pos
@@ -111,6 +122,22 @@ class ArcadeLevel(BaseLevel):
         # Build combo up to a maximum limit (e.g. 5.0x)
         self.multiplier = min(5.0, self.multiplier + 0.25)
 
+        # ── XP / leveling (flat, uncombo'd so it stays predictable) ──
+        xp_map = {
+            'SuicideDrone': 20,
+            'Dogfighter': 45,
+            'Sniper': 60,
+            'Minelayer': 70,
+            'StealthInterceptor': 85,
+            'Carrier': 250,
+        }
+        self.xp += xp_map.get(enemy_type, 30)
+        while self.xp >= self.xp_to_next:
+            self.xp -= self.xp_to_next
+            self.player_level += 1
+            self.xp_to_next = self._xp_for_next_level()
+            self.pending_level_ups += 1
+
     def draw_hud_overlay(self, screen):
         # Layered UI: Draw Wave / Score & Multiplier on top-right space
         director = self.director
@@ -124,6 +151,9 @@ class ArcadeLevel(BaseLevel):
         surf_wave = self._font.render(wave_txt, True, (0, 220, 255))
         surf_score = self._font.render(score_txt, True, (255, 220, 0))
         surf_mult = self._font.render(mult_txt, True, col_mult)
+        surf_level = self._font.render(
+            f"LEVEL {self.player_level}  ({self.xp}/{self.xp_to_next} XP)", True, (180, 100, 255)
+        )
 
         r_edge = self.gameplay_state.W - 40
         y = 40
@@ -132,10 +162,12 @@ class ArcadeLevel(BaseLevel):
         screen.blit(surf_score, (r_edge - surf_score.get_width(), y))
         y += surf_score.get_height() + 6
         screen.blit(surf_mult, (r_edge - surf_mult.get_width(), y))
+        y += surf_mult.get_height() + 6
+        screen.blit(surf_level, (r_edge - surf_level.get_width(), y))
 
         # Countdown to the next wave while the arena is quiet
         if not director.wave_active:
-            y += surf_mult.get_height() + 6
+            y += surf_level.get_height() + 6
             countdown = max(0.0, director.intermission_timer)
             next_txt = f"NEXT WAVE: {countdown:0.1f}s"
             surf_next = self._font.render(next_txt, True, (200, 200, 60))
