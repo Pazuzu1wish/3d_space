@@ -66,6 +66,20 @@ set-pieces.
 | `Circle` + stick | Dodge thrust |
 | D-pad up | Cycle target |
 
+### TwinStick phone controller
+
+The game also speaks the Xbox-style `xpad` layout, which is what the
+[TwinStick Controller](https://github.com/Pazuzu1wish/twinstick-controller)
+phone app emits. Pair the phone, then run:
+
+```bash
+python main.py --layout xpad
+```
+
+`--layout` also accepts `ds4` (default) and `auto`, which guesses from the
+device name. If your host enumerates the TwinStick's buttons/axes differently,
+remap them in the TwinStick app's Profiles screen — no game changes needed.
+
 ## Run it
 
 ```bash

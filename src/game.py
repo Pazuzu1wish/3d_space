@@ -27,14 +27,14 @@ from src.spatial_partition import SpatialPartition
 # ──────────────────────────────────────────────
 
 class Game:
-    def __init__(self):
+    def __init__(self, layout: str | None = None):
         pygame.init()
         self.W, self.H = 1280, 760
         self.screen = pygame.display.set_mode((self.W, self.H))
         pygame.display.set_caption("🚀 3D Cockpit Dogfighter")
         self.clock = pygame.time.Clock()
 
-        self.handler = DS4Input()
+        self.handler = DS4Input(layout=layout)
         self.handler.init()
 
         self.player = Player()

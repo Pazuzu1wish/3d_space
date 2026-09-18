@@ -29,11 +29,46 @@ AXIS_NAMES = [
     'R2 Trigger'
 ]
 
-# Axis index constants — change these if your driver maps differently
+# Axis index constants — DS4 defaults; per-layout overrides live in LAYOUTS below
 AX_LX, AX_LY = 0, 1
 AX_L2        = 2
 AX_RX, AX_RY = 3, 4
 AX_R2        = 5
+
+# ──────────────────────────────────────────────
+#  CONTROLLER LAYOUTS
+# ──────────────────────────────────────────────
+# The game thinks in logical, DS4-flavoured names ('X' = south face button,
+# 'Circle' = east, 'Square' = west, 'Triangle' = north, ...). Each layout maps
+# those logical names onto the physical indices SDL/pygame reports for that
+# controller family.
+#
+# 'ds4'  — DualShock 4 via SDL: analog triggers live on axes 2/5, the right
+#          stick is axes 3/4.
+# 'xpad' — Xbox-style controllers and the TwinStick phone app (xpad-legacy HID
+#          codes): right stick is axes 2/3, analog triggers are axes 4
+#          (R2/gas) and 5 (L2/brake). Button indices assume SDL's default
+#          evdev-order enumeration for unmapped controllers; if a host
+#          enumerates differently, remap in the TwinStick app's Profiles
+#          screen instead of touching this file.
+LAYOUTS = {
+    'ds4': {
+        'buttons': ['X', 'Circle', 'Triangle', 'Square',
+                    'L1', 'R1', 'L2', 'R2',
+                    'Share', 'Options', 'PS', 'L3', 'R3', 'Touchpad'],
+        'axes': {'lx': 0, 'ly': 1, 'l2': 2, 'rx': 3, 'ry': 4, 'r2': 5},
+    },
+    'xpad': {
+        'buttons': ['X', 'Circle', 'Square', 'Triangle',
+                    'L1', 'R1', 'L2', 'R2',
+                    'Share', 'Options', 'L3', 'R3'],
+        'axes': {'lx': 0, 'ly': 1, 'rx': 2, 'ry': 3, 'r2': 4, 'l2': 5},
+    },
+}
+DEFAULT_LAYOUT = 'ds4'
+
+# Names that trigger the xpad layout during auto-detect (case-insensitive)
+XPAD_NAME_HINTS = ('twinstick', 'xbox', 'xinput')
 
 # ──────────────────────────────────────────────
 #  THEME
@@ -98,10 +133,17 @@ class DS4Input:
 
     DEADZONE_DEFAULT = 0.20
 
-    def __init__(self, joystick_index: int = 0, deadzone: float = DEADZONE_DEFAULT):
+    def __init__(self, joystick_index: int = 0, deadzone: float = DEADZONE_DEFAULT,
+                 layout: str | None = None):
         self.joystick_index = joystick_index
         self.deadzone       = deadzone
         self._joy: pygame.joystick.JoystickType | None = None
+
+        # controller layout: 'ds4', 'xpad', or None for auto-detect on connect
+        self._requested_layout = layout
+        self.layout_name = layout if layout in LAYOUTS else DEFAULT_LAYOUT
+        self._layout = LAYOUTS[self.layout_name]
+        self.button_names = self._layout['buttons']
 
         # raw axis values (–1..1)
         self._axes: dict[int, float] = {}
@@ -144,6 +186,13 @@ class DS4Input:
             self.num_hats    = self._joy.get_numhats()
             # Check if rumble is supported
             self.rumble_supported = self._joy.rumble(0.0, 0.0, 0)
+            # Auto-detect layout from the device name unless explicitly requested
+            if not self._requested_layout:
+                lowered = self.name.lower()
+                self.layout_name = ('xpad' if any(h in lowered for h in XPAD_NAME_HINTS)
+                                    else DEFAULT_LAYOUT)
+                self._layout = LAYOUTS[self.layout_name]
+                self.button_names = self._layout['buttons']
             return True
         self.connected = False
         self.name      = "No controller detected"
@@ -220,27 +269,31 @@ class DS4Input:
 
     def stick_left(self) -> tuple[float, float]:
         """Left stick (x, y) with deadzone applied, –1..1."""
+        ax = self._layout['axes']
         return self._apply_deadzone(
-            self._axes.get(AX_LX, 0.0),
-            self._axes.get(AX_LY, 0.0),
+            self._axes.get(ax['lx'], 0.0),
+            self._axes.get(ax['ly'], 0.0),
         )
 
     def stick_right(self) -> tuple[float, float]:
         """Right stick (x, y) with deadzone applied, –1..1."""
+        ax = self._layout['axes']
         return self._apply_deadzone(
-            self._axes.get(AX_RX, 0.0),
-            self._axes.get(AX_RY, 0.0),
+            self._axes.get(ax['rx'], 0.0),
+            self._axes.get(ax['ry'], 0.0),
         )
 
     # ── trigger queries ──────────────────────────
 
     def trigger_left(self) -> float:
         """L2 normalised to 0..1."""
-        return self._normalise_trigger(self._axes.get(AX_L2, -1.0))
+        return self._normalise_trigger(
+            self._axes.get(self._layout['axes']['l2'], -1.0))
 
     def trigger_right(self) -> float:
         """R2 normalised to 0..1."""
-        return self._normalise_trigger(self._axes.get(AX_R2, -1.0))
+        return self._normalise_trigger(
+            self._axes.get(self._layout['axes']['r2'], -1.0))
 
     # ── hat / d-pad ──────────────────────────────
 
@@ -312,9 +365,9 @@ class DS4Input:
 
     # ── internals ───────────────────────────────
 
-    @staticmethod
-    def _btn_name(index: int) -> str:
-        return BUTTON_NAMES[index] if index < len(BUTTON_NAMES) else f"Btn {index}"
+    def _btn_name(self, index: int) -> str:
+        names = self.button_names
+        return names[index] if index < len(names) else f"Btn {index}"
 
     @staticmethod
     def _normalise_trigger(raw: float) -> float:
