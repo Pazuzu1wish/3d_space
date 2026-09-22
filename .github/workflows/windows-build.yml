@@ -1,17 +1,22 @@
 name: Windows build
 
+# Builds a Windows .exe of 3D SPACE with PyInstaller on a real Windows runner,
+# so you don't need a Windows machine. Builds the master branch.
+# Trigger it manually from the Actions tab, or automatically by pushing to
+# master (or by pushing a version tag, e.g. git tag v1.0 && git push --tags).
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
 
 jobs:
   build-windows:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout tweaks8-21
-        uses: actions/checkout@v4
-        with:
-          ref: tweaks8-21
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -21,23 +26,27 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          pip install -r requirements.txt pyinstaller
 
       - name: Build .exe with PyInstaller
         run: |
           pyinstaller --noconfirm --clean --noconsole `
             --name "3D-SPACE" `
             --add-data "assets;assets" `
+            --collect-all numba `
+            --collect-all llvmlite `
             main.py
 
-      - name: Zip it up
+      - name: Show what got built
         run: |
-          Compress-Archive -Path dist/3D-SPACE -DestinationPath 3D-SPACE-windows.zip
+          Get-ChildItem dist/3D-SPACE | Select-Object Name, Length
+          Get-ChildItem dist/3D-SPACE/_internal | Select-Object -First 8 Name
 
-      - name: Upload Windows build
+      # Uploads the folder directly. When you download the artifact you get ONE
+      # zip containing 3D-SPACE.exe plus its _internal folder — ready for itch.io.
+      - name: Upload build
         uses: actions/upload-artifact@v4
         with:
           name: 3D-SPACE-windows
-          path: 3D-SPACE-windows.zip
+          path: dist/3D-SPACE
           retention-days: 90
