@@ -1,19 +1,17 @@
 name: Windows build
 
-# Builds a Windows .exe of 3D SPACE with PyInstaller on a real Windows runner,
-# so you don't need a Windows machine. Trigger it manually from the Actions tab,
-# or automatically by pushing a version tag (e.g. git tag v1.0 && git push --tags).
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
 
 jobs:
   build-windows:
     runs-on: windows-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout tweaks8-21
+        uses: actions/checkout@v4
+        with:
+          ref: tweaks8-21
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,7 +21,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          pip install -r requirements.txt
+          pip install pyinstaller
 
       - name: Build .exe with PyInstaller
         run: |
@@ -32,10 +31,11 @@ jobs:
             --add-data "assets;assets" `
             main.py
 
-      - name: Zip it up for itch.io
-        run: Compress-Archive -Path dist/3D-SPACE -DestinationPath 3D-SPACE-windows.zip
+      - name: Zip it up
+        run: |
+          Compress-Archive -Path dist/3D-SPACE -DestinationPath 3D-SPACE-windows.zip
 
-      - name: Upload artifact
+      - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
           name: 3D-SPACE-windows
